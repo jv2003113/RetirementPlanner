@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -134,11 +134,22 @@ const Healthcare = () => {
   };
 
   const onSubmit = (values: HealthcareEstimatorValues) => {
-    calculateHealthcareCosts(values);
+    const estimates = calculateHealthcareCosts(values);
+    setCostEstimates(estimates);
   };
 
-  // Calculate costs based on current form values
-  const costEstimates = calculateHealthcareCosts(form.getValues());
+  // Calculate costs based on current form values using useEffect to prevent infinite re-renders
+  const [costEstimates, setCostEstimates] = useState({
+    monthlyTotal: 720,
+    annualTotal: 8640,
+    lifetimeTotal: 241920
+  });
+  
+  // Only recalculate when the component mounts
+  useEffect(() => {
+    const estimates = calculateHealthcareCosts(form.getValues());
+    setCostEstimates(estimates);
+  }, []);
   
   // Format currency
   const formatCurrency = (value: number) => {
