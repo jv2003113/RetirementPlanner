@@ -1,5 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { User } from "@shared/schema";
 import { 
   HomeIcon, 
   UserIcon, 
@@ -14,6 +16,12 @@ import {
 
 const Sidebar = () => {
   const [location] = useLocation();
+  const userId = 1; // For demo purposes
+  
+  // Fetch user data
+  const { data: userData } = useQuery<User>({
+    queryKey: [`/api/users/${userId}`],
+  });
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
@@ -60,7 +68,9 @@ const Sidebar = () => {
               </div>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-700">John Doe</p>
+              <p className="text-sm font-medium text-gray-700">
+                {userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...'}
+              </p>
               <Link href="/profile">
                 <a className="text-xs font-medium text-gray-500 hover:text-gray-700">
                   Settings
