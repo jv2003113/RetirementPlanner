@@ -2,6 +2,29 @@ import { pgTable, text, serial, integer, boolean, jsonb, timestamp, decimal, var
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Define additional schemas for non-persistent data structures
+export const recommendationSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  impact: z.enum(["high", "medium", "info"]),
+  actionText: z.string(),
+  actionLink: z.string()
+});
+
+export const resourceSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  icon: z.enum(["book", "healthcare", "estate"]),
+  buttonText: z.string(),
+  buttonLink: z.string(),
+  color: z.string()
+});
+
+export type Recommendation = z.infer<typeof recommendationSchema>;
+export type Resource = z.infer<typeof resourceSchema>;
+
 // User profile schema
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),

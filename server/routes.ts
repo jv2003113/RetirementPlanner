@@ -400,6 +400,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Get recent activities
     const activities = await storage.getActivities(userId, 3);
     
+    // Get personalized recommendations
+    const recommendations = await storage.getRecommendations(userId);
+    
+    // Get resources
+    const resources = await storage.getResources();
+    
     // Calculate total portfolio value
     const totalPortfolioValue = accounts.reduce((sum, account) => sum + Number(account.balance), 0);
     
@@ -484,6 +490,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         socialSecurity: 1450,
         estimatedExpenses: totalMonthlyExpenses
       },
+      recommendations: recommendations,
+      resources: resources,
       recentActivities: activities
     });
   });

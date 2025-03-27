@@ -8,42 +8,51 @@ import RecommendationsCard from "@/components/dashboard/RecommendationsCard";
 import ActivityTimeline from "@/components/dashboard/ActivityTimeline";
 import ResourceCard from "@/components/dashboard/ResourceCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Recommendation, Resource, Activity } from "@shared/schema";
+
+// Define interface for the dashboard data
+interface DashboardData {
+  retirementReadiness: {
+    score: number;
+    targetRetirementAge: number | null;
+  };
+  monthlyIncome: {
+    projected: number;
+    goal: number;
+    percentOfCurrent: number;
+  };
+  savingsRate: {
+    percentage: number;
+    monthlyAmount: number;
+  };
+  portfolioAllocation: {
+    total: number;
+    categories: {
+      stocks: { percentage: number; value: number };
+      bonds: { percentage: number; value: number };
+      realEstate: { percentage: number; value: number };
+      cash: { percentage: number; value: number };
+    };
+  };
+  incomeProjection: {
+    portfolioIncome: number;
+    socialSecurity: number;
+    estimatedExpenses: number;
+  };
+  recommendations: Recommendation[];
+  resources: Resource[];
+  recentActivities: Activity[];
+}
 
 const Dashboard = () => {
   const userId = 1; // For demo purposes
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<DashboardData>({
     queryKey: [`/api/users/${userId}/dashboard`],
     refetchOnWindowFocus: false,
   });
 
-  // Recommendations data
-  const recommendations = [
-    {
-      id: "1",
-      title: "Increase contribution rate",
-      description: "Increasing your 401(k) contribution by just 2% could add $250,000 to your retirement savings.",
-      impact: "high",
-      actionText: "Take action",
-      actionLink: "/portfolio",
-    },
-    {
-      id: "2",
-      title: "Review asset allocation",
-      description: "Your portfolio may be too aggressive for your age. Consider adjusting your stock-to-bond ratio.",
-      impact: "medium",
-      actionText: "Review allocation",
-      actionLink: "/portfolio",
-    },
-    {
-      id: "3",
-      title: "Complete healthcare planning",
-      description: "You haven't completed your healthcare planning section. This is important for accurate retirement projections.",
-      impact: "info",
-      actionText: "Complete section",
-      actionLink: "/healthcare",
-    },
-  ];
+  // Recommendations and resources are now fetched from the API and included in the data object
 
   if (isLoading) {
     return (
@@ -85,70 +94,55 @@ const Dashboard = () => {
       {/* Retirement Readiness Cards */}
       <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <RetirementReadinessCard
-          score={data.retirementReadiness.score}
+          score={data!.retirementReadiness.score}
           label="Retirement Readiness"
           icon={<BarChart3 className="h-6 w-6 text-white" />}
           bgColor="bg-primary"
-          description={`On track for retirement at age ${data.retirementReadiness.targetRetirementAge}`}
+          description={`On track for retirement at age ${data!.retirementReadiness.targetRetirementAge}`}
         />
         
         <RetirementReadinessCard
-          score={data.monthlyIncome.projected}
+          score={data!.monthlyIncome.projected}
           label="Projected Monthly Income"
           icon={<BanknoteIcon className="h-6 w-6 text-white" />}
           bgColor="bg-[#43A047]"
-          description={`${data.monthlyIncome.percentOfCurrent}% of current income`}
+          description={`${data!.monthlyIncome.percentOfCurrent}% of current income`}
         />
         
         <RetirementReadinessCard
-          score={data.savingsRate.percentage}
+          score={data!.savingsRate.percentage}
           label="Current Savings Rate"
           icon={<WalletIcon className="h-6 w-6 text-white" />}
           bgColor="bg-[#FFA000]"
-          description={`$${data.savingsRate.monthlyAmount} per month`}
+          description={`$${data!.savingsRate.monthlyAmount} per month`}
         />
       </div>
 
       {/* Portfolio and Projection Section */}
       <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <PortfolioAllocationChart data={data.portfolioAllocation} />
-        <IncomeProjectionChart data={data.incomeProjection} />
+        <PortfolioAllocationChart data={data!.portfolioAllocation} />
+        <IncomeProjectionChart data={data!.incomeProjection} />
       </div>
 
       {/* Recommendations & Activities Section */}
       <div className="mt-8 grid grid-cols-1 gap-5">
-        <RecommendationsCard recommendations={recommendations} />
-        <ActivityTimeline activities={data.recentActivities} />
+        <RecommendationsCard recommendations={data!.recommendations} />
+        <ActivityTimeline activities={data!.recentActivities} />
       </div>
 
       {/* Planning Resources Section */}
       <div className="mt-8 mb-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <ResourceCard
-          title="Retirement Tax Strategies"
-          description="Learn strategies to minimize taxes in retirement and maximize your income."
-          icon="book"
-          buttonText="Read guide"
-          buttonLink="/tax-planning"
-          color="text-primary"
-        />
-        
-        <ResourceCard
-          title="Healthcare in Retirement"
-          description="Understand Medicare options and planning for healthcare costs in retirement."
-          icon="healthcare"
-          buttonText="Read healthcare guide"
-          buttonLink="/healthcare"
-          color="text-[#43A047]"
-        />
-        
-        <ResourceCard
-          title="Estate Planning Basics"
-          description="Learn the fundamentals of estate planning and how to protect your legacy."
-          icon="estate"
-          buttonText="Read estate guide"
-          buttonLink="/estate-planning"
-          color="text-[#FFA000]"
-        />
+        {data!.resources.map((resource: Resource) => (
+          <ResourceCard
+            key={resource.id}
+            title={resource.title}
+            description={resource.description}
+            icon={resource.icon}
+            buttonText={resource.buttonText}
+            buttonLink={resource.buttonLink}
+            color={`text-[${resource.color}]`}
+          />
+        ))}
       </div>
     </div>
   );

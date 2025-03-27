@@ -4,7 +4,8 @@ import {
   investmentAccounts, type InvestmentAccount, type InsertInvestmentAccount,
   assetAllocations, type AssetAllocation, type InsertAssetAllocation,
   retirementExpenses, type RetirementExpense, type InsertRetirementExpense,
-  activities, type Activity, type InsertActivity
+  activities, type Activity, type InsertActivity,
+  type Recommendation, type Resource
 } from "@shared/schema";
 
 // Define the storage interface
@@ -44,6 +45,12 @@ export interface IStorage {
   // Activities operations
   getActivities(userId: number, limit?: number): Promise<Activity[]>;
   createActivity(activity: InsertActivity): Promise<Activity>;
+  
+  // Recommendations operations
+  getRecommendations(userId: number): Promise<Recommendation[]>;
+  
+  // Resources operations
+  getResources(): Promise<Resource[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -53,6 +60,8 @@ export class MemStorage implements IStorage {
   private assetAllocations: Map<number, AssetAllocation>;
   private retirementExpenses: Map<number, RetirementExpense>;
   private activities: Map<number, Activity>;
+  private recommendations: Map<string, Recommendation>;
+  private resources: Map<string, Resource>;
 
   private userId: number;
   private goalId: number;
@@ -68,6 +77,8 @@ export class MemStorage implements IStorage {
     this.assetAllocations = new Map();
     this.retirementExpenses = new Map();
     this.activities = new Map();
+    this.recommendations = new Map();
+    this.resources = new Map();
 
     this.userId = 1;
     this.goalId = 1;
@@ -284,6 +295,88 @@ export class MemStorage implements IStorage {
   }
 
   // Initialize with sample data for demo
+  // Recommendations operations
+  async getRecommendations(userId: number): Promise<Recommendation[]> {
+    // Currently returning static recommendations based on user profile
+    // In a real app, this would generate personalized recommendations based on user data
+    return [
+      {
+        id: "rec-1",
+        title: "Increase 401(k) contributions",
+        description: "Consider increasing your 401(k) contributions to maximize your employer match and tax benefits.",
+        impact: "high",
+        actionText: "Adjust contributions",
+        actionLink: "/portfolio"
+      },
+      {
+        id: "rec-2",
+        title: "Diversify your portfolio",
+        description: "Your portfolio has a high concentration in stocks. Consider diversifying to reduce risk.",
+        impact: "medium",
+        actionText: "View allocation strategies",
+        actionLink: "/portfolio"
+      },
+      {
+        id: "rec-3",
+        title: "Check healthcare coverage",
+        description: "Medicare may not cover all your healthcare needs in retirement. Consider supplemental insurance.",
+        impact: "high",
+        actionText: "Explore healthcare options",
+        actionLink: "/healthcare"
+      },
+      {
+        id: "rec-4",
+        title: "Create an estate plan",
+        description: "Ensure your assets are distributed according to your wishes and minimize taxes.",
+        impact: "medium",
+        actionText: "Start estate planning",
+        actionLink: "/estate-planning"
+      },
+      {
+        id: "rec-5",
+        title: "Set up automatic savings",
+        description: "Automate your contributions to retirement accounts to stay consistent.",
+        impact: "info",
+        actionText: "Learn more",
+        actionLink: "/portfolio"
+      }
+    ];
+  }
+  
+  // Resources operations
+  async getResources(): Promise<Resource[]> {
+    // Static resources that are the same for all users
+    return [
+      {
+        id: "res-1",
+        title: "Retirement Tax Strategies",
+        description: "Learn strategies to minimize taxes in retirement and maximize your income.",
+        icon: "book",
+        buttonText: "Read guide",
+        buttonLink: "/tax-planning",
+        color: "#4CAF50"
+      },
+      {
+        id: "res-2",
+        title: "Healthcare in Retirement",
+        description: "Understand Medicare coverage and plan for healthcare expenses in retirement.",
+        icon: "healthcare",
+        buttonText: "Learn more",
+        buttonLink: "/healthcare",
+        color: "#2196F3"
+      },
+      {
+        id: "res-3",
+        title: "Estate Planning Basics",
+        description: "Protect your assets and provide for your loved ones with proper estate planning.",
+        icon: "estate",
+        buttonText: "Get started",
+        buttonLink: "/estate-planning",
+        color: "#9C27B0"
+      }
+    ];
+  }
+  
   async initializeDemoData(userId: number) {
     // Create retirement goals
     await this.createRetirementGoal({
