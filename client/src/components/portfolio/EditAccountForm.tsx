@@ -78,13 +78,13 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
   // Update account mutation
   const updateAccountMutation = useMutation({
     mutationFn: async (data: z.infer<typeof accountFormSchema>) => {
-      // Ensure all numeric fields are properly formatted for the server
+      // Ensure all numeric fields are properly formatted as strings for the server
       const formattedData = {
         ...data,
-        balance: Number(data.balance),
-        contributionAmount: Number(data.contributionAmount),
-        annualReturn: Number(data.annualReturn),
-        fees: Number(data.fees),
+        balance: String(data.balance),
+        contributionAmount: String(data.contributionAmount),
+        annualReturn: String(data.annualReturn),
+        fees: String(data.fees),
       };
       console.log("Submitting data:", formattedData);
       return await apiRequest("PATCH", `/api/investment-accounts/${account.id}`, formattedData);

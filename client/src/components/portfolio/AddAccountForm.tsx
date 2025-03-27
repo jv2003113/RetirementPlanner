@@ -35,6 +35,7 @@ const accountFormSchema = z.object({
   annualReturn: z.coerce.number().min(0, "Annual return cannot be negative"),
   fees: z.coerce.number().min(0, "Fees cannot be negative"),
   isRetirementAccount: z.boolean().default(true),
+  accountOwner: z.string().default("primary"),
 });
 
 interface AddAccountFormProps {
@@ -55,21 +56,34 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
       annualReturn: 7,
       fees: 0.5,
       isRetirementAccount: true,
+      accountOwner: "primary",
     },
   });
 
   // Create account mutation
   const createAccountMutation = useMutation({
     mutationFn: async (data: z.infer<typeof accountFormSchema>) => {
-      return await apiRequest("POST", "/api/investment-accounts", {
+      // Ensure all numeric fields are properly formatted as strings for the server
+      const formattedData = {
         ...data,
         userId,
-      });
+        balance: String(data.balance),
+        contributionAmount: String(data.contributionAmount),
+        annualReturn: String(data.annualReturn),
+        fees: String(data.fees),
+        // Add account owner field if missing
+        accountOwner: "primary"
+      };
+      console.log("Submitting data:", formattedData);
+      return await apiRequest("POST", "/api/investment-accounts", formattedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/investment-accounts`] });
       form.reset();
       onSuccess();
+    },
+    onError: (error) => {
+      console.error("Error creating account:", error);
     },
   });
 
@@ -222,6 +236,32 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                 )}
               />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="accountOwner"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account Owner</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account owner" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="primary">Primary (You)</SelectItem>
+                      <SelectItem value="spouse">Spouse</SelectItem>
+                      <SelectItem value="joint">Joint</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Who owns this account? This helps with retirement planning calculations.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
