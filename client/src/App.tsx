@@ -12,6 +12,7 @@ import TaxPlanning from "@/pages/TaxPlanning";
 import Healthcare from "@/pages/Healthcare";
 import EstatePlanning from "@/pages/EstatePlanning";
 import Reports from "@/pages/Reports";
+import Simulation from "@/pages/Simulation";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileNav from "@/components/layout/MobileNav";
 
@@ -31,6 +32,7 @@ function Router() {
             <Route path="/healthcare" component={Healthcare} />
             <Route path="/estate-planning" component={EstatePlanning} />
             <Route path="/reports" component={Reports} />
+            <Route path="/simulation" component={Simulation} />
             <Route component={NotFound} />
           </Switch>
         </div>
