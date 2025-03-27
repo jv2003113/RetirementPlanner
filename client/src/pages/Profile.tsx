@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
+import { User, RetirementGoal } from "../../shared/schema";
 import { 
   Card, 
   CardContent, 
@@ -40,8 +41,8 @@ const profileFormSchema = z.object({
   currentLocation: z.string().optional(),
   maritalStatus: z.string().optional(),
   dependents: z.coerce.number().min(0, "Dependents cannot be negative").optional(),
-  currentIncome: z.coerce.number().min(0, "Income cannot be negative"),
-  expectedFutureIncome: z.coerce.number().min(0, "Income cannot be negative").optional(),
+  currentIncome: z.string().transform((val) => val === "" ? "0" : val), // Handle as string for API compatibility
+  expectedFutureIncome: z.string().optional().transform((val) => val === "" ? "0" : val), // Handle as string for API compatibility
   desiredLifestyle: z.string().optional(),
 });
 
@@ -59,12 +60,12 @@ const Profile = () => {
   const userId = 1; // For demo purposes
 
   // Fetch user profile data
-  const { data: userData, isLoading: isLoadingUser } = useQuery({
+  const { data: userData, isLoading: isLoadingUser } = useQuery<User>({
     queryKey: [`/api/users/${userId}`],
   });
 
   // Fetch retirement goals
-  const { data: goalsData, isLoading: isLoadingGoals } = useQuery({
+  const { data: goalsData, isLoading: isLoadingGoals } = useQuery<RetirementGoal[]>({
     queryKey: [`/api/users/${userId}/retirement-goals`],
   });
 
@@ -126,8 +127,8 @@ const Profile = () => {
       currentLocation: "",
       maritalStatus: "",
       dependents: 0,
-      currentIncome: 0,
-      expectedFutureIncome: 0,
+      currentIncome: "0", // String for API compatibility
+      expectedFutureIncome: "0", // String for API compatibility
       desiredLifestyle: "",
     },
   });
@@ -155,8 +156,8 @@ const Profile = () => {
         currentLocation: userData.currentLocation || "",
         maritalStatus: userData.maritalStatus || "",
         dependents: userData.dependents || 0,
-        currentIncome: userData.currentIncome || 0,
-        expectedFutureIncome: userData.expectedFutureIncome || 0,
+        currentIncome: String(userData.currentIncome || "0"), // Convert to string
+        expectedFutureIncome: String(userData.expectedFutureIncome || "0"), // Convert to string
         desiredLifestyle: userData.desiredLifestyle || "",
       });
     }
