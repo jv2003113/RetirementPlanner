@@ -41,6 +41,14 @@ export const users = pgTable("users", {
   currentIncome: decimal("current_income", { precision: 10, scale: 2 }),
   expectedFutureIncome: decimal("expected_future_income", { precision: 10, scale: 2 }),
   desiredLifestyle: text("desired_lifestyle"), // frugal, comfortable, luxurious
+  // Spouse information
+  hasSpouse: boolean("has_spouse").default(false),
+  spouseFirstName: text("spouse_first_name"),
+  spouseLastName: text("spouse_last_name"),
+  spouseCurrentAge: integer("spouse_current_age"),
+  spouseTargetRetirementAge: integer("spouse_target_retirement_age"),
+  spouseCurrentIncome: decimal("spouse_current_income", { precision: 10, scale: 2 }),
+  spouseExpectedFutureIncome: decimal("spouse_expected_future_income", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -67,6 +75,7 @@ export const investmentAccounts = pgTable("investment_accounts", {
   annualReturn: decimal("annual_return", { precision: 5, scale: 2 }),
   fees: decimal("fees", { precision: 5, scale: 2 }),
   isRetirementAccount: boolean("is_retirement_account").default(true),
+  accountOwner: text("account_owner").default("primary"), // primary, spouse, joint
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

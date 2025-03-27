@@ -15,10 +15,27 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import AccountsList from "@/components/portfolio/AccountsList";
 import AddAccountForm from "@/components/portfolio/AddAccountForm";
+import EditAccountForm from "@/components/portfolio/EditAccountForm";
 import AssetAllocationPieChart from "@/components/portfolio/AssetAllocationPieChart";
+
+// Define interface for investment account
+interface InvestmentAccount {
+  id: number;
+  userId: number;
+  accountName: string;
+  accountType: string;
+  balance: number;
+  contributionAmount: number;
+  contributionFrequency: string;
+  annualReturn: number;
+  fees: number;
+  isRetirementAccount: boolean;
+  accountOwner?: string;
+}
 
 const Portfolio = () => {
   const [activeTab, setActiveTab] = useState("accounts");
+  const [accountToEdit, setAccountToEdit] = useState<InvestmentAccount | null>(null);
   const { toast } = useToast();
   const userId = 1; // For demo purposes
 
@@ -27,14 +44,20 @@ const Portfolio = () => {
     data: accountsData, 
     isLoading: isLoadingAccounts,
     error: accountsError
-  } = useQuery({
+  } = useQuery<InvestmentAccount[]>({
     queryKey: [`/api/users/${userId}/investment-accounts`],
   });
 
   // Function to calculate total portfolio value
   const calculateTotalPortfolioValue = () => {
-    if (!accountsData) return 0;
-    return accountsData.reduce((total: number, account: any) => total + Number(account.balance), 0);
+    if (!accountsData || !Array.isArray(accountsData)) return 0;
+    return accountsData.reduce((total: number, account: InvestmentAccount) => total + Number(account.balance), 0);
+  };
+  
+  // Handle editing an account
+  const handleEditAccount = (account: InvestmentAccount) => {
+    setAccountToEdit(account);
+    setActiveTab("edit");
   };
 
   // Delete account mutation
@@ -105,7 +128,7 @@ const Portfolio = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {accountsData?.length || 0}
+              {Array.isArray(accountsData) ? accountsData.length : 0}
             </div>
           </CardContent>
         </Card>
@@ -116,8 +139,10 @@ const Portfolio = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${accountsData?.reduce((total: number, account: any) => 
-                total + (account.contributionFrequency === "monthly" ? Number(account.contributionAmount) : 0), 0).toLocaleString()}
+              ${Array.isArray(accountsData) 
+                ? accountsData.reduce((total: number, account: InvestmentAccount) => 
+                  total + (account.contributionFrequency === "monthly" ? Number(account.contributionAmount) : 0), 0).toLocaleString()
+                : "0"}
             </div>
           </CardContent>
         </Card>
@@ -131,10 +156,11 @@ const Portfolio = () => {
         </TabsList>
         
         <TabsContent value="accounts" className="mt-4">
-          {accountsData && accountsData.length > 0 ? (
+          {Array.isArray(accountsData) && accountsData.length > 0 ? (
             <AccountsList 
               accounts={accountsData} 
               onDeleteAccount={handleDeleteAccount}
+              onEditAccount={handleEditAccount}
             />
           ) : (
             <Card>
@@ -150,6 +176,26 @@ const Portfolio = () => {
           )}
         </TabsContent>
         
+        <TabsContent value="edit" className="mt-4">
+          {accountToEdit && (
+            <EditAccountForm
+              account={accountToEdit}
+              onSuccess={() => {
+                setAccountToEdit(null);
+                setActiveTab("accounts");
+                toast({
+                  title: "Account Updated",
+                  description: "Your investment account has been successfully updated."
+                });
+              }}
+              onCancel={() => {
+                setAccountToEdit(null);
+                setActiveTab("accounts");
+              }}
+            />
+          )}
+        </TabsContent>
+        
         <TabsContent value="allocation" className="mt-4">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
@@ -160,7 +206,7 @@ const Portfolio = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
-                {accountsData && accountsData.length > 0 ? (
+                {Array.isArray(accountsData) && accountsData.length > 0 ? (
                   <div className="h-[400px] w-full max-w-md">
                     <AssetAllocationPieChart accounts={accountsData} />
                   </div>

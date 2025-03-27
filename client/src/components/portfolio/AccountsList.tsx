@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, TrashIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { PencilIcon, TrashIcon, ChevronDownIcon, ChevronUpIcon, UserIcon, Users2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface InvestmentAccount {
   id: number;
+  userId: number;
   accountName: string;
   accountType: string;
   balance: number;
@@ -16,14 +17,16 @@ interface InvestmentAccount {
   annualReturn: number;
   fees: number;
   isRetirementAccount: boolean;
+  accountOwner?: string;
 }
 
 interface AccountsListProps {
   accounts: InvestmentAccount[];
   onDeleteAccount: (id: number) => void;
+  onEditAccount: (account: InvestmentAccount) => void;
 }
 
-const AccountsList = ({ accounts, onDeleteAccount }: AccountsListProps) => {
+const AccountsList = ({ accounts, onDeleteAccount, onEditAccount }: AccountsListProps) => {
   const [expandedAccount, setExpandedAccount] = useState<number | null>(null);
 
   const toggleAccountDetails = (accountId: number) => {
@@ -49,6 +52,28 @@ const AccountsList = ({ accounts, onDeleteAccount }: AccountsListProps) => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+  
+  const getAccountOwnerIcon = (owner?: string) => {
+    switch (owner) {
+      case 'spouse':
+        return <UserIcon className="h-4 w-4 mr-1 text-pink-500" />;
+      case 'joint':
+        return <Users2Icon className="h-4 w-4 mr-1 text-purple-500" />;
+      default:
+        return <UserIcon className="h-4 w-4 mr-1 text-blue-500" />;
+    }
+  };
+  
+  const getAccountOwnerLabel = (owner?: string) => {
+    switch (owner) {
+      case 'spouse':
+        return 'Spouse';
+      case 'joint':
+        return 'Joint';
+      default:
+        return 'Primary';
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -62,16 +87,22 @@ const AccountsList = ({ accounts, onDeleteAccount }: AccountsListProps) => {
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">{account.accountName}</CardTitle>
+                  <div className="flex items-center gap-1">
+                    {getAccountOwnerIcon(account.accountOwner)}
+                    <CardTitle className="text-lg">{account.accountName}</CardTitle>
+                  </div>
                   <CardDescription className="flex items-center mt-1">
                     <Badge variant="outline" className={`mr-2 ${getAccountTypeColor(account.accountType)}`}>
                       {formatAccountType(account.accountType)}
                     </Badge>
                     {account.isRetirementAccount && (
-                      <Badge variant="outline" className="bg-teal-100 text-teal-800">
+                      <Badge variant="outline" className="bg-teal-100 text-teal-800 mr-2">
                         Retirement
                       </Badge>
                     )}
+                    <Badge variant="outline" className="bg-gray-100 text-gray-800">
+                      {getAccountOwnerLabel(account.accountOwner)}
+                    </Badge>
                   </CardDescription>
                 </div>
                 <div className="text-right">
@@ -110,7 +141,12 @@ const AccountsList = ({ accounts, onDeleteAccount }: AccountsListProps) => {
               </CardContent>
               
               <CardFooter className="flex justify-end space-x-2 pt-0">
-                <Button size="sm" variant="outline" className="flex items-center">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center"
+                  onClick={() => onEditAccount(account)}
+                >
                   <PencilIcon className="h-4 w-4 mr-1" /> Edit
                 </Button>
                 <Button 
@@ -140,7 +176,17 @@ const AssetAllocationForAccount = ({ accountId }: { accountId: number }) => {
     return <div className="py-2">Loading asset allocations...</div>;
   }
 
-  if (error || !allocations || allocations.length === 0) {
+  if (error) {
+    return <div className="py-2 text-sm text-gray-500">Error loading asset allocations.</div>;
+  }
+
+  const allocationData = allocations as Array<{
+    id: number;
+    assetCategory: string;
+    percentage: number;
+  }> || [];
+
+  if (allocationData.length === 0) {
     return <div className="py-2 text-sm text-gray-500">No asset allocation data available.</div>;
   }
 
@@ -164,7 +210,7 @@ const AssetAllocationForAccount = ({ accountId }: { accountId: number }) => {
     <div className="mt-2">
       <div className="text-sm font-medium mb-2">Asset Allocation</div>
       <div className="space-y-2">
-        {allocations.map((allocation: any) => (
+        {allocationData.map((allocation) => (
           <div key={allocation.id} className="flex items-center">
             <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
               <div 
