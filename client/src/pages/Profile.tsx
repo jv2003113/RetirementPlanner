@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
-import { User, RetirementGoal } from "../../shared/schema";
+import { User, RetirementGoal } from "@shared/schema";
 import { 
   Card, 
   CardContent, 

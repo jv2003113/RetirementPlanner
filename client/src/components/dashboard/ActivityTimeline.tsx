@@ -6,8 +6,9 @@ interface Activity {
   id: number;
   activityType: string;
   description: string;
-  date: string;
-  metadata?: Record<string, any>;
+  date: string | Date | null;
+  metadata?: Record<string, any> | unknown;
+  userId?: number;
 }
 
 interface ActivityTimelineProps {
@@ -57,8 +58,11 @@ const ActivityTimeline = ({ activities }: ActivityTimelineProps) => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateInput: string | Date | null) => {
+    if (!dateInput) {
+      return format(new Date(), 'MMM d, yyyy'); // Use current date if no date provided
+    }
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
     return format(date, 'MMM d, yyyy');
   };
 
