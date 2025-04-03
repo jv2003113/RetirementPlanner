@@ -48,7 +48,7 @@ const profileFormSchema = z.object({
 
 // Form schema for retirement goals
 const goalFormSchema = z.object({
-  targetMonthlyIncome: z.coerce.number().min(0, "Income cannot be negative"),
+  targetMonthlyIncome: z.string().transform((val) => val === "" ? "0" : val),  // Handle as string for API compatibility
   description: z.string().min(1, "Description is required"),
   category: z.string().min(1, "Category is required"),
   priority: z.coerce.number().min(1, "Priority must be at least 1").max(5, "Priority cannot exceed 5"),
@@ -137,7 +137,7 @@ const Profile = () => {
   const goalForm = useForm<z.infer<typeof goalFormSchema>>({
     resolver: zodResolver(goalFormSchema),
     defaultValues: {
-      targetMonthlyIncome: 0,
+      targetMonthlyIncome: "0", // String for API compatibility
       description: "",
       category: "",
       priority: 3,
