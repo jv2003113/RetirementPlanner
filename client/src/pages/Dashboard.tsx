@@ -7,8 +7,9 @@ import IncomeProjectionChart from "@/components/dashboard/IncomeProjectionChart"
 import RecommendationsCard from "@/components/dashboard/RecommendationsCard";
 import ActivityTimeline from "@/components/dashboard/ActivityTimeline";
 import ResourceCard from "@/components/dashboard/ResourceCard";
+import RetirementGoalsCard from "@/components/dashboard/RetirementGoalsCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Recommendation, Resource, Activity } from "@shared/schema";
+import { Recommendation, Resource, Activity, RetirementGoal } from "@shared/schema";
 
 // Define interface for the dashboard data
 interface DashboardData {
@@ -42,6 +43,7 @@ interface DashboardData {
   recommendations: Recommendation[];
   resources: Resource[];
   recentActivities: Activity[];
+  retirementGoals: RetirementGoal[];
 }
 
 const Dashboard = () => {
@@ -124,10 +126,15 @@ const Dashboard = () => {
         <IncomeProjectionChart data={data!.incomeProjection} />
       </div>
 
-      {/* Recommendations & Activities Section */}
+      {/* Retirement Goals & Activities Section */}
+      <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <RetirementGoalsCard goals={data!.retirementGoals || []} />
+        <ActivityTimeline activities={data!.recentActivities} />
+      </div>
+      
+      {/* Recommendations Section */}
       <div className="mt-8 grid grid-cols-1 gap-5">
         <RecommendationsCard recommendations={data!.recommendations} />
-        <ActivityTimeline activities={data!.recentActivities} />
       </div>
 
       {/* Planning Resources Section */}

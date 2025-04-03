@@ -48,9 +48,10 @@ const profileFormSchema = z.object({
 
 // Form schema for retirement goals
 const goalFormSchema = z.object({
+  category: z.string().min(1, "Category is required"),
+  frequency: z.string().min(1, "Frequency is required"),
   targetMonthlyIncome: z.string().transform((val) => val === "" ? "0" : val),  // Handle as string for API compatibility
   description: z.string().min(1, "Description is required"),
-  category: z.string().min(1, "Category is required"),
   priority: z.coerce.number().min(1, "Priority must be at least 1").max(5, "Priority cannot exceed 5"),
 });
 
@@ -138,9 +139,10 @@ const Profile = () => {
   const goalForm = useForm<z.infer<typeof goalFormSchema>>({
     resolver: zodResolver(goalFormSchema),
     defaultValues: {
+      category: "",
+      frequency: "monthly", // Default to monthly
       targetMonthlyIncome: "0", // String for API compatibility
       description: "",
-      category: "",
       priority: 3,
     },
   });
@@ -423,51 +425,6 @@ const Profile = () => {
                   <form onSubmit={goalForm.handleSubmit(onGoalSubmit)} className="space-y-4">
                     <FormField
                       control={goalForm.control}
-                      name="targetMonthlyIncome"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {selectedCategory === "income" 
-                              ? "Target Monthly Income ($)" 
-                              : selectedCategory === "travel" || selectedCategory === "hobbies" || selectedCategory === "education"
-                                ? "Estimated Total Cost ($)"
-                                : selectedCategory === "healthcare" || selectedCategory === "housing"
-                                  ? "Estimated Monthly Cost ($)"
-                                  : "Estimated Amount ($)"}
-                          </FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" />
-                          </FormControl>
-                          <FormDescription>
-                            {selectedCategory === "income" 
-                              ? "Your desired monthly income during retirement"
-                              : selectedCategory === "travel" || selectedCategory === "hobbies" || selectedCategory === "education"
-                                ? "The total amount you expect to spend on this goal"
-                                : selectedCategory === "healthcare" || selectedCategory === "housing" 
-                                  ? "Your estimated monthly expenses for this category"
-                                  : "The amount you expect to allocate for this goal"}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={goalForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Goal Description</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={goalForm.control}
                       name="category"
                       render={({ field }) => (
                         <FormItem>
@@ -494,6 +451,79 @@ const Profile = () => {
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
+                          <FormDescription>Select the type of retirement goal</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={goalForm.control}
+                      name="frequency"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Frequency</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select frequency" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="monthly">Monthly</SelectItem>
+                              <SelectItem value="yearly">Yearly</SelectItem>
+                              <SelectItem value="one-time">One-time</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>How often you'll spend on this goal</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={goalForm.control}
+                      name="targetMonthlyIncome"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {selectedCategory === "income" 
+                              ? "Target Income ($)" 
+                              : selectedCategory === "travel" || selectedCategory === "hobbies" || selectedCategory === "education"
+                                ? "Estimated Cost ($)"
+                                : selectedCategory === "healthcare" || selectedCategory === "housing"
+                                  ? "Estimated Cost ($)"
+                                  : "Estimated Amount ($)"}
+                          </FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" />
+                          </FormControl>
+                          <FormDescription>
+                            {selectedCategory === "income" 
+                              ? "Your desired income during retirement"
+                              : selectedCategory === "travel" || selectedCategory === "hobbies" || selectedCategory === "education"
+                                ? "The amount you expect to spend on this goal"
+                                : selectedCategory === "healthcare" || selectedCategory === "housing" 
+                                  ? "Your estimated expenses for this category"
+                                  : "The amount you expect to allocate for this goal"}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={goalForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Goal Description</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -536,31 +566,39 @@ const Profile = () => {
               <CardContent>
                 {goalsData && goalsData.length > 0 ? (
                   <div className="space-y-4">
-                    {goalsData.map((goal: any) => (
-                      <Card key={goal.id}>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="font-medium">{goal.description}</div>
-                            <div className="text-sm bg-gray-100 px-2 py-1 rounded-md capitalize">
-                              {goal.category}
+                    {[...goalsData]
+                      // Sort by priority (lowest number = highest priority)
+                      .sort((a, b) => (a.priority || 5) - (b.priority || 5))
+                      .map((goal: any) => (
+                        <Card key={goal.id}>
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="font-medium">{goal.description}</div>
+                              <div className="text-sm bg-gray-100 px-2 py-1 rounded-md capitalize">
+                                {goal.category}
+                              </div>
                             </div>
-                          </div>
-                          <div className="text-sm text-gray-500 mb-2">
-                            Priority: {goal.priority}
-                          </div>
-                          {goal.targetMonthlyIncome && (
-                            <div className="text-sm font-medium">
-                              {goal.category === "income" 
-                                ? `Target Income: $${goal.targetMonthlyIncome}/month` 
-                                : goal.category === "travel" || goal.category === "hobbies" || goal.category === "education"
-                                  ? `Total Cost: $${goal.targetMonthlyIncome}`
-                                  : goal.category === "healthcare" || goal.category === "housing" 
-                                    ? `Monthly Cost: $${goal.targetMonthlyIncome}/month`
-                                    : `Amount: $${goal.targetMonthlyIncome}`}
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="text-sm text-gray-500">
+                                Priority: {goal.priority}
+                              </div>
+                              <div className="text-xs bg-slate-50 px-2 py-1 rounded-md capitalize">
+                                {goal.frequency || 'monthly'}
+                              </div>
                             </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                            {goal.targetMonthlyIncome && (
+                              <div className="text-sm font-medium">
+                                {goal.category === "income" 
+                                  ? `Target Income: $${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}` 
+                                  : goal.category === "travel" || goal.category === "hobbies" || goal.category === "education"
+                                    ? `Cost: $${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`
+                                    : goal.category === "healthcare" || goal.category === "housing" 
+                                      ? `Cost: $${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}`
+                                      : `Amount: $${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
                     ))}
                   </div>
                 ) : (

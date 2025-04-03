@@ -492,7 +492,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       },
       recommendations: recommendations,
       resources: resources,
-      recentActivities: activities
+      recentActivities: activities,
+      retirementGoals: goals // Add retirement goals to dashboard data
     });
   });
 

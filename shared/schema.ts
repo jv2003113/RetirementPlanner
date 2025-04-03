@@ -59,6 +59,7 @@ export const retirementGoals = pgTable("retirement_goals", {
   targetMonthlyIncome: decimal("target_monthly_income", { precision: 10, scale: 2 }),
   description: text("description"),
   category: text("category"), // travel, hobbies, healthcare, etc.
+  frequency: text("frequency").default("monthly"), // monthly, yearly, one-time
   priority: integer("priority"), // 1-5
   createdAt: timestamp("created_at").defaultNow(),
 });

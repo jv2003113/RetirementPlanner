@@ -89,6 +89,7 @@ export function estimateSocialSecurityBenefits(
  * @param annualContributions - Annual retirement contributions
  * @param currentIncome - Current annual income
  * @param desiredReplacementRate - Desired income replacement rate in retirement (as a decimal)
+ * @param retirementGoals - Optional array of retirement goals
  * @returns A retirement readiness score from 0-100
  */
 export function calculateRetirementReadinessScore(
@@ -97,7 +98,8 @@ export function calculateRetirementReadinessScore(
   currentSavings: number,
   annualContributions: number,
   currentIncome: number,
-  desiredReplacementRate: number = 0.8 // 80% is a common target
+  desiredReplacementRate: number = 0.8, // 80% is a common target
+  retirementGoals: any[] = [] // Optional retirement goals
 ): number {
   // Calculate years until retirement
   const yearsUntilRetirement = Math.max(0, retirementAge - currentAge);
@@ -110,9 +112,30 @@ export function calculateRetirementReadinessScore(
     annualContributions / 12
   );
   
-  // Calculate required retirement savings
-  const annualExpenses = currentIncome * desiredReplacementRate;
-  const requiredSavings = annualExpenses * 25; // 25x annual expenses (4% rule)
+  // Get income goals from retirement goals if available
+  let targetMonthlyIncome = 0;
+  
+  if (retirementGoals && retirementGoals.length > 0) {
+    // Find income goals
+    const incomeGoals = retirementGoals.filter(goal => goal.category === 'income');
+    
+    if (incomeGoals.length > 0) {
+      // Sum up income goals or use the highest priority income goal
+      const highestPriorityIncomeGoal = incomeGoals.sort((a, b) => (a.priority || 5) - (b.priority || 5))[0];
+      targetMonthlyIncome = parseFloat(highestPriorityIncomeGoal.targetMonthlyIncome?.toString() || '0');
+    }
+  }
+  
+  if (targetMonthlyIncome === 0) {
+    // Fallback calculation if no goals available
+    targetMonthlyIncome = (currentIncome * desiredReplacementRate) / 12;
+  }
+  
+  // Annualize the target income
+  const annualExpenses = targetMonthlyIncome * 12;
+  
+  // Calculate required retirement savings using the 4% rule (25x annual expenses)
+  const requiredSavings = annualExpenses * 25;
   
   // Calculate Social Security benefit to reduce required savings
   const monthlySocialSecurity = estimateSocialSecurityBenefits(
@@ -125,8 +148,35 @@ export function calculateRetirementReadinessScore(
   // Adjust required savings based on Social Security
   const adjustedRequiredSavings = Math.max(0, requiredSavings - (annualSocialSecurity * 25));
   
+  // Calculate additional costs from other retirement goals (travel, healthcare, etc.)
+  let additionalCosts = 0;
+  
+  if (retirementGoals && retirementGoals.length > 0) {
+    // Filter for non-income goals
+    const otherGoals = retirementGoals.filter(goal => goal.category !== 'income');
+    
+    // Calculate the present value of these additional goals
+    otherGoals.forEach(goal => {
+      const amount = parseFloat(goal.targetMonthlyIncome?.toString() || '0');
+      
+      if (goal.frequency === 'monthly') {
+        // If it's a monthly expense, calculate 25x (using 4% rule)
+        additionalCosts += amount * 12 * 25;
+      } else if (goal.frequency === 'yearly') {
+        // If it's a yearly expense, calculate 25x
+        additionalCosts += amount * 25;
+      } else if (goal.frequency === 'one-time') {
+        // One-time expense
+        additionalCosts += amount;
+      }
+    });
+  }
+  
+  // Add the additional costs to required savings
+  const totalRequiredSavings = adjustedRequiredSavings + additionalCosts;
+  
   // Calculate readiness score as a percentage
-  const readinessScore = Math.min(100, (portfolioValue / adjustedRequiredSavings) * 100);
+  const readinessScore = Math.min(100, (portfolioValue / totalRequiredSavings) * 100);
   
   return Math.round(readinessScore);
 }
@@ -177,4 +227,40 @@ export function projectRetirementIncome(
   }
   
   return projections;
+}
+
+/**
+ * Estimate cost of retirement goals in today's dollars
+ * @param retirementGoals - Array of retirement goals
+ * @param yearsToRetirement - Years until retirement
+ * @returns Total estimated cost of all goals
+ */
+export function estimateRetirementGoalsCost(
+  retirementGoals: any[],
+  yearsToRetirement: number,
+  lifeExpectancy: number = 85
+): number {
+  if (!retirementGoals || retirementGoals.length === 0) {
+    return 0;
+  }
+  
+  let totalCost = 0;
+  const retirementYears = lifeExpectancy - (lifeExpectancy - yearsToRetirement);
+  
+  retirementGoals.forEach(goal => {
+    const amount = parseFloat(goal.targetMonthlyIncome?.toString() || '0');
+    
+    if (goal.frequency === 'monthly') {
+      // Monthly expenses throughout retirement
+      totalCost += amount * 12 * retirementYears;
+    } else if (goal.frequency === 'yearly') {
+      // Yearly expenses throughout retirement
+      totalCost += amount * retirementYears;
+    } else if (goal.frequency === 'one-time') {
+      // One-time expense
+      totalCost += amount;
+    }
+  });
+  
+  return totalCost;
 }
