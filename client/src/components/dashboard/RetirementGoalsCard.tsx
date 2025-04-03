@@ -63,12 +63,12 @@ const RetirementGoalsCard = ({ goals }: RetirementGoalsCardProps) => {
               <div className="text-sm text-gray-500 flex justify-between">
                 <div>
                   {goal.category === "income" 
-                    ? `$${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}` 
+                    ? `$${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}` 
                     : goal.category === "travel" || goal.category === "hobbies" || goal.category === "education"
-                      ? `$${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`
+                      ? `$${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`
                       : goal.category === "healthcare" || goal.category === "housing" 
-                        ? `$${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}`
-                        : `$${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`}
+                        ? `$${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}`
+                        : `$${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`}
                 </div>
                 <div className="text-xs">
                   Priority: {goal.priority}

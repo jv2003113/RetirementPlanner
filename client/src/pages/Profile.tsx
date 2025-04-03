@@ -589,12 +589,12 @@ const Profile = () => {
                             {goal.targetMonthlyIncome && (
                               <div className="text-sm font-medium">
                                 {goal.category === "income" 
-                                  ? `Target Income: $${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}` 
+                                  ? `Target Income: $${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}` 
                                   : goal.category === "travel" || goal.category === "hobbies" || goal.category === "education"
-                                    ? `Cost: $${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`
+                                    ? `Cost: $${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`
                                     : goal.category === "healthcare" || goal.category === "housing" 
-                                      ? `Cost: $${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}`
-                                      : `Amount: $${goal.targetMonthlyIncome}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`}
+                                      ? `Cost: $${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? `/${goal.frequency || 'monthly'}` : ''}`
+                                      : `Amount: $${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`}
                               </div>
                             )}
                           </CardContent>
