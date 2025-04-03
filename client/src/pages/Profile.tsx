@@ -56,6 +56,7 @@ const goalFormSchema = z.object({
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("profile");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const { toast } = useToast();
   const userId = 1; // For demo purposes
 
@@ -425,10 +426,27 @@ const Profile = () => {
                       name="targetMonthlyIncome"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Target Monthly Income ($)</FormLabel>
+                          <FormLabel>
+                            {selectedCategory === "income" 
+                              ? "Target Monthly Income ($)" 
+                              : selectedCategory === "travel" || selectedCategory === "hobbies" || selectedCategory === "education"
+                                ? "Estimated Total Cost ($)"
+                                : selectedCategory === "healthcare" || selectedCategory === "housing"
+                                  ? "Estimated Monthly Cost ($)"
+                                  : "Estimated Amount ($)"}
+                          </FormLabel>
                           <FormControl>
                             <Input {...field} type="number" />
                           </FormControl>
+                          <FormDescription>
+                            {selectedCategory === "income" 
+                              ? "Your desired monthly income during retirement"
+                              : selectedCategory === "travel" || selectedCategory === "hobbies" || selectedCategory === "education"
+                                ? "The total amount you expect to spend on this goal"
+                                : selectedCategory === "healthcare" || selectedCategory === "housing" 
+                                  ? "Your estimated monthly expenses for this category"
+                                  : "The amount you expect to allocate for this goal"}
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -455,7 +473,10 @@ const Profile = () => {
                         <FormItem>
                           <FormLabel>Category</FormLabel>
                           <Select 
-                            onValueChange={field.onChange} 
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              setSelectedCategory(value);
+                            }} 
                             defaultValue={field.value}
                           >
                             <FormControl>
@@ -529,7 +550,13 @@ const Profile = () => {
                           </div>
                           {goal.targetMonthlyIncome && (
                             <div className="text-sm font-medium">
-                              Target Income: ${goal.targetMonthlyIncome}/month
+                              {goal.category === "income" 
+                                ? `Target Income: $${goal.targetMonthlyIncome}/month` 
+                                : goal.category === "travel" || goal.category === "hobbies" || goal.category === "education"
+                                  ? `Total Cost: $${goal.targetMonthlyIncome}`
+                                  : goal.category === "healthcare" || goal.category === "housing" 
+                                    ? `Monthly Cost: $${goal.targetMonthlyIncome}/month`
+                                    : `Amount: $${goal.targetMonthlyIncome}`}
                             </div>
                           )}
                         </CardContent>
