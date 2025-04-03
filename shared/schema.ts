@@ -108,6 +108,7 @@ export const activities = pgTable("activities", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
   activityType: text("activity_type").notNull(),
+  title: text("title"),
   description: text("description").notNull(),
   date: timestamp("date").defaultNow(),
   metadata: jsonb("metadata"),

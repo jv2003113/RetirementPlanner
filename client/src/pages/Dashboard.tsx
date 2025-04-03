@@ -5,7 +5,7 @@ import RetirementReadinessCard from "@/components/dashboard/RetirementReadinessC
 import PortfolioAllocationChart from "@/components/dashboard/PortfolioAllocationChart";
 import IncomeProjectionChart from "@/components/dashboard/IncomeProjectionChart";
 import RecommendationsCard from "@/components/dashboard/RecommendationsCard";
-import ActivityTimeline from "@/components/dashboard/ActivityTimeline";
+import ActivityList from "@/components/dashboard/ActivityList";
 import ResourceCard from "@/components/dashboard/ResourceCard";
 import RetirementGoalsCard from "@/components/dashboard/RetirementGoalsCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -129,7 +129,7 @@ const Dashboard = () => {
       {/* Retirement Goals & Activities Section */}
       <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <RetirementGoalsCard goals={data!.retirementGoals || []} />
-        <ActivityTimeline activities={data!.recentActivities} />
+        <ActivityList activities={data!.recentActivities || []} />
       </div>
       
       {/* Recommendations Section */}

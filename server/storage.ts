@@ -288,10 +288,17 @@ export class MemStorage implements IStorage {
     const id = this.activityId++;
     const activity: Activity = { 
       ...activityData, 
-      id
+      id,
+      title: activityData.title || this.formatActivityTitle(activityData.activityType)
     };
     this.activities.set(id, activity);
     return activity;
+  }
+  
+  private formatActivityTitle(activityType: string): string {
+    return activityType.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   // Initialize with sample data for demo
@@ -574,6 +581,7 @@ export class MemStorage implements IStorage {
     await this.createActivity({
       userId,
       activityType: "profile_setup",
+      title: "Profile Setup",
       description: "Set up retirement goals",
       date: threeMonthsAgo,
       metadata: { targetRetirementAge: 67, targetMonthlyIncome: 6000 }
@@ -582,6 +590,7 @@ export class MemStorage implements IStorage {
     await this.createActivity({
       userId,
       activityType: "assessment",
+      title: "Retirement Assessment",
       description: "Completed retirement assessment",
       date: twoMonthsAgo,
       metadata: { oldScore: 72, newScore: 78 }
@@ -590,9 +599,19 @@ export class MemStorage implements IStorage {
     await this.createActivity({
       userId,
       activityType: "contribution_update",
+      title: "Contribution Update",
       description: "Updated 401(k) contribution rate",
       date: twoWeeksAgo,
       metadata: { oldRate: 12, newRate: 15 }
+    });
+    
+    await this.createActivity({
+      userId,
+      activityType: "goal",
+      title: "Retirement Goal Added",
+      description: "Added a new retirement goal for travel to Europe",
+      date: oneMonthAgo,
+      metadata: { category: "travel", priority: 2 }
     });
   }
 }
