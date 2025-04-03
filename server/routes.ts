@@ -90,6 +90,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const goalData = insertRetirementGoalSchema.parse(req.body);
       const goal = await storage.createRetirementGoal(goalData);
+      
+      // Create an activity for this goal creation
+      await storage.createActivity({
+        userId: goalData.userId,
+        activityType: "goal_created",
+        title: "New Retirement Goal",
+        description: `Added a new retirement goal${goalData.description ? ': ' + goalData.description : ''}`,
+        metadata: {
+          goalId: goal.id,
+          category: goalData.category,
+          priority: goalData.priority
+        }
+      });
+      
       return res.status(201).json(goal);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -114,6 +128,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Retirement goal not found" });
       }
       
+      // Create an activity for this goal update
+      await storage.createActivity({
+        userId: updatedGoal.userId,
+        activityType: "goal_updated",
+        title: "Updated Retirement Goal",
+        description: `Updated retirement goal${updatedGoal.description ? ': ' + updatedGoal.description : ''}`,
+        metadata: {
+          goalId: updatedGoal.id,
+          category: updatedGoal.category,
+          priority: updatedGoal.priority
+        }
+      });
+      
       return res.json(updatedGoal);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -130,11 +157,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Invalid goal ID" });
     }
     
+    // Get the goal before deleting it to capture user info and goal details
+    const goal = await storage.getRetirementGoal(goalId);
+    if (!goal) {
+      return res.status(404).json({ message: "Retirement goal not found" });
+    }
+    
     const success = await storage.deleteRetirementGoal(goalId);
     
     if (!success) {
       return res.status(404).json({ message: "Retirement goal not found" });
     }
+    
+    // Create an activity for this goal deletion
+    await storage.createActivity({
+      userId: goal.userId,
+      activityType: "goal_deleted",
+      title: "Deleted Retirement Goal",
+      description: `Deleted retirement goal${goal.description ? ': ' + goal.description : ''}`,
+      metadata: {
+        goalId: goal.id,
+        category: goal.category,
+        priority: goal.priority
+      }
+    });
     
     return res.status(204).end();
   });
