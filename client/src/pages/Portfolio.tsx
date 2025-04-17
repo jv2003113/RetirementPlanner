@@ -16,9 +16,20 @@ import { useToast } from "@/hooks/use-toast";
 import AccountsList from "@/components/portfolio/AccountsList";
 import AddAccountForm from "@/components/portfolio/AddAccountForm";
 import EditAccountForm from "@/components/portfolio/EditAccountForm";
+import SecurityHoldingForm from "@/components/portfolio/SecurityHoldingForm";
 import AssetAllocationPieChart from "@/components/portfolio/AssetAllocationPieChart";
 
 // Define interface for investment account
+interface SecurityHolding {
+  id: number;
+  accountId: number;
+  ticker: string;
+  name: string | null;
+  percentage: string;
+  assetClass: string | null;
+  region: string | null;
+}
+
 interface InvestmentAccount {
   id: number;
   userId: number;

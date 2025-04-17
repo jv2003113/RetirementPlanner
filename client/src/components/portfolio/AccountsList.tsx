@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { PencilIcon, TrashIcon, ChevronDownIcon, ChevronUpIcon, UserIcon, Users2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import SecurityHoldings from "./SecurityHoldings";
 
 interface InvestmentAccount {
   id: number;
@@ -20,14 +22,35 @@ interface InvestmentAccount {
   accountOwner?: string;
 }
 
+interface SecurityHolding {
+  id: number;
+  accountId: number;
+  ticker: string;
+  name: string | null;
+  percentage: string;
+  assetClass: string | null;
+  region: string | null;
+}
+
 interface AccountsListProps {
   accounts: InvestmentAccount[];
   onDeleteAccount: (id: number) => void;
   onEditAccount: (account: InvestmentAccount) => void;
+  onAddHolding?: (accountId: number) => void;
+  onEditHolding?: (holding: SecurityHolding) => void;
+  onDeleteHolding?: (holdingId: number) => void;
 }
 
-const AccountsList = ({ accounts, onDeleteAccount, onEditAccount }: AccountsListProps) => {
+const AccountsList = ({ 
+  accounts, 
+  onDeleteAccount, 
+  onEditAccount,
+  onAddHolding,
+  onEditHolding,
+  onDeleteHolding 
+}: AccountsListProps) => {
   const [expandedAccount, setExpandedAccount] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<Record<number, string>>({});
 
   const toggleAccountDetails = (accountId: number) => {
     setExpandedAccount(expandedAccount === accountId ? null : accountId);
@@ -137,7 +160,33 @@ const AccountsList = ({ accounts, onDeleteAccount, onEditAccount }: AccountsList
                   </div>
                 </div>
                 
-                <AssetAllocationForAccount accountId={account.id} />
+                <div className="mt-4">
+                  <Tabs 
+                    value={activeTab[account.id] || "allocation"}
+                    onValueChange={(value) => setActiveTab({...activeTab, [account.id]: value})}
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="allocation">Asset Allocation</TabsTrigger>
+                      <TabsTrigger value="securities">Security Holdings</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="allocation">
+                      <AssetAllocationForAccount accountId={account.id} />
+                    </TabsContent>
+                    <TabsContent value="securities">
+                      {onAddHolding && onEditHolding && onDeleteHolding ? (
+                        <SecurityHoldings 
+                          accountId={account.id}
+                          accountName={account.accountName}
+                          onAddHolding={onAddHolding}
+                          onEditHolding={onEditHolding}
+                          onDeleteHolding={onDeleteHolding}
+                        />
+                      ) : (
+                        <div className="py-2 text-sm text-gray-500">Securities management not available</div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </div>
               </CardContent>
               
               <CardFooter className="flex justify-end space-x-2 pt-0">
