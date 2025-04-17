@@ -161,6 +161,28 @@ export type InsertInvestmentAccount = z.infer<typeof insertInvestmentAccountSche
 export type AssetAllocation = typeof assetAllocations.$inferSelect;
 export type InsertAssetAllocation = z.infer<typeof insertAssetAllocationSchema>;
 
+// Add new schema for security holdings
+export const securityHoldings = pgTable("security_holdings", {
+  id: serial("id").primaryKey(),
+  accountId: integer("account_id").references(() => investmentAccounts.id, { onDelete: "cascade" }).notNull(),
+  ticker: text("ticker").notNull(),
+  name: text("name"),
+  percentage: text("percentage").notNull(), // Stored as string for precision
+  assetClass: text("asset_class"),
+  region: text("region"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSecurityHoldingSchema = createInsertSchema(securityHoldings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SecurityHolding = typeof securityHoldings.$inferSelect;
+export type InsertSecurityHolding = z.infer<typeof insertSecurityHoldingSchema>;
+
 export type RetirementExpense = typeof retirementExpenses.$inferSelect;
 export type InsertRetirementExpense = z.infer<typeof insertRetirementExpenseSchema>;
 

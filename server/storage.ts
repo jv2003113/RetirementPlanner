@@ -3,6 +3,7 @@ import {
   retirementGoals, type RetirementGoal, type InsertRetirementGoal,
   investmentAccounts, type InvestmentAccount, type InsertInvestmentAccount,
   assetAllocations, type AssetAllocation, type InsertAssetAllocation,
+  securityHoldings, type SecurityHolding, type InsertSecurityHolding,
   retirementExpenses, type RetirementExpense, type InsertRetirementExpense,
   activities, type Activity, type InsertActivity,
   type Recommendation, type Resource
@@ -36,6 +37,13 @@ export interface IStorage {
   updateAssetAllocation(id: number, allocation: Partial<InsertAssetAllocation>): Promise<AssetAllocation | undefined>;
   deleteAssetAllocation(id: number): Promise<boolean>;
 
+  // Security holdings operations
+  getSecurityHoldings(accountId: number): Promise<SecurityHolding[]>;
+  getSecurityHolding(id: number): Promise<SecurityHolding | undefined>;
+  createSecurityHolding(holding: InsertSecurityHolding): Promise<SecurityHolding>;
+  updateSecurityHolding(id: number, holding: Partial<InsertSecurityHolding>): Promise<SecurityHolding | undefined>;
+  deleteSecurityHolding(id: number): Promise<boolean>;
+
   // Retirement expenses operations
   getRetirementExpenses(userId: number): Promise<RetirementExpense[]>;
   createRetirementExpense(expense: InsertRetirementExpense): Promise<RetirementExpense>;
@@ -58,6 +66,7 @@ export class MemStorage implements IStorage {
   private retirementGoals: Map<number, RetirementGoal>;
   private investmentAccounts: Map<number, InvestmentAccount>;
   private assetAllocations: Map<number, AssetAllocation>;
+  private securityHoldings: Map<number, SecurityHolding>;
   private retirementExpenses: Map<number, RetirementExpense>;
   private activities: Map<number, Activity>;
   private recommendations: Map<string, Recommendation>;
@@ -67,6 +76,7 @@ export class MemStorage implements IStorage {
   private goalId: number;
   private accountId: number;
   private allocationId: number;
+  private holdingId: number;
   private expenseId: number;
   private activityId: number;
 
