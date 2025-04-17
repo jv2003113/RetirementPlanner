@@ -5,11 +5,11 @@ import RetirementReadinessCard from "@/components/dashboard/RetirementReadinessC
 import PortfolioAllocationChart from "@/components/dashboard/PortfolioAllocationChart";
 import IncomeProjectionChart from "@/components/dashboard/IncomeProjectionChart";
 import RecommendationsCard from "@/components/dashboard/RecommendationsCard";
-import ActivityList from "@/components/dashboard/ActivityList";
+import RetirementMilestones from "@/components/dashboard/RetirementMilestones";
 import ResourceCard from "@/components/dashboard/ResourceCard";
 import RetirementGoalsCard from "@/components/dashboard/RetirementGoalsCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Recommendation, Resource, Activity, RetirementGoal } from "@shared/schema";
+import { Recommendation, Resource, Activity, RetirementGoal, User } from "@shared/schema";
 
 // Define interface for the dashboard data
 interface DashboardData {
@@ -126,10 +126,23 @@ const Dashboard = () => {
         <IncomeProjectionChart data={data!.incomeProjection} />
       </div>
 
-      {/* Retirement Goals & Activities Section */}
+      {/* Retirement Goals & Milestones Section */}
       <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <RetirementGoalsCard goals={data!.retirementGoals || []} />
-        <ActivityList activities={data!.recentActivities || []} />
+        <RetirementMilestones 
+          user={{
+            id: userId,
+            username: 'john.doe',
+            password: '',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john.doe@example.com',
+            currentAge: 40,
+            targetRetirementAge: data!.retirementReadiness.targetRetirementAge || 65,
+            createdAt: null
+          }}
+          portfolioTotal={data!.portfolioAllocation.total}
+        />
       </div>
       
       {/* Recommendations Section */}
