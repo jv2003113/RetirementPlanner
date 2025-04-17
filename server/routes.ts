@@ -6,6 +6,7 @@ import {
   insertRetirementGoalSchema,
   insertInvestmentAccountSchema,
   insertAssetAllocationSchema,
+  insertSecurityHoldingSchema,
   insertRetirementExpenseSchema,
   insertActivitySchema
 } from "@shared/schema";
@@ -315,6 +316,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(204).end();
   });
 
+  // Security holdings routes
+  app.get("/api/investment-accounts/:accountId/security-holdings", async (req: Request, res: Response) => {
+    const accountId = parseInt(req.params.accountId);
+    
+    if (isNaN(accountId)) {
+      return res.status(400).json({ message: "Invalid account ID" });
+    }
+    
+    const holdings = await storage.getSecurityHoldings(accountId);
+    return res.json(holdings);
+  });
+
+  app.post("/api/security-holdings", async (req: Request, res: Response) => {
+    try {
+      const holdingData = insertSecurityHoldingSchema.parse(req.body);
+      const newHolding = await storage.createSecurityHolding(holdingData);
+      
+      // Create activity for adding a new security holding
+      await storage.createActivity({
+        userId: (await storage.getInvestmentAccount(holdingData.accountId))?.userId || 1,
+        activityType: "portfolio_update",
+        description: `Added ${holdingData.ticker} to portfolio`,
+        date: new Date(),
+        metadata: { ticker: holdingData.ticker, percentage: holdingData.percentage }
+      });
+      
+      res.status(201).json(newHolding);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid holding data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to create security holding" });
+    }
+  });
+
+  app.patch("/api/security-holdings/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid security holding ID" });
+      }
+      
+      const existingHolding = await storage.getSecurityHolding(id);
+      
+      if (!existingHolding) {
+        return res.status(404).json({ message: "Security holding not found" });
+      }
+      
+      const updateData = insertSecurityHoldingSchema.partial().parse(req.body);
+      const updatedHolding = await storage.updateSecurityHolding(id, updateData);
+      
+      // Create activity for updating security holding
+      await storage.createActivity({
+        userId: (await storage.getInvestmentAccount(existingHolding.accountId))?.userId || 1,
+        activityType: "portfolio_update",
+        description: `Updated ${existingHolding.ticker} allocation`,
+        date: new Date(),
+        metadata: { 
+          ticker: existingHolding.ticker, 
+          oldPercentage: existingHolding.percentage,
+          newPercentage: updateData.percentage || existingHolding.percentage
+        }
+      });
+      
+      res.json(updatedHolding);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid holding data", errors: error.errors });
+      }
+      return res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/security-holdings/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid security holding ID" });
+      }
+      
+      const existingHolding = await storage.getSecurityHolding(id);
+      
+      if (!existingHolding) {
+        return res.status(404).json({ message: "Security holding not found" });
+      }
+      
+      const deleted = await storage.deleteSecurityHolding(id);
+      
+      // Create activity for deleting security holding
+      await storage.createActivity({
+        userId: (await storage.getInvestmentAccount(existingHolding.accountId))?.userId || 1,
+        activityType: "portfolio_update",
+        description: `Removed ${existingHolding.ticker} from portfolio`,
+        date: new Date(),
+        metadata: { ticker: existingHolding.ticker }
+      });
+      
+      res.json({ success: deleted });
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+  });
+
   // Retirement expenses routes
   app.get("/api/users/:userId/retirement-expenses", async (req: Request, res: Response) => {
     const userId = parseInt(req.params.userId);
@@ -438,6 +544,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     for (const account of accounts) {
       const allocations = await storage.getAssetAllocations(account.id);
       assetAllocations.push(...allocations);
+    }
+    
+    // Get security holdings for all accounts
+    const securityHoldings = [];
+    for (const account of accounts) {
+      const holdings = await storage.getSecurityHoldings(account.id);
+      securityHoldings.push(...holdings);
     }
     
     // Get retirement expenses

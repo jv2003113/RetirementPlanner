@@ -85,6 +85,7 @@ export class MemStorage implements IStorage {
     this.retirementGoals = new Map();
     this.investmentAccounts = new Map();
     this.assetAllocations = new Map();
+    this.securityHoldings = new Map();
     this.retirementExpenses = new Map();
     this.activities = new Map();
     this.recommendations = new Map();
@@ -94,6 +95,7 @@ export class MemStorage implements IStorage {
     this.goalId = 1;
     this.accountId = 1;
     this.allocationId = 1;
+    this.holdingId = 1;
     this.expenseId = 1;
     this.activityId = 1;
 
@@ -252,6 +254,46 @@ export class MemStorage implements IStorage {
 
   async deleteAssetAllocation(id: number): Promise<boolean> {
     return this.assetAllocations.delete(id);
+  }
+
+  // Security holdings operations
+  async getSecurityHoldings(accountId: number): Promise<SecurityHolding[]> {
+    return Array.from(this.securityHoldings.values())
+      .filter(holding => holding.accountId === accountId);
+  }
+
+  async getSecurityHolding(id: number): Promise<SecurityHolding | undefined> {
+    return this.securityHoldings.get(id);
+  }
+
+  async createSecurityHolding(holdingData: InsertSecurityHolding): Promise<SecurityHolding> {
+    const id = this.holdingId++;
+    const currentDate = new Date();
+    const holding: SecurityHolding = { 
+      ...holdingData, 
+      id,
+      createdAt: currentDate,
+      updatedAt: currentDate
+    };
+    this.securityHoldings.set(id, holding);
+    return holding;
+  }
+
+  async updateSecurityHolding(id: number, holdingData: Partial<InsertSecurityHolding>): Promise<SecurityHolding | undefined> {
+    const holding = this.securityHoldings.get(id);
+    if (!holding) return undefined;
+
+    const updatedHolding: SecurityHolding = { 
+      ...holding, 
+      ...holdingData,
+      updatedAt: new Date()
+    };
+    this.securityHoldings.set(id, updatedHolding);
+    return updatedHolding;
+  }
+
+  async deleteSecurityHolding(id: number): Promise<boolean> {
+    return this.securityHoldings.delete(id);
   }
 
   // Retirement expenses operations
@@ -532,6 +574,107 @@ export class MemStorage implements IStorage {
       assetCategory: "real_estate",
       percentage: 100,
       value: 150000,
+    });
+    
+    // Create sample security holdings for brokerage account
+    await this.createSecurityHolding({
+      accountId: accountBrokerage.id,
+      ticker: "VTI",
+      name: "Vanguard Total Stock Market ETF",
+      percentage: "25",
+      assetClass: "stock",
+      region: "domestic",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountBrokerage.id,
+      ticker: "VXUS",
+      name: "Vanguard Total International Stock ETF",
+      percentage: "15",
+      assetClass: "stock",
+      region: "international",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountBrokerage.id,
+      ticker: "BND",
+      name: "Vanguard Total Bond Market ETF",
+      percentage: "20",
+      assetClass: "bond",
+      region: "domestic",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountBrokerage.id,
+      ticker: "BNDX",
+      name: "Vanguard Total International Bond ETF",
+      percentage: "10",
+      assetClass: "bond",
+      region: "international",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountBrokerage.id,
+      ticker: "VNQ",
+      name: "Vanguard Real Estate ETF",
+      percentage: "10",
+      assetClass: "real_estate",
+      region: "domestic",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountBrokerage.id,
+      ticker: "CASH",
+      name: "Cash & Money Market",
+      percentage: "20",
+      assetClass: "cash",
+      region: "global",
+    });
+    
+    // Create sample security holdings for IRA account
+    await this.createSecurityHolding({
+      accountId: accountIRA.id,
+      ticker: "VOO",
+      name: "Vanguard S&P 500 ETF",
+      percentage: "40",
+      assetClass: "stock",
+      region: "domestic",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountIRA.id,
+      ticker: "VEA",
+      name: "Vanguard FTSE Developed Markets ETF",
+      percentage: "20",
+      assetClass: "stock",
+      region: "international",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountIRA.id,
+      ticker: "VWO",
+      name: "Vanguard FTSE Emerging Markets ETF",
+      percentage: "20",
+      assetClass: "stock",
+      region: "emerging",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountIRA.id,
+      ticker: "BSV",
+      name: "Vanguard Short-Term Bond ETF",
+      percentage: "15",
+      assetClass: "bond",
+      region: "domestic",
+    });
+    
+    await this.createSecurityHolding({
+      accountId: accountIRA.id,
+      ticker: "CASH",
+      name: "Cash & Money Market",
+      percentage: "5",
+      assetClass: "cash",
+      region: "global",
     });
 
     // Create retirement expenses
