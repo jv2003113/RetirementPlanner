@@ -93,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const goal = await storage.createRetirementGoal(goalData);
       
       // Create an activity for this goal creation
-      await storage.createActivity({
+      await ({
         userId: goalData.userId,
         activityType: "goal_created",
         title: "New Retirement Goal",

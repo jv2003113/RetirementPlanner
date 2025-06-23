@@ -100,7 +100,7 @@ export const retirementExpenses = pgTable("retirement_expenses", {
   estimatedMonthlyAmount: decimal("estimated_monthly_amount", { precision: 10, scale: 2 }).notNull(),
   isEssential: boolean("is_essential").default(false),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at",{ mode: "date" }).defaultNow(),
 });
 
 // Activities schema
@@ -110,7 +110,7 @@ export const activities = pgTable("activities", {
   activityType: text("activity_type").notNull(),
   title: text("title"),
   description: text("description").notNull(),
-  date: timestamp("date").defaultNow(),
+  date: timestamp("date",{ mode: "date" }).defaultNow(),
   metadata: jsonb("metadata"),
 });
 
