@@ -15,6 +15,7 @@ import Reports from "@/pages/Reports";
 import Simulation from "@/pages/Simulation";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileNav from "@/components/layout/MobileNav";
+import RothConversionCalculator from "@/components/tax/RothConversionCalculator";
 
 function Router() {
   return (

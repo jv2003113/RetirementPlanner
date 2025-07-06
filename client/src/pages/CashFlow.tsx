@@ -21,6 +21,7 @@ import {
 } from "recharts";
 import ExpenseTracker from "@/components/cashflow/ExpenseTracker";
 import AddExpenseForm from "@/components/cashflow/AddExpenseForm";
+import RothConversionCashFlow from "@/components/cashflow/RothConversionCashFlow";
 
 const CashFlow = () => {
   const [activeTab, setActiveTab] = useState("expenses");
@@ -283,9 +284,10 @@ const CashFlow = () => {
       </div>
 
       <Tabs defaultValue="expenses" value={activeTab} onValueChange={setActiveTab} className="mt-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="expenses">Manage Expenses</TabsTrigger>
           <TabsTrigger value="add">Add New Expense</TabsTrigger>
+          <TabsTrigger value="roth-conversion">Roth Conversion Impact</TabsTrigger>
         </TabsList>
         
         <TabsContent value="expenses" className="mt-4">
@@ -300,6 +302,10 @@ const CashFlow = () => {
             userId={userId}
             onSuccess={() => setActiveTab("expenses")}
           />
+        </TabsContent>
+        
+        <TabsContent value="roth-conversion" className="mt-4">
+          <RothConversionCashFlow userId={userId} />
         </TabsContent>
       </Tabs>
     </div>

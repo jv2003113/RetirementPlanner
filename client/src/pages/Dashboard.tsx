@@ -10,6 +10,9 @@ import ResourceCard from "@/components/dashboard/ResourceCard";
 import RetirementGoalsCard from "@/components/dashboard/RetirementGoalsCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Recommendation, Resource, Activity, RetirementGoal, User } from "@shared/schema";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 // Define interface for the dashboard data
 interface DashboardData {
@@ -164,6 +167,22 @@ const Dashboard = () => {
           />
         ))}
       </div>
+
+      {/* Tax Optimization Card */}
+      <Card className="col-span-1">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-gray-500">Tax Optimization</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-green-600">Roth Conversion</div>
+          <p className="text-sm text-gray-500 mt-1">Optimize your tax strategy</p>
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" size="sm" className="w-full" asChild>
+            <Link href="/tax-planning">Explore Roth Conversion</Link>
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

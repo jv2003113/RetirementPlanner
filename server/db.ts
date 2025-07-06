@@ -9,9 +9,12 @@ import {
   securityHoldings, type SecurityHolding, type InsertSecurityHolding,
   retirementExpenses, type RetirementExpense, type InsertRetirementExpense,
   activities, type Activity, type InsertActivity,
+  rothConversionPlans, type RothConversionPlan, type InsertRothConversionPlan,
+  rothConversionScenarios, type RothConversionScenario, type InsertRothConversionScenario,
   type Recommendation, type Resource
 } from "@shared/schema";
 import { eq, desc } from 'drizzle-orm';
+import type { IStorage } from './types';
 
 // Create PostgreSQL connection pool
 const pool = new Pool({
@@ -288,6 +291,73 @@ export class PostgresStorage implements IStorage {
       },
       // ... other resources
     ];
+  }
+
+  // Roth conversion plans operations
+  async getRothConversionPlans(userId: number): Promise<RothConversionPlan[]> {
+    return await db
+      .select()
+      .from(rothConversionPlans)
+      .where(eq(rothConversionPlans.userId, userId))
+      .orderBy(desc(rothConversionPlans.createdAt));
+  }
+
+  async getRothConversionPlan(id: number): Promise<RothConversionPlan | undefined> {
+    const results = await db
+      .select()
+      .from(rothConversionPlans)
+      .where(eq(rothConversionPlans.id, id));
+    return results[0];
+  }
+
+  async createRothConversionPlan(planData: InsertRothConversionPlan): Promise<RothConversionPlan> {
+    const results = await db
+      .insert(rothConversionPlans)
+      .values(planData)
+      .returning();
+    return results[0];
+  }
+
+  async updateRothConversionPlan(id: number, planData: Partial<InsertRothConversionPlan>): Promise<RothConversionPlan | undefined> {
+    const results = await db
+      .update(rothConversionPlans)
+      .set({ ...planData, updatedAt: new Date() })
+      .where(eq(rothConversionPlans.id, id))
+      .returning();
+    return results[0];
+  }
+
+  async deleteRothConversionPlan(id: number): Promise<boolean> {
+    const results = await db
+      .delete(rothConversionPlans)
+      .where(eq(rothConversionPlans.id, id))
+      .returning();
+    return results.length > 0;
+  }
+
+  // Roth conversion scenarios operations
+  async getRothConversionScenarios(planId: number): Promise<RothConversionScenario[]> {
+    return await db
+      .select()
+      .from(rothConversionScenarios)
+      .where(eq(rothConversionScenarios.planId, planId))
+      .orderBy(rothConversionScenarios.year);
+  }
+
+  async createRothConversionScenario(scenarioData: InsertRothConversionScenario): Promise<RothConversionScenario> {
+    const results = await db
+      .insert(rothConversionScenarios)
+      .values(scenarioData)
+      .returning();
+    return results[0];
+  }
+
+  async deleteRothConversionScenarios(planId: number): Promise<boolean> {
+    const results = await db
+      .delete(rothConversionScenarios)
+      .where(eq(rothConversionScenarios.planId, planId))
+      .returning();
+    return results.length > 0;
   }
 }
 

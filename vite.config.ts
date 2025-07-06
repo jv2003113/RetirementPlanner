@@ -34,4 +34,10 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
   },
+  define: {
+    'process.env': {},
+  },
+  server: {
+    port: 3000,
+  },
 });

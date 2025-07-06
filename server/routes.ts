@@ -8,7 +8,8 @@ import {
   insertAssetAllocationSchema,
   insertSecurityHoldingSchema,
   insertRetirementExpenseSchema,
-  insertActivitySchema
+  insertActivitySchema,
+  insertRothConversionPlanSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -517,6 +518,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       return res.status(500).json({ message: "Failed to create activity" });
     }
+  });
+
+  // Roth conversion plans routes
+  app.get("/api/users/:userId/roth-conversion-plans", async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    const plans = await storage.getRothConversionPlans(userId);
+    return res.json(plans);
+  });
+
+  app.get("/api/roth-conversion-plans/:id", async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+    
+    const plan = await storage.getRothConversionPlan(planId);
+    
+    if (!plan) {
+      return res.status(404).json({ message: "Roth conversion plan not found" });
+    }
+    
+    // Get scenarios for this plan
+    const scenarios = await storage.getRothConversionScenarios(planId);
+    
+    return res.json({ plan, scenarios });
+  });
+
+  app.post("/api/roth-conversion-plans", async (req: Request, res: Response) => {
+    try {
+      const planData = insertRothConversionPlanSchema.parse(req.body);
+      const plan = await storage.createRothConversionPlan(planData);
+      
+      // Create an activity for this plan creation
+      await storage.createActivity({
+        userId: planData.userId,
+        activityType: "roth_conversion_plan_created",
+        title: "Roth Conversion Plan Created",
+        description: `Created Roth conversion plan: ${planData.planName}`,
+        metadata: {
+          planId: plan.id,
+          conversionAmount: planData.conversionAmount,
+          yearsToConvert: planData.yearsToConvert
+        }
+      });
+      
+      return res.status(201).json(plan);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid plan data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to create Roth conversion plan" });
+    }
+  });
+
+  app.post("/api/roth-conversion-plans/:id/scenarios", async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+    
+    try {
+      // Delete existing scenarios for this plan
+      await storage.deleteRothConversionScenarios(planId);
+      
+      // Insert new scenarios
+      const scenarios = req.body.scenarios;
+      if (!Array.isArray(scenarios)) {
+        return res.status(400).json({ message: "Scenarios must be an array" });
+      }
+      
+      const createdScenarios = [];
+      for (const scenario of scenarios) {
+        const scenarioData = {
+          ...scenario,
+          planId
+        };
+        const createdScenario = await storage.createRothConversionScenario(scenarioData);
+        createdScenarios.push(createdScenario);
+      }
+      
+      return res.status(201).json(createdScenarios);
+    } catch (error: unknown) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid scenario data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to create scenarios" });
+    }
+  });
+
+  app.patch("/api/roth-conversion-plans/:id", async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+    
+    try {
+      const planData = insertRothConversionPlanSchema.partial().parse(req.body);
+      const updatedPlan = await storage.updateRothConversionPlan(planId, planData);
+      
+      if (!updatedPlan) {
+        return res.status(404).json({ message: "Roth conversion plan not found" });
+      }
+      
+      // Create an activity for this plan update
+      await storage.createActivity({
+        userId: updatedPlan.userId,
+        activityType: "roth_conversion_plan_updated",
+        title: "Roth Conversion Plan Updated",
+        description: `Updated Roth conversion plan: ${updatedPlan.planName}`,
+        metadata: {
+          planId: updatedPlan.id,
+          conversionAmount: updatedPlan.conversionAmount,
+          yearsToConvert: updatedPlan.yearsToConvert
+        }
+      });
+      
+      return res.json(updatedPlan);
+    } catch (error: unknown) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid plan data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to update Roth conversion plan" });
+    }
+  });
+
+  app.delete("/api/roth-conversion-plans/:id", async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+    
+    // Get the plan before deleting it to capture user info and plan details
+    const plan = await storage.getRothConversionPlan(planId);
+    if (!plan) {
+      return res.status(404).json({ message: "Roth conversion plan not found" });
+    }
+    
+    const success = await storage.deleteRothConversionPlan(planId);
+    
+    if (!success) {
+      return res.status(404).json({ message: "Roth conversion plan not found" });
+    }
+    
+    // Create an activity for this plan deletion
+    await storage.createActivity({
+      userId: plan.userId,
+      activityType: "roth_conversion_plan_deleted",
+      title: "Roth Conversion Plan Deleted",
+      description: `Deleted Roth conversion plan: ${plan.planName}`,
+      metadata: {
+        planId: plan.id,
+        conversionAmount: plan.conversionAmount,
+        yearsToConvert: plan.yearsToConvert
+      }
+    });
+    
+    return res.status(204).end();
   });
 
   // Dashboard summary route

@@ -6,6 +6,8 @@ import type {
   SecurityHolding, InsertSecurityHolding,
   RetirementExpense, InsertRetirementExpense,
   Activity, InsertActivity,
+  RothConversionPlan, InsertRothConversionPlan,
+  RothConversionScenario, InsertRothConversionScenario,
   Recommendation, Resource
 } from "@shared/schema";
 
@@ -58,4 +60,16 @@ export interface IStorage {
   
   // Resources operations
   getResources(): Promise<Resource[]>;
+  
+  // Roth conversion plans operations
+  getRothConversionPlans(userId: number): Promise<RothConversionPlan[]>;
+  getRothConversionPlan(id: number): Promise<RothConversionPlan | undefined>;
+  createRothConversionPlan(plan: InsertRothConversionPlan): Promise<RothConversionPlan>;
+  updateRothConversionPlan(id: number, plan: Partial<InsertRothConversionPlan>): Promise<RothConversionPlan | undefined>;
+  deleteRothConversionPlan(id: number): Promise<boolean>;
+  
+  // Roth conversion scenarios operations
+  getRothConversionScenarios(planId: number): Promise<RothConversionScenario[]>;
+  createRothConversionScenario(scenario: InsertRothConversionScenario): Promise<RothConversionScenario>;
+  deleteRothConversionScenarios(planId: number): Promise<boolean>;
 }

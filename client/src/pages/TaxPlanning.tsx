@@ -15,6 +15,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import RothConversionCalculator from "@/components/tax/RothConversionCalculator";
+import SavedRothConversionPlans from "@/components/tax/SavedRothConversionPlans";
 
 const TaxPlanning = () => {
   return (
@@ -27,10 +29,11 @@ const TaxPlanning = () => {
       </div>
 
       <Tabs defaultValue="strategies" className="mt-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="strategies">Tax Strategies</TabsTrigger>
           <TabsTrigger value="accounts">Account Types</TabsTrigger>
           <TabsTrigger value="withdrawals">Withdrawal Strategies</TabsTrigger>
+          <TabsTrigger value="roth-conversion">Roth Conversion</TabsTrigger>
         </TabsList>
 
         <TabsContent value="strategies" className="mt-4">
@@ -410,6 +413,13 @@ const TaxPlanning = () => {
               <Button className="w-full">Generate Personalized Withdrawal Strategy</Button>
             </CardFooter>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="roth-conversion" className="mt-4">
+          <div className="space-y-6">
+            <SavedRothConversionPlans userId={1} />
+            <RothConversionCalculator />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

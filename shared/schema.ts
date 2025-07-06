@@ -114,6 +114,7 @@ export const activities = pgTable("activities", {
   metadata: jsonb("metadata"),
 });
 
+
 // Define insert schemas
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -188,3 +189,57 @@ export type InsertRetirementExpense = z.infer<typeof insertRetirementExpenseSche
 
 export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
+
+// Roth conversion plans schema
+export const rothConversionPlans = pgTable("roth_conversion_plans", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  planName: text("plan_name").notNull(),
+  currentAge: integer("current_age").notNull(),
+  retirementAge: integer("retirement_age").notNull(),
+  traditionalIraBalance: decimal("traditional_ira_balance", { precision: 12, scale: 2 }).notNull(),
+  currentTaxRate: decimal("current_tax_rate", { precision: 5, scale: 2 }).notNull(),
+  expectedRetirementTaxRate: decimal("expected_retirement_tax_rate", { precision: 5, scale: 2 }).notNull(),
+  annualIncome: decimal("annual_income", { precision: 10, scale: 2 }).notNull(),
+  conversionAmount: decimal("conversion_amount", { precision: 12, scale: 2 }).notNull(),
+  yearsToConvert: integer("years_to_convert").notNull(),
+  expectedReturn: decimal("expected_return", { precision: 5, scale: 2 }).notNull(),
+  isActive: boolean("is_active").default(true),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Roth conversion scenarios schema (for storing calculated scenarios)
+export const rothConversionScenarios = pgTable("roth_conversion_scenarios", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").references(() => rothConversionPlans.id, { onDelete: "cascade" }).notNull(),
+  year: integer("year").notNull(),
+  age: integer("age").notNull(),
+  conversionAmount: decimal("conversion_amount", { precision: 12, scale: 2 }).notNull(),
+  taxCost: decimal("tax_cost", { precision: 12, scale: 2 }).notNull(),
+  traditionalBalance: decimal("traditional_balance", { precision: 12, scale: 2 }).notNull(),
+  rothBalance: decimal("roth_balance", { precision: 12, scale: 2 }).notNull(),
+  totalTaxPaid: decimal("total_tax_paid", { precision: 12, scale: 2 }).notNull(),
+  netWorth: decimal("net_worth", { precision: 12, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Define insert schemas for Roth conversion plans
+export const insertRothConversionPlanSchema = createInsertSchema(rothConversionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRothConversionScenarioSchema = createInsertSchema(rothConversionScenarios).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Define types for Roth conversion plans
+export type RothConversionPlan = typeof rothConversionPlans.$inferSelect;
+export type InsertRothConversionPlan = z.infer<typeof insertRothConversionPlanSchema>;
+
+export type RothConversionScenario = typeof rothConversionScenarios.$inferSelect;
+export type InsertRothConversionScenario = z.infer<typeof insertRothConversionScenarioSchema>;

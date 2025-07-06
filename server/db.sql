@@ -103,6 +103,39 @@ CREATE TABLE activities (
     metadata JSONB
 );
 
+CREATE TABLE roth_conversion_plans (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) NOT NULL,
+    plan_name TEXT NOT NULL,
+    current_age INTEGER NOT NULL,
+    retirement_age INTEGER NOT NULL,
+    traditional_ira_balance DECIMAL(12,2) NOT NULL,
+    current_tax_rate DECIMAL(5,2) NOT NULL,
+    expected_retirement_tax_rate DECIMAL(5,2) NOT NULL,
+    annual_income DECIMAL(10,2) NOT NULL,
+    conversion_amount DECIMAL(12,2) NOT NULL,
+    years_to_convert INTEGER NOT NULL,
+    expected_return DECIMAL(5,2) NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE roth_conversion_scenarios (
+    id SERIAL PRIMARY KEY,
+    plan_id INTEGER REFERENCES roth_conversion_plans(id) ON DELETE CASCADE NOT NULL,
+    year INTEGER NOT NULL,
+    age INTEGER NOT NULL,
+    conversion_amount DECIMAL(12,2) NOT NULL,
+    tax_cost DECIMAL(12,2) NOT NULL,
+    traditional_balance DECIMAL(12,2) NOT NULL,
+    roth_balance DECIMAL(12,2) NOT NULL,
+    total_tax_paid DECIMAL(12,2) NOT NULL,
+    net_worth DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
     -- Insert demo data
 -- Default user
 INSERT INTO users (
@@ -188,3 +221,25 @@ VALUES
      '{"oldRate": 12, "newRate": 15}'::jsonb),
     (1, 'goal', 'Retirement Goal Added', 'Added a new retirement goal for travel to Europe', CURRENT_TIMESTAMP - INTERVAL '1 month',
      '{"category": "travel", "priority": 2}'::jsonb);
+
+-- Roth conversion plans
+INSERT INTO roth_conversion_plans (
+    user_id, plan_name, current_age, retirement_age, traditional_ira_balance,
+    current_tax_rate, expected_retirement_tax_rate, annual_income,
+    conversion_amount, years_to_convert, expected_return, notes
+) VALUES (
+    1, 'Conservative Roth Conversion Strategy', 55, 67, 300000,
+    24.0, 15.0, 120000, 50000, 5, 7.0,
+    'Converting $50k over 5 years to reduce future RMDs and tax burden'
+);
+
+-- Roth conversion scenarios (sample data for the plan above)
+INSERT INTO roth_conversion_scenarios (
+    plan_id, year, age, conversion_amount, tax_cost, traditional_balance, 
+    roth_balance, total_tax_paid, net_worth
+) VALUES 
+    (1, 1, 55, 10000, 2400, 310000, 7600, 2400, 317600),
+    (1, 2, 56, 10000, 2400, 321000, 16120, 4800, 337120),
+    (1, 3, 57, 10000, 2400, 332100, 25628, 7200, 357728),
+    (1, 4, 58, 10000, 2400, 343410, 36172, 9600, 379582),
+    (1, 5, 59, 10000, 2400, 354941, 47804, 12000, 402745);
