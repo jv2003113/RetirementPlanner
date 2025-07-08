@@ -38,8 +38,9 @@ const RothConversionCashFlow = ({ userId }: RothConversionCashFlowProps) => {
     }).format(value);
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
+  const formatPercentage = (value: number | string) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return `${numValue.toFixed(1)}%`;
   };
 
   // Calculate cash flow impact from Roth conversions

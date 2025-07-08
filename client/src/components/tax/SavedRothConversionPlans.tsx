@@ -38,8 +38,9 @@ const SavedRothConversionPlans = ({ userId, onPlanSelect }: SavedRothConversionP
     }).format(value);
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
+  const formatPercentage = (value: number | string) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return `${numValue.toFixed(1)}%`;
   };
 
   if (isLoading) {

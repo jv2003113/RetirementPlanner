@@ -52,14 +52,14 @@ const CashFlow = () => {
 
   // Calculate total expenses
   const calculateTotalExpenses = () => {
-    if (!expensesData) return 0;
+    if (!expensesData || !Array.isArray(expensesData)) return 0;
     return expensesData.reduce((total: number, expense: any) => 
       total + Number(expense.estimatedMonthlyAmount), 0);
   };
 
   // Prepare data for pie chart
   const prepareChartData = () => {
-    if (!expensesData || expensesData.length === 0) return [];
+    if (!expensesData || !Array.isArray(expensesData) || expensesData.length === 0) return [];
     
     // Group expenses by category
     const categoryGroups: Record<string, number> = {};
@@ -98,7 +98,7 @@ const CashFlow = () => {
   };
 
   const countEssentialExpenses = () => {
-    if (!expensesData) return 0;
+    if (!expensesData || !Array.isArray(expensesData)) return 0;
     return expensesData.filter((expense: any) => expense.isEssential).length;
   };
 
@@ -120,7 +120,7 @@ const CashFlow = () => {
             <div className="text-2xl font-bold">
               {formatCurrency(totalExpenses)}
             </div>
-            <p className="text-sm text-gray-500 mt-1">{expensesData?.length || 0} expense categories</p>
+            <p className="text-sm text-gray-500 mt-1">{(expensesData as any[])?.length || 0} expense categories</p>
           </CardContent>
         </Card>
         
@@ -131,7 +131,7 @@ const CashFlow = () => {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(
-                expensesData?.reduce((total: number, expense: any) => 
+                (expensesData as any[])?.reduce((total: number, expense: any) => 
                   total + (expense.isEssential ? Number(expense.estimatedMonthlyAmount) : 0), 0) || 0
               )}
             </div>
@@ -146,12 +146,12 @@ const CashFlow = () => {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(
-                expensesData?.reduce((total: number, expense: any) => 
+                (expensesData as any[])?.reduce((total: number, expense: any) => 
                   total + (!expense.isEssential ? Number(expense.estimatedMonthlyAmount) : 0), 0) || 0
               )}
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              {(expensesData?.length || 0) - countEssentialExpenses()} discretionary categories
+              {((expensesData as any[])?.length || 0) - countEssentialExpenses()} discretionary categories
             </p>
           </CardContent>
         </Card>
@@ -292,7 +292,7 @@ const CashFlow = () => {
         
         <TabsContent value="expenses" className="mt-4">
           <ExpenseTracker 
-            expenses={expensesData || []}
+            expenses={(expensesData as any[]) || []}
             userId={userId}
           />
         </TabsContent>

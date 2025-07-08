@@ -383,11 +383,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json(updatedHolding);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid holding data", errors: error.errors });
       }
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({ message: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
@@ -417,8 +417,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json({ success: deleted });
-    } catch (error) {
-      return res.status(400).json({ message: error.message });
+    } catch (error: unknown) {
+      return res.status(400).json({ message: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
@@ -553,8 +553,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/roth-conversion-plans", async (req: Request, res: Response) => {
     try {
+      console.log('Creating Roth conversion plan with data:', req.body);
       const planData = insertRothConversionPlanSchema.parse(req.body);
+      console.log('Parsed plan data:', planData);
       const plan = await storage.createRothConversionPlan(planData);
+      console.log('Created plan:', plan);
       
       // Create an activity for this plan creation
       await storage.createActivity({
@@ -570,8 +573,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       return res.status(201).json(plan);
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('Error creating Roth conversion plan:', error);
       if (error instanceof z.ZodError) {
+        console.error('Validation errors:', error.errors);
         return res.status(400).json({ message: "Invalid plan data", errors: error.errors });
       }
       return res.status(500).json({ message: "Failed to create Roth conversion plan" });

@@ -82,33 +82,40 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
   // Save plan mutation
   const savePlanMutation = useMutation({
     mutationFn: async (planData: any) => {
-      return await apiRequest("POST", "/api/roth-conversion-plans", planData);
-    },
-    onSuccess: (response) => {
-      const plan = response as any;
-      // Save scenarios for the plan
-      if (scenarios.length > 0) {
-        apiRequest("POST", `/api/roth-conversion-plans/${plan.id}/scenarios`, {
-          scenarios: scenarios.map(scenario => ({
-            year: scenario.year,
-            age: scenario.age,
-            conversionAmount: scenario.conversionAmount,
-            taxCost: scenario.taxCost,
-            traditionalBalance: scenario.traditionalBalance,
-            rothBalance: scenario.rothBalance,
-            totalTaxPaid: scenario.totalTaxPaid,
-            netWorth: scenario.netWorth,
-          }))
-        });
+      const plan = await apiRequest("POST", "/api/roth-conversion-plans", planData);
+      
+      // Save scenarios for the plan if plan creation was successful
+      if (scenarios.length > 0 && plan && (plan as any).id) {
+        try {
+          await apiRequest("POST", `/api/roth-conversion-plans/${(plan as any).id}/scenarios`, {
+            scenarios: scenarios.map(scenario => ({
+              year: scenario.year,
+              age: scenario.age,
+              conversionAmount: scenario.conversionAmount.toString(),
+              taxCost: scenario.taxCost.toString(),
+              traditionalBalance: scenario.traditionalBalance.toString(),
+              rothBalance: scenario.rothBalance.toString(),
+              totalTaxPaid: scenario.totalTaxPaid.toString(),
+              netWorth: scenario.netWorth.toString(),
+            }))
+          });
+        } catch (scenarioError) {
+          console.error('Failed to save scenarios:', scenarioError);
+          // Don't fail the entire operation if scenarios fail to save
+        }
       }
       
+      return plan;
+    },
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/roth-conversion-plans`] });
       toast({
         title: "Plan Saved",
         description: "Your Roth conversion plan has been saved successfully.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Failed to save plan:', error);
       toast({
         title: "Error",
         description: "Failed to save the Roth conversion plan. Please try again.",
@@ -143,12 +150,12 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
   const form = useForm<RothConversionFormValues>({
     resolver: zodResolver(rothConversionSchema),
     defaultValues: {
-      currentAge: userData?.currentAge || 55,
-      retirementAge: userData?.targetRetirementAge || 67,
+      currentAge: (userData as any)?.currentAge || 55,
+      retirementAge: (userData as any)?.targetRetirementAge || 67,
       traditionalIraBalance: getTraditionalIraBalance(),
-      currentTaxRate: calculateTaxRate(userData?.currentIncome || 75000),
+      currentTaxRate: calculateTaxRate((userData as any)?.currentIncome || 75000),
       expectedRetirementTaxRate: 15, // Conservative estimate
-      annualIncome: userData?.currentIncome || 75000,
+      annualIncome: (userData as any)?.currentIncome || 75000,
       conversionAmount: 50000,
       yearsToConvert: 5,
       expectedReturn: 7,
@@ -158,11 +165,11 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
   // Update form when user data loads
   useEffect(() => {
     if (userData && accountsData) {
-      form.setValue('currentAge', userData.currentAge || 55);
-      form.setValue('retirementAge', userData.targetRetirementAge || 67);
+      form.setValue('currentAge', (userData as any).currentAge || 55);
+      form.setValue('retirementAge', (userData as any).targetRetirementAge || 67);
       form.setValue('traditionalIraBalance', getTraditionalIraBalance());
-      form.setValue('currentTaxRate', calculateTaxRate(userData.currentIncome || 75000));
-      form.setValue('annualIncome', userData.currentIncome || 75000);
+      form.setValue('currentTaxRate', calculateTaxRate((userData as any).currentIncome || 75000));
+      form.setValue('annualIncome', (userData as any).currentIncome || 75000);
     }
   }, [userData, accountsData, form]);
 
@@ -265,13 +272,13 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
       planName: `Roth Conversion Plan - ${new Date().toLocaleDateString()}`,
       currentAge: formValues.currentAge,
       retirementAge: formValues.retirementAge,
-      traditionalIraBalance: formValues.traditionalIraBalance,
-      currentTaxRate: formValues.currentTaxRate,
-      expectedRetirementTaxRate: formValues.expectedRetirementTaxRate,
-      annualIncome: formValues.annualIncome,
-      conversionAmount: formValues.conversionAmount,
+      traditionalIraBalance: formValues.traditionalIraBalance.toString(),
+      currentTaxRate: formValues.currentTaxRate.toString(),
+      expectedRetirementTaxRate: formValues.expectedRetirementTaxRate.toString(),
+      annualIncome: formValues.annualIncome.toString(),
+      conversionAmount: formValues.conversionAmount.toString(),
       yearsToConvert: formValues.yearsToConvert,
-      expectedReturn: formValues.expectedReturn,
+      expectedReturn: formValues.expectedReturn.toString(),
       notes: `Roth conversion plan created on ${new Date().toLocaleDateString()}`,
     };
 
@@ -286,8 +293,9 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
     }).format(value);
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
+  const formatPercentage = (value: number | string) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return `${numValue.toFixed(1)}%`;
   };
 
   const getTaxBracketColor = (rate: number) => {
