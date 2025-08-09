@@ -18,19 +18,54 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, DollarSign, Calendar } from "lucide-react";
+import { TrendingUp, DollarSign, Calendar, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RothConversionCashFlowProps {
   userId: number;
 }
 
+interface Scenario {
+  year: number;
+  age: number;
+  conversionAmount: number;
+  taxCost: number;
+  traditionalBalance: number;
+  rothBalance: number;
+  netWorth: number;
+}
+
+interface ScenariosResponse {
+  plan: any;
+  scenarios: Scenario[];
+}
+
 const RothConversionCashFlow = ({ userId }: RothConversionCashFlowProps) => {
-  const { data: plans } = useQuery({
+  const { data: plans, isLoading: plansLoading, error: plansError } = useQuery({
     queryKey: [`/api/users/${userId}/roth-conversion-plans`],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  // Get the most recent active plan
+  const activePlans = plans && Array.isArray(plans) ? plans.filter((plan: any) => plan.isActive) : [];
+  const latestPlan = activePlans.length > 0 
+    ? activePlans.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] 
+    : null;
+
+  console.log('All plans:', plans);
+  console.log('Active plans:', activePlans);
+  console.log('Latest plan:', latestPlan);
+
+  // Fetch scenarios for the latest plan
+  const { data: scenarios, isLoading: scenariosLoading, error: scenariosError, refetch: refetchScenarios } = useQuery({
+    queryKey: [`/api/roth-conversion-plans/${latestPlan?.id}`],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!latestPlan?.id, // Only run this query if we have a plan ID
+    staleTime: 0, // Always consider this data stale to force fresh fetch
+  });
+
   const formatCurrency = (value: number) => {
+    if (!value || isNaN(value)) return '$0';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -39,44 +74,82 @@ const RothConversionCashFlow = ({ userId }: RothConversionCashFlowProps) => {
   };
 
   const formatPercentage = (value: number | string) => {
+    if (!value) return '0.0%';
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue)) return '0.0%';
     return `${numValue.toFixed(1)}%`;
   };
 
   // Calculate cash flow impact from Roth conversions
   const calculateCashFlowImpact = () => {
-    if (!plans || (plans as any[]).length === 0) return [];
-
-    const activePlans = (plans as any[]).filter((plan: any) => plan.isActive);
-    if (activePlans.length === 0) return [];
-
-    // Get the most recent active plan
-    const latestPlan = activePlans[0];
+    const scenariosData = scenarios as ScenariosResponse | null;
+    console.log('Scenarios data:', scenariosData);
+    console.log('Latest plan:', latestPlan);
     
-    // Fetch scenarios for this plan
-    const { data: scenarios } = useQuery({
-      queryKey: [`/api/roth-conversion-plans/${latestPlan.id}`],
-      queryFn: getQueryFn({ on401: "returnNull" }),
-    });
+    if (!scenariosData || !scenariosData.scenarios || !Array.isArray(scenariosData.scenarios)) {
+      // If we have a plan but no scenarios, try to refetch
+      if (latestPlan?.id && !scenariosLoading) {
+        console.log('No scenarios found, attempting refetch...');
+        setTimeout(() => refetchScenarios(), 1000);
+      }
+      return [];
+    }
 
-    if (!scenarios || !(scenarios as any).scenarios) return [];
-
-    // Calculate cash flow impact for each year
-    return (scenarios as any).scenarios.map((scenario: any) => ({
-      year: scenario.year,
-      age: scenario.age,
-      conversionAmount: scenario.conversionAmount,
-      taxCost: scenario.taxCost,
-      netConversion: scenario.conversionAmount - scenario.taxCost,
-      traditionalBalance: scenario.traditionalBalance,
-      rothBalance: scenario.rothBalance,
-      totalNetWorth: scenario.netWorth,
+    return scenariosData.scenarios.map((scenario: Scenario) => ({
+      year: scenario.year || 0,
+      age: scenario.age || 0,
+      conversionAmount: scenario.conversionAmount || 0,
+      taxCost: scenario.taxCost || 0,
+      netConversion: (scenario.conversionAmount || 0) - (scenario.taxCost || 0),
+      traditionalBalance: scenario.traditionalBalance || 0,
+      rothBalance: scenario.rothBalance || 0,
+      totalNetWorth: scenario.netWorth || 0,
     }));
   };
 
   const cashFlowData = calculateCashFlowImpact();
 
-  if (!plans || (plans as any[]).length === 0) {
+  // Loading state
+  if (plansLoading || scenariosLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Roth Conversion Cash Flow Impact
+          </CardTitle>
+          <CardDescription>
+            Loading Roth conversion data...
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  // Error state
+  if (plansError || scenariosError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Roth Conversion Cash Flow Impact
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Error loading Roth conversion data. Please try again later.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // No plans state
+  if (!plans || !Array.isArray(plans) || plans.length === 0 || activePlans.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -92,8 +165,23 @@ const RothConversionCashFlow = ({ userId }: RothConversionCashFlowProps) => {
     );
   }
 
-  const activePlans = (plans as any[]).filter((plan: any) => plan.isActive);
-  const latestPlan = activePlans[0];
+  // No scenarios state
+  const scenariosData = scenarios as ScenariosResponse | null;
+  if (!scenariosData || !scenariosData.scenarios || scenariosData.scenarios.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Roth Conversion Cash Flow Impact
+          </CardTitle>
+          <CardDescription>
+            No conversion scenarios found for this plan.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -111,10 +199,10 @@ const RothConversionCashFlow = ({ userId }: RothConversionCashFlowProps) => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h3 className="font-medium text-blue-900">Total Conversion Amount</h3>
             <div className="text-2xl font-bold text-blue-900">
-              {formatCurrency(latestPlan.conversionAmount)}
+              {formatCurrency(latestPlan?.conversionAmount || 0)}
             </div>
             <p className="text-sm text-blue-700">
-              Over {latestPlan.yearsToConvert} years
+              Over {latestPlan?.yearsToConvert || 0} years
             </p>
           </div>
           
@@ -122,11 +210,11 @@ const RothConversionCashFlow = ({ userId }: RothConversionCashFlowProps) => {
             <h3 className="font-medium text-red-900">Total Tax Cost</h3>
             <div className="text-2xl font-bold text-red-900">
               {formatCurrency(
-                cashFlowData.reduce((total: number, year: any) => total + year.taxCost, 0)
+                cashFlowData.reduce((total: number, year: any) => total + (year.taxCost || 0), 0)
               )}
             </div>
             <p className="text-sm text-red-700">
-              Tax rate: {formatPercentage(latestPlan.currentTaxRate)}
+              Tax rate: {formatPercentage(latestPlan?.currentTaxRate || 0)}
             </p>
           </div>
           
@@ -134,7 +222,7 @@ const RothConversionCashFlow = ({ userId }: RothConversionCashFlowProps) => {
             <h3 className="font-medium text-green-900">Net Conversion</h3>
             <div className="text-2xl font-bold text-green-900">
               {formatCurrency(
-                cashFlowData.reduce((total: number, year: any) => total + year.netConversion, 0)
+                cashFlowData.reduce((total: number, year: any) => total + (year.netConversion || 0), 0)
               )}
             </div>
             <p className="text-sm text-green-700">
@@ -185,7 +273,7 @@ const RothConversionCashFlow = ({ userId }: RothConversionCashFlowProps) => {
               <h4 className="font-medium text-gray-700">During Conversion Years:</h4>
               <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
                 <li>Additional tax burden of {formatCurrency(
-                  cashFlowData.reduce((total: number, year: any) => total + year.taxCost, 0) / latestPlan.yearsToConvert
+                  cashFlowData.reduce((total: number, year: any) => total + (year.taxCost || 0), 0) / (latestPlan?.yearsToConvert || 1)
                 )} per year</li>
                 <li>Reduced traditional IRA balance</li>
                 <li>Increased Roth IRA balance (tax-free growth)</li>

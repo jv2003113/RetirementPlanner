@@ -13,9 +13,13 @@ import Healthcare from "@/pages/Healthcare";
 import EstatePlanning from "@/pages/EstatePlanning";
 import Reports from "@/pages/Reports";
 import Simulation from "@/pages/Simulation";
+import RetirementOverview from "@/pages/RetirementOverview";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileNav from "@/components/layout/MobileNav";
 import RothConversionCalculator from "@/components/tax/RothConversionCalculator";
+
+// Wrapper component for RetirementOverview
+const RetirementOverviewWrapper = () => <RetirementOverview />;
 
 function Router() {
   return (
@@ -34,6 +38,7 @@ function Router() {
             <Route path="/estate-planning" component={EstatePlanning} />
             <Route path="/reports" component={Reports} />
             <Route path="/simulation" component={Simulation} />
+            <Route path="/retirement-overview" component={RetirementOverviewWrapper} />
             <Route component={NotFound} />
           </Switch>
         </div>

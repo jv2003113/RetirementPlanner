@@ -1,7 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
+  if (!res.ok && res.status !== 304) {
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
@@ -37,6 +37,11 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
+    // Handle 304 Not Modified - return null to trigger a fresh fetch
+    if (res.status === 304) {
+      return null;
+    }
+
     await throwIfResNotOk(res);
     return await res.json();
   };
@@ -47,7 +52,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 5 * 60 * 1000, // 5 minutes instead of Infinity
       retry: false,
     },
     mutations: {

@@ -5,7 +5,8 @@ import {
   UserIcon, 
   BanknoteIcon, 
   BarChart3Icon,
-  ActivitySquareIcon
+  ActivitySquareIcon,
+  CalendarIcon
 } from "lucide-react";
 
 const MobileNav = () => {
@@ -13,10 +14,10 @@ const MobileNav = () => {
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
+    { path: "/retirement-overview", label: "Overview", icon: <CalendarIcon className="h-6 w-6" /> },
     { path: "/profile", label: "Profile", icon: <UserIcon className="h-6 w-6" /> },
     { path: "/portfolio", label: "Portfolio", icon: <BanknoteIcon className="h-6 w-6" /> },
     { path: "/simulation", label: "Simulation", icon: <ActivitySquareIcon className="h-6 w-6" /> },
-    { path: "/income-projections", label: "Planning", icon: <BarChart3Icon className="h-6 w-6" /> },
   ];
 
   return (

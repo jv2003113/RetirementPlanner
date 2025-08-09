@@ -9,9 +9,90 @@ import {
   insertSecurityHoldingSchema,
   insertRetirementExpenseSchema,
   insertActivitySchema,
-  insertRothConversionPlanSchema
-} from "@shared/schema";
+  insertRothConversionPlanSchema,
+  insertRothConversionScenarioSchema,
+} from "../shared/schema";
 import { z } from "zod";
+
+// Function to generate sample scenarios for a Roth conversion plan
+async function generateSampleScenarios(plan: any) {
+  console.log('Generating scenarios for plan:', plan.id);
+  const scenarios = [];
+  const annualConversion = parseFloat(plan.conversionAmount) / plan.yearsToConvert;
+  const currentTaxRate = parseFloat(plan.currentTaxRate) / 100;
+  
+  console.log('Annual conversion:', annualConversion);
+  console.log('Current tax rate:', currentTaxRate);
+  
+  let traditionalBalance = parseFloat(plan.traditionalIraBalance);
+  let rothBalance = 0;
+  let totalTaxPaid = 0;
+  
+  // Generate scenarios for conversion years
+  for (let year = 1; year <= plan.yearsToConvert; year++) {
+    const age = plan.currentAge + year - 1;
+    const taxCost = annualConversion * currentTaxRate;
+    totalTaxPaid += taxCost;
+    
+    // Apply conversion
+    traditionalBalance -= annualConversion;
+    rothBalance += annualConversion - taxCost;
+    
+    // Apply growth to both accounts
+    traditionalBalance *= (1 + parseFloat(plan.expectedReturn) / 100);
+    rothBalance *= (1 + parseFloat(plan.expectedReturn) / 100);
+    
+    scenarios.push({
+      planId: plan.id,
+      year,
+      age,
+      conversionAmount: annualConversion.toString(),
+      taxCost: taxCost.toString(),
+      traditionalBalance: traditionalBalance.toString(),
+      rothBalance: rothBalance.toString(),
+      totalTaxPaid: totalTaxPaid.toString(),
+      netWorth: (traditionalBalance + rothBalance).toString(),
+    });
+  }
+  
+  // Generate scenarios for years after conversion
+  const yearsAfterConversion = plan.retirementAge - plan.currentAge - plan.yearsToConvert;
+  for (let year = plan.yearsToConvert + 1; year <= plan.yearsToConvert + yearsAfterConversion; year++) {
+    const age = plan.currentAge + year - 1;
+    
+    // Apply growth to both accounts
+    traditionalBalance *= (1 + parseFloat(plan.expectedReturn) / 100);
+    rothBalance *= (1 + parseFloat(plan.expectedReturn) / 100);
+    
+    scenarios.push({
+      planId: plan.id,
+      year,
+      age,
+      conversionAmount: "0",
+      taxCost: "0",
+      traditionalBalance: traditionalBalance.toString(),
+      rothBalance: rothBalance.toString(),
+      totalTaxPaid: totalTaxPaid.toString(),
+      netWorth: (traditionalBalance + rothBalance).toString(),
+    });
+  }
+  
+  console.log('Generated scenarios count:', scenarios.length);
+  
+  // Save the generated scenarios to the database
+  const createdScenarios = [];
+  for (const scenario of scenarios) {
+    try {
+      const createdScenario = await storage.createRothConversionScenario(scenario);
+      createdScenarios.push(createdScenario);
+    } catch (error) {
+      console.error('Error creating scenario:', error);
+    }
+  }
+  
+  console.log('Created scenarios count:', createdScenarios.length);
+  return createdScenarios;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -546,7 +627,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Get scenarios for this plan
-    const scenarios = await storage.getRothConversionScenarios(planId);
+    let scenarios = await storage.getRothConversionScenarios(planId);
+    
+    // If no scenarios exist, generate sample scenarios
+    if (scenarios.length === 0) {
+      scenarios = await generateSampleScenarios(plan);
+    }
     
     return res.json({ plan, scenarios });
   });
@@ -558,6 +644,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Parsed plan data:', planData);
       const plan = await storage.createRothConversionPlan(planData);
       console.log('Created plan:', plan);
+      
+      // Generate scenarios for the new plan
+      const scenarios = await generateSampleScenarios(plan);
+      console.log('Generated scenarios:', scenarios.length);
       
       // Create an activity for this plan creation
       await storage.createActivity({

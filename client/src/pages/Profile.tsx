@@ -44,6 +44,13 @@ const profileFormSchema = z.object({
   currentIncome: z.string().transform((val) => val === "" ? "0" : val), // Handle as string for API compatibility
   expectedFutureIncome: z.string().optional().transform((val) => val === "" ? "0" : val), // Handle as string for API compatibility
   desiredLifestyle: z.string().optional(),
+  hasSpouse: z.boolean().default(false),
+  spouseFirstName: z.string().optional(),
+  spouseLastName: z.string().optional(),
+  spouseCurrentAge: z.coerce.number().min(18).max(100).optional(),
+  spouseTargetRetirementAge: z.coerce.number().min(50).max(100).optional(),
+  spouseCurrentIncome: z.string().optional().transform((val) => val === "" ? "0" : val),
+  spouseExpectedFutureIncome: z.string().optional().transform((val) => val === "" ? "0" : val),
 });
 
 // Form schema for retirement goals
@@ -58,6 +65,7 @@ const goalFormSchema = z.object({
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [editingGoal, setEditingGoal] = useState<any | null>(null);
   const { toast } = useToast();
   const userId = 1; // For demo purposes
 
@@ -117,6 +125,53 @@ const Profile = () => {
     },
   });
 
+  // Update and delete goal mutations
+  const updateGoalMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("PATCH", `/api/retirement-goals/${editingGoal.id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/retirement-goals`] });
+      setEditingGoal(null);
+      goalForm.reset();
+      toast({
+        title: "Goal Updated",
+        description: "Your retirement goal has been updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update goal. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteGoalMutation = useMutation({
+    mutationFn: async (goalId: number) => {
+      return await apiRequest("DELETE", `/api/retirement-goals/${goalId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/retirement-goals`] });
+      toast({
+        title: "Goal Deleted",
+        description: "Your retirement goal has been deleted.",
+      });
+      if (editingGoal) {
+        setEditingGoal(null);
+        goalForm.reset();
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete goal. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Profile form
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -132,6 +187,13 @@ const Profile = () => {
       currentIncome: "0", // String for API compatibility
       expectedFutureIncome: "0", // String for API compatibility
       desiredLifestyle: "",
+      hasSpouse: false,
+      spouseFirstName: "",
+      spouseLastName: "",
+      spouseCurrentAge: undefined,
+      spouseTargetRetirementAge: undefined,
+      spouseCurrentIncome: "0",
+      spouseExpectedFutureIncome: "0",
     },
   });
 
@@ -162,6 +224,13 @@ const Profile = () => {
         currentIncome: String(userData.currentIncome || "0"), // Convert to string
         expectedFutureIncome: String(userData.expectedFutureIncome || "0"), // Convert to string
         desiredLifestyle: userData.desiredLifestyle || "",
+        hasSpouse: userData.hasSpouse || false,
+        spouseFirstName: userData.spouseFirstName || "",
+        spouseLastName: userData.spouseLastName || "",
+        spouseCurrentAge: userData.spouseCurrentAge || undefined,
+        spouseTargetRetirementAge: userData.spouseTargetRetirementAge || undefined,
+        spouseCurrentIncome: String(userData.spouseCurrentIncome || "0"),
+        spouseExpectedFutureIncome: String(userData.spouseExpectedFutureIncome || "0"),
       });
     }
   }, [userData]);
@@ -171,7 +240,11 @@ const Profile = () => {
   };
 
   const onGoalSubmit = (values: z.infer<typeof goalFormSchema>) => {
-    createGoalMutation.mutate(values);
+    if (editingGoal) {
+      updateGoalMutation.mutate({ ...values, userId });
+    } else {
+      createGoalMutation.mutate(values);
+    }
   };
 
   if (isLoadingUser || isLoadingGoals) {
@@ -340,36 +413,34 @@ const Profile = () => {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={profileForm.control}
-                      name="currentIncome"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Current Annual Income ($)</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={profileForm.control}
-                      name="expectedFutureIncome"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Expected Future Income ($)</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" />
-                          </FormControl>
-                          <FormDescription>Optional</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={profileForm.control}
+                    name="currentIncome"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Annual Income ($)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={profileForm.control}
+                    name="expectedFutureIncome"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expected Future Income ($)</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="number" />
+                        </FormControl>
+                        <FormDescription>Optional</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <FormField
                     control={profileForm.control}
@@ -397,6 +468,114 @@ const Profile = () => {
                       </FormItem>
                     )}
                   />
+                  
+                  <FormField
+                    control={profileForm.control}
+                    name="hasSpouse"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mt-2">
+                        <div className="space-y-0.5">
+                          <FormLabel>Include Spouse in Retirement Planning</FormLabel>
+                          <FormDescription>
+                            Enable this if you want to include your spouse's information in your retirement plan.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <input type="checkbox" checked={field.value} onChange={e => field.onChange(e.target.checked)} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {profileForm.watch("hasSpouse") && (
+                    <div className="border rounded-lg p-4 bg-slate-50 mt-2">
+                      <div className="font-medium mb-2">Spouse Information</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={profileForm.control}
+                          name="spouseFirstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Spouse First Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profileForm.control}
+                          name="spouseLastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Spouse Last Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <FormField
+                          control={profileForm.control}
+                          name="spouseCurrentAge"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Spouse Current Age</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="number" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profileForm.control}
+                          name="spouseTargetRetirementAge"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Spouse Target Retirement Age</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="number" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <FormField
+                          control={profileForm.control}
+                          name="spouseCurrentIncome"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Spouse Current Annual Income ($)</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="number" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profileForm.control}
+                          name="spouseExpectedFutureIncome"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Spouse Expected Future Income ($)</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="number" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  )}
                   
                   <Button 
                     type="submit" 
@@ -547,10 +726,25 @@ const Profile = () => {
                     <Button 
                       type="submit" 
                       className="w-full"
-                      disabled={createGoalMutation.isPending}
+                      disabled={createGoalMutation.isPending || updateGoalMutation.isPending}
                     >
-                      {createGoalMutation.isPending ? "Adding Goal..." : "Add Goal"}
+                      {editingGoal
+                        ? (updateGoalMutation.isPending ? "Saving..." : "Save Changes")
+                        : (createGoalMutation.isPending ? "Adding Goal..." : "Add Goal")}
                     </Button>
+                    {editingGoal && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full mt-2"
+                        onClick={() => {
+                          setEditingGoal(null);
+                          goalForm.reset();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
                   </form>
                 </Form>
               </CardContent>
@@ -597,6 +791,38 @@ const Profile = () => {
                                       : `Amount: $${goal.targetMonthlyIncome || '0'}${goal.frequency !== 'one-time' ? ` (${goal.frequency || 'monthly'})` : ''}`}
                               </div>
                             )}
+                            <div className="flex gap-2 mt-4">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingGoal(goal);
+                                  setSelectedCategory(goal.category);
+                                  goalForm.reset({
+                                    category: goal.category,
+                                    frequency: goal.frequency,
+                                    targetMonthlyIncome: String(goal.targetMonthlyIncome || "0"),
+                                    description: goal.description,
+                                    priority: goal.priority,
+                                  });
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to delete this goal?")) {
+                                    deleteGoalMutation.mutate(goal.id);
+                                  }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           </CardContent>
                         </Card>
                     ))}
