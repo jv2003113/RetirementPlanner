@@ -137,14 +137,14 @@ CREATE TABLE roth_conversion_scenarios (
 );
 
     -- Insert demo data
--- Default user
+-- Default user (password is 'password123' hashed with bcrypt)
 INSERT INTO users (
     username, password, first_name, last_name, email, 
     current_age, target_retirement_age, current_location, 
     marital_status, dependents, current_income, 
     expected_future_income, desired_lifestyle
 ) VALUES (
-    'john.doe', 'password123', 'John', 'Doe', 'john.doe@example.com',
+    'john.doe', '$2b$10$rOsJzgkNKnKHjCQcFoZn2OEaVZEjg1y7sQKm9dkb5N8qxGvQpbvfO', 'John', 'Doe', 'john.doe@example.com',
     40, 67, 'New York', 'married', 2, 120000,
     150000, 'comfortable'
 ) RETURNING id;

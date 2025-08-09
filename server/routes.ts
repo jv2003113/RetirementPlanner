@@ -1,5 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import passport from "passport";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import {
   insertUserSchema,
@@ -13,6 +15,19 @@ import {
   insertRothConversionScenarioSchema,
 } from "../shared/schema";
 import { z } from "zod";
+
+// Middleware to check if user is authenticated
+function requireAuth(req: Request, res: Response, next: any) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: "Authentication required" });
+}
+
+// Helper function to get current user from request
+function getCurrentUser(req: Request): any {
+  return req.user;
+}
 
 // Function to generate sample scenarios for a Roth conversion plan
 async function generateSampleScenarios(plan: any) {
@@ -95,6 +110,91 @@ async function generateSampleScenarios(plan: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Authentication routes
+  app.post("/api/auth/signup", async (req: Request, res: Response) => {
+    try {
+      const { username, password, email, firstName, lastName } = req.body;
+      
+      // Validate required fields
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      // Hash password
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      
+      // Create user
+      const userData = {
+        username,
+        password: hashedPassword,
+        email,
+        firstName,
+        lastName,
+      };
+      
+      const user = await storage.createUser(userData);
+      
+      // Log the user in automatically after signup
+      req.login(user, (err) => {
+        if (err) {
+          console.error('Login error after signup:', err);
+          return res.status(500).json({ message: "Account created but login failed" });
+        }
+        
+        // Don't return password in response
+        const { password: _, ...userWithoutPassword } = user;
+        return res.status(201).json({ 
+          message: "Account created successfully", 
+          user: userWithoutPassword 
+        });
+      });
+    } catch (error) {
+      console.error('Signup error:', error);
+      return res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  app.post("/api/auth/login", (req: Request, res: Response, next) => {
+    passport.authenticate('local', (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({ message: "Authentication error" });
+      }
+      if (!user) {
+        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+      }
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Login failed" });
+        }
+        return res.json({ message: "Login successful", user });
+      });
+    })(req, res, next);
+  });
+
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  });
+
+  app.get("/api/auth/me", (req: Request, res: Response) => {
+    if (req.isAuthenticated()) {
+      res.json({ user: req.user });
+    } else {
+      res.status(401).json({ message: "Not authenticated" });
+    }
+  });
   
   // User routes
   app.get("/api/users/:id", async (req: Request, res: Response) => {

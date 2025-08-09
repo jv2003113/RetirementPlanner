@@ -1,11 +1,75 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import bcrypt from "bcrypt";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Configure session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'retirement-planner-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  },
+}));
+
+// Configure Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Configure Passport Local Strategy
+passport.use(new LocalStrategy({
+  usernameField: 'username',
+  passwordField: 'password'
+}, async (username, password, done) => {
+  try {
+    const user = await storage.getUserByUsername(username);
+    if (!user) {
+      return done(null, false, { message: 'Invalid username or password' });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return done(null, false, { message: 'Invalid username or password' });
+    }
+
+    // Don't include password in the user object
+    const { password: _, ...userWithoutPassword } = user;
+    return done(null, userWithoutPassword);
+  } catch (error) {
+    return done(error);
+  }
+}));
+
+// Serialize and deserialize user for session management
+passport.serializeUser((user: any, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id: number, done) => {
+  try {
+    const user = await storage.getUser(id);
+    if (!user) {
+      return done(null, false);
+    }
+    // Don't include password in the user object
+    const { password: _, ...userWithoutPassword } = user;
+    done(null, userWithoutPassword);
+  } catch (error) {
+    done(error);
+  }
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

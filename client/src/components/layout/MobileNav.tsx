@@ -1,30 +1,40 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   HomeIcon, 
   UserIcon, 
   BanknoteIcon, 
   BarChart3Icon,
   ActivitySquareIcon,
-  CalendarIcon
+  CalendarIcon,
+  LogOutIcon
 } from "lucide-react";
 
 const MobileNav = () => {
   const [location] = useLocation();
+  const { logout, isLoading } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const navItems = [
-    { path: "/", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
-    { path: "/retirement-overview", label: "Overview", icon: <CalendarIcon className="h-6 w-6" /> },
-    { path: "/profile", label: "Profile", icon: <UserIcon className="h-6 w-6" /> },
-    { path: "/portfolio", label: "Portfolio", icon: <BanknoteIcon className="h-6 w-6" /> },
-    { path: "/simulation", label: "Simulation", icon: <ActivitySquareIcon className="h-6 w-6" /> },
+    { path: "/", label: "Dashboard", icon: <HomeIcon className="h-5 w-5" /> },
+    { path: "/retirement-overview", label: "Overview", icon: <CalendarIcon className="h-5 w-5" /> },
+    { path: "/profile", label: "Profile", icon: <UserIcon className="h-5 w-5" /> },
+    { path: "/portfolio", label: "Portfolio", icon: <BanknoteIcon className="h-5 w-5" /> },
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-3 z-10">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-10">
       {navItems.map((item) => (
         <Link href={item.path} key={item.path}>
-          <a className="flex flex-col items-center">
+          <a className="flex flex-col items-center px-2 py-1">
             <span
               className={cn(
                 location === item.path ? "text-primary" : "text-gray-500"
@@ -36,6 +46,16 @@ const MobileNav = () => {
           </a>
         </Link>
       ))}
+      <button 
+        onClick={handleLogout}
+        disabled={isLoading}
+        className="flex flex-col items-center px-2 py-1 text-gray-500 disabled:opacity-50"
+      >
+        <LogOutIcon className="h-5 w-5" />
+        <span className="text-xs mt-1">
+          {isLoading ? 'Wait...' : 'Logout'}
+        </span>
+      </button>
     </nav>
   );
 };

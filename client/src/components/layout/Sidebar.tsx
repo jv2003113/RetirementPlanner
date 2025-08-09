@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { User } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import { 
   HomeIcon, 
   UserIcon, 
@@ -13,17 +13,21 @@ import {
   LayoutPanelLeftIcon,
   HeartPulseIcon,
   ActivitySquareIcon,
-  CalendarIcon
+  CalendarIcon,
+  LogOutIcon
 } from "lucide-react";
 
 const Sidebar = () => {
   const [location] = useLocation();
-  const userId = 1; // For demo purposes
-  
-  // Fetch user data
-  const { data: userData } = useQuery<User>({
-    queryKey: [`/api/users/${userId}`],
-  });
+  const { user, logout, isLoading } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
@@ -64,24 +68,36 @@ const Sidebar = () => {
             ))}
           </nav>
         </div>
-        <div className="p-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                <UserIcon className="h-4 w-4 text-gray-600" />
+        <div className="p-4 border-t">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                  <UserIcon className="h-4 w-4 text-gray-600" />
+                </div>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">
+                  {user ? `${user.firstName || user.username}` : 'Loading...'}
+                </p>
+                <Link href="/profile">
+                  <a className="text-xs font-medium text-gray-500 hover:text-gray-700">
+                    Settings
+                  </a>
+                </Link>
               </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-700">
-                {userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...'}
-              </p>
-              <Link href="/profile">
-                <a className="text-xs font-medium text-gray-500 hover:text-gray-700">
-                  Settings
-                </a>
-              </Link>
-            </div>
           </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout}
+            disabled={isLoading}
+            className="w-full"
+          >
+            <LogOutIcon className="h-4 w-4 mr-2" />
+            {isLoading ? 'Signing out...' : 'Sign out'}
+          </Button>
         </div>
       </div>
     </aside>
