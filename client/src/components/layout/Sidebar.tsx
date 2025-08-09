@@ -47,7 +47,14 @@ const Sidebar = () => {
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white shadow-md z-10">
       <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
         <div className="flex items-center flex-shrink-0 px-4 mb-5">
-          <span className="text-xl font-semibold text-primary">RetireWise</span>
+          <div className="flex items-center space-x-2">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-2">
+              <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <span className="text-xl font-bold text-gray-800">EasyRetire</span>
+          </div>
         </div>
         <div className="mt-5 flex-grow flex flex-col">
           <nav className="flex-1 space-y-1 px-2">

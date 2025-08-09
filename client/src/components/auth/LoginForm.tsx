@@ -3,9 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff, User, Lock } from 'lucide-react';
 
 interface LoginFormProps {
   onSwitchToSignup?: () => void;
@@ -14,6 +13,7 @@ interface LoginFormProps {
 export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const { login, isLoading } = useAuth();
 
@@ -34,23 +34,29 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
-        <CardDescription className="text-center">
-          Sign in to your retirement planning account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-gray-900">Welcome back!</h2>
+        <p className="text-gray-600">
+          Continue your journey to financial freedom
+        </p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <Alert variant="destructive" className="border-red-200 bg-red-50">
+            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="space-y-2">
+          <Label htmlFor="username" className="text-sm font-semibold text-gray-700">
+            Username
+          </Label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <User className="h-5 w-5 text-gray-400" />
+            </div>
             <Input
               id="username"
               type="text"
@@ -59,53 +65,83 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
               onChange={(e) => setUsername(e.target.value)}
               disabled={isLoading}
               required
+              className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-colors duration-200"
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+            Password
+          </Label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Lock className="h-5 w-5 text-gray-400" />
+            </div>
             <Input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
               required
+              className="pl-10 pr-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-colors duration-200"
             />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={isLoading}
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              ) : (
+                <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              )}
+            </button>
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Sign in'
-            )}
-          </Button>
-          
-          {onSwitchToSignup && (
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
-              <Button
-                type="button"
-                variant="link"
-                className="p-0 h-auto font-normal"
-                onClick={onSwitchToSignup}
-                disabled={isLoading}
-              >
-                Sign up
-              </Button>
-            </div>
+        </div>
+        
+        <Button 
+          type="submit" 
+          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200" 
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Signing you in...
+            </>
+          ) : (
+            'Sign In'
           )}
-        </form>
-      </CardContent>
-    </Card>
+        </Button>
+        
+        {/* Demo credentials hint */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+          <p className="text-sm text-yellow-800 font-medium mb-1">Demo Account</p>
+          <p className="text-xs text-yellow-700">
+            Username: <span className="font-mono font-semibold">john.doe</span> | 
+            Password: <span className="font-mono font-semibold">password123</span>
+          </p>
+        </div>
+        
+        {onSwitchToSignup && (
+          <div className="text-center text-sm pt-4 border-t border-gray-100">
+            <span className="text-gray-600">New to EasyRetire? </span>
+            <Button
+              type="button"
+              variant="link"
+              className="p-0 h-auto font-semibold text-blue-600 hover:text-blue-700"
+              onClick={onSwitchToSignup}
+              disabled={isLoading}
+            >
+              Create your account
+            </Button>
+          </div>
+        )}
+      </form>
+    </div>
   );
 }
