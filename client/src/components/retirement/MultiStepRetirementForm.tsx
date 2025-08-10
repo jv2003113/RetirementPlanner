@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Form } from '@/components/ui/form';
-import { Circle, ArrowLeft, ArrowRight, Save, User, DollarSign, PiggyBank, CreditCard, Target, TrendingUp, FileText } from 'lucide-react';
+import { CheckCircle, Circle, ArrowLeft, ArrowRight, Save, User, DollarSign, PiggyBank, CreditCard, Target, TrendingUp, FileText } from 'lucide-react';
 import { PersonalInfoStep } from './steps/PersonalInfoStep';
 import { IncomeInfoStep } from './steps/IncomeInfoStep';
 import { CurrentAssetsStep } from './steps/CurrentAssetsStep';
