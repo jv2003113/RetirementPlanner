@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import MultiStepRetirementForm from "@/components/retirement/MultiStepRetirementForm";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Profile = () => {
-  const userId = 1; // For demo purposes
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id || 1; // Use authenticated user's ID
 
   // Fetch user profile data
   const { data: userData, isLoading: isLoadingUser } = useQuery<User>({
@@ -17,14 +19,16 @@ const Profile = () => {
     if (!user) return true;
     
     // Consider user "new" if they haven't filled out essential retirement planning info
-    const hasBasicInfo = user.firstName && user.lastName && user.email;
+    // Check for retirement-specific data, not just basic signup info
     const hasRetirementInfo = user.currentAge && user.targetRetirementAge;
     const hasFinancialInfo = user.currentIncome && parseFloat(user.currentIncome) > 0;
+    const hasRetirementGoals = user.desiredLifestyle;
     
-    // For testing: You can temporarily return true here to test wizard mode
+    // For testing wizard mode: uncomment the line below
     // return true;
     
-    return !(hasBasicInfo && hasRetirementInfo && hasFinancialInfo);
+    // User is "new" if they lack retirement planning data
+    return !(hasRetirementInfo && hasFinancialInfo);
   };
 
   if (isLoadingUser) {

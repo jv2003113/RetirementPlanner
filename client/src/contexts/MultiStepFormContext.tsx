@@ -307,8 +307,8 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
   const [hasLoadedInitialProgress, setHasLoadedInitialProgress] = useState(false);
   
   useEffect(() => {
-    if (progress && !hasLoadedInitialProgress) {
-      // Only load from database once
+    if (progress && !hasLoadedInitialProgress && progress.userId === userId) {
+      // Only load from database once and ensure it's for the correct user
       setCurrentStep(progress.currentStep as FormStepType);
       setCompletedSteps(progress.completedSteps as FormStepType[]);
       setHasLoadedInitialProgress(true);
@@ -318,8 +318,11 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         const savedFormData = progress.formData as Partial<MultiStepFormData>;
         form.reset({ ...form.getValues(), ...savedFormData });
       }
+    } else if (!progress && !hasLoadedInitialProgress) {
+      // No progress found for this user - mark as loaded to prevent infinite loading
+      setHasLoadedInitialProgress(true);
     }
-  }, [progress, form, hasLoadedInitialProgress]);
+  }, [progress, form, hasLoadedInitialProgress, userId]);
 
   // Save progress mutation
   const saveProgressMutation = useMutation({
