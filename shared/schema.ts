@@ -243,3 +243,22 @@ export type InsertRothConversionPlan = z.infer<typeof insertRothConversionPlanSc
 
 export type RothConversionScenario = typeof rothConversionScenarios.$inferSelect;
 export type InsertRothConversionScenario = z.infer<typeof insertRothConversionScenarioSchema>;
+
+// Multi-step form progress tracking schema
+export const multiStepFormProgress = pgTable("multi_step_form_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  currentStep: integer("current_step").default(1).notNull(),
+  completedSteps: jsonb("completed_steps").default([]).notNull(), // Array of completed step numbers
+  formData: jsonb("form_data").default({}).notNull(), // Temporary storage for incomplete form data
+  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+  isCompleted: boolean("is_completed").default(false).notNull(),
+});
+
+export const insertMultiStepFormProgressSchema = createInsertSchema(multiStepFormProgress).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type MultiStepFormProgress = typeof multiStepFormProgress.$inferSelect;
+export type InsertMultiStepFormProgress = z.infer<typeof insertMultiStepFormProgressSchema>;

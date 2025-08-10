@@ -11,6 +11,7 @@ import {
   activities, type Activity, type InsertActivity,
   rothConversionPlans, type RothConversionPlan, type InsertRothConversionPlan,
   rothConversionScenarios, type RothConversionScenario, type InsertRothConversionScenario,
+  multiStepFormProgress, type MultiStepFormProgress, type InsertMultiStepFormProgress,
   type Recommendation, type Resource
 } from "@shared/schema";
 import { eq, desc } from 'drizzle-orm';
@@ -356,6 +357,40 @@ export class PostgresStorage implements IStorage {
     const results = await db
       .delete(rothConversionScenarios)
       .where(eq(rothConversionScenarios.planId, planId))
+      .returning();
+    return results.length > 0;
+  }
+
+  // Multi-step form progress operations
+  async getMultiStepFormProgress(userId: number): Promise<MultiStepFormProgress | undefined> {
+    const results = await db
+      .select()
+      .from(multiStepFormProgress)
+      .where(eq(multiStepFormProgress.userId, userId));
+    return results[0];
+  }
+
+  async createMultiStepFormProgress(progressData: InsertMultiStepFormProgress): Promise<MultiStepFormProgress> {
+    const results = await db
+      .insert(multiStepFormProgress)
+      .values(progressData)
+      .returning();
+    return results[0];
+  }
+
+  async updateMultiStepFormProgress(userId: number, progressData: Partial<InsertMultiStepFormProgress>): Promise<MultiStepFormProgress | undefined> {
+    const results = await db
+      .update(multiStepFormProgress)
+      .set({ ...progressData, lastUpdated: new Date() })
+      .where(eq(multiStepFormProgress.userId, userId))
+      .returning();
+    return results[0];
+  }
+
+  async deleteMultiStepFormProgress(userId: number): Promise<boolean> {
+    const results = await db
+      .delete(multiStepFormProgress)
+      .where(eq(multiStepFormProgress.userId, userId))
       .returning();
     return results.length > 0;
   }

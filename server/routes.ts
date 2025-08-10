@@ -13,6 +13,7 @@ import {
   insertActivitySchema,
   insertRothConversionPlanSchema,
   insertRothConversionScenarioSchema,
+  insertMultiStepFormProgressSchema,
 } from "../shared/schema";
 import { z } from "zod";
 
@@ -1016,6 +1017,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       recentActivities: activities,
       retirementGoals: goals // Add retirement goals to dashboard data
     });
+  });
+
+  // Multi-step form progress routes
+  app.get("/api/users/:userId/multi-step-form-progress", async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    const progress = await storage.getMultiStepFormProgress(userId);
+    return res.json(progress || null);
+  });
+
+  app.post("/api/users/:userId/multi-step-form-progress", async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    try {
+      const progressData = insertMultiStepFormProgressSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      // Check if progress already exists for this user
+      const existingProgress = await storage.getMultiStepFormProgress(userId);
+      
+      if (existingProgress) {
+        // Update existing progress
+        const updatedProgress = await storage.updateMultiStepFormProgress(userId, req.body);
+        return res.json(updatedProgress);
+      } else {
+        // Create new progress
+        const newProgress = await storage.createMultiStepFormProgress(progressData);
+        return res.status(201).json(newProgress);
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid progress data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to save form progress" });
+    }
+  });
+
+  app.patch("/api/users/:userId/multi-step-form-progress", async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    try {
+      const progressData = insertMultiStepFormProgressSchema.partial().parse(req.body);
+      const updatedProgress = await storage.updateMultiStepFormProgress(userId, progressData);
+      
+      if (!updatedProgress) {
+        return res.status(404).json({ message: "Form progress not found" });
+      }
+      
+      return res.json(updatedProgress);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid progress data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to update form progress" });
+    }
+  });
+
+  app.delete("/api/users/:userId/multi-step-form-progress", async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    const success = await storage.deleteMultiStepFormProgress(userId);
+    
+    if (!success) {
+      return res.status(404).json({ message: "Form progress not found" });
+    }
+    
+    return res.status(204).end();
   });
 
   const httpServer = createServer(app);
