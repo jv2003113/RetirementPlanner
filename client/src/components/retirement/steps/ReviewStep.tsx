@@ -614,9 +614,13 @@ export const ReviewStep: React.FC = () => {
             </div>
             
             <div className="text-center text-green-800 bg-green-100 p-4 rounded-lg">
+              <div className="flex items-center justify-center space-x-2 mb-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="font-semibold">Your retirement plan is complete!</span>
+              </div>
               <p className="text-sm">
-                Your retirement plan is ready! Click "Submit Plan" to save your information 
-                and get personalized recommendations for achieving your retirement goals.
+                All your information has been saved automatically as you progressed through each step. 
+                You can edit any section by clicking on the step indicators above or navigating to specific pages.
               </p>
             </div>
           </div>

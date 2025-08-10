@@ -112,8 +112,6 @@ const NavigationButtons: React.FC = () => {
     currentStep, 
     prevStep, 
     nextStep, 
-    saveProgress, 
-    submitForm,
     saveCurrentStep,
     isLoading,
     totalSteps,
@@ -160,42 +158,19 @@ const NavigationButtons: React.FC = () => {
         <span>Previous</span>
       </Button>
 
-      <div className="flex space-x-3">
-        {/* Save & Continue Later button */}
+      {/* Save & Continue button (no submit button on last step since data is already saved) */}
+      {!isLastStep && (
         <Button
           type="button"
-          variant="ghost"
-          onClick={saveProgress}
+          onClick={nextStep}
           disabled={isLoading}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
         >
           <Save className="w-4 h-4" />
-          <span>Save & Continue Later</span>
+          <span>{isLoading ? 'Saving...' : 'Save & Continue'}</span>
+          <ArrowRight className="w-4 h-4" />
         </Button>
-
-        {/* Next/Submit button */}
-        {isLastStep ? (
-          <Button
-            type="button"
-            onClick={submitForm}
-            disabled={isLoading}
-            className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
-          >
-            <span>{isLoading ? 'Submitting...' : 'Submit Plan'}</span>
-            <CheckCircle className="w-4 h-4" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={nextStep}
-            disabled={isLoading}
-            className="flex items-center space-x-2"
-          >
-            <span>Next</span>
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
+      )}
     </div>
   );
 };

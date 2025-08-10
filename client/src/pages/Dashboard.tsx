@@ -74,6 +74,15 @@ const Dashboard = () => {
     const hasRetirementInfo = user.currentAge && user.targetRetirementAge;
     const hasFinancialInfo = user.currentIncome && parseFloat(user.currentIncome) > 0;
     
+    // Debug logging
+    console.log('Dashboard - User data:', {
+      currentAge: user.currentAge,
+      targetRetirementAge: user.targetRetirementAge,
+      currentIncome: user.currentIncome,
+      hasRetirementInfo,
+      hasFinancialInfo
+    });
+    
     // User is "new" if they lack retirement planning data
     return !(hasRetirementInfo && hasFinancialInfo);
   };

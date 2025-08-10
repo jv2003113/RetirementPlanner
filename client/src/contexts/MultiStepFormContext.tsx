@@ -177,15 +177,14 @@ interface MultiStepFormContextType {
   isLoading: boolean;
   progress: MultiStepFormProgress | null;
   isWizardMode: boolean;
-  goToStep: (step: FormStepType) => void;
-  navigateToStep: (step: FormStepType) => void;
-  nextStep: () => void;
+  goToStep: (step: FormStepType) => Promise<void>;
+  navigateToStep: (step: FormStepType) => Promise<void>;
+  nextStep: () => Promise<void>;
   prevStep: () => void;
   canGoToStep: (step: FormStepType) => boolean;
   isStepCompleted: (step: FormStepType) => boolean;
   validateCurrentStep: () => Promise<boolean>;
   saveProgress: () => Promise<void>;
-  submitForm: () => Promise<void>;
   saveCurrentStep: () => Promise<void>;
   getStepTitle: (step: FormStepType) => string;
   getStepDescription: (step: FormStepType) => string;
@@ -478,40 +477,83 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     });
   };
 
-  const goToStep = (step: FormStepType): void => {
-    if (canGoToStep(step)) {
-      setCurrentStep(step);
+  const goToStep = async (step: FormStepType): Promise<void> => {
+    if (!canGoToStep(step)) return;
+
+    // For edit mode, save current step data before navigating
+    if (!isWizardMode) {
+      try {
+        await saveCurrentStep();
+      } catch (error) {
+        console.error('Error saving current step:', error);
+        // Still allow navigation even if save fails in edit mode
+      }
     }
+
+    setCurrentStep(step);
   };
 
-  const navigateToStep = (step: FormStepType): void => {
-    if (canGoToStep(step)) {
-      setCurrentStep(step);
-    }
+  const navigateToStep = async (step: FormStepType): Promise<void> => {
+    await goToStep(step);
   };
 
   const nextStep = async (): Promise<void> => {
     const isValid = await validateCurrentStep();
     if (!isValid) return;
 
-    // Mark current step as completed
-    const newCompletedSteps = Array.from(new Set([...completedSteps, currentStep]));
-    setCompletedSteps(newCompletedSteps);
+    const formData = form.getValues();
+    
+    // Convert form data to user update format and save to database
+    const userUpdateData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      currentAge: Number(formData.currentAge) || 0,
+      targetRetirementAge: Number(formData.targetRetirementAge) || 0,
+      currentLocation: formData.currentLocation,
+      maritalStatus: formData.maritalStatus,
+      dependents: Number(formData.dependents) || 0,
+      currentIncome: formData.currentIncome,
+      expectedFutureIncome: formData.expectedFutureIncome,
+      desiredLifestyle: formData.desiredLifestyle,
+      hasSpouse: formData.hasSpouse,
+      spouseFirstName: formData.spouseFirstName,
+      spouseLastName: formData.spouseLastName,
+      spouseCurrentAge: formData.spouseCurrentAge ? Number(formData.spouseCurrentAge) : undefined,
+      spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
+      spouseCurrentIncome: formData.spouseCurrentIncome,
+      spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
+      expenses: formData.expenses || [],
+      totalMonthlyExpenses: formData.totalMonthlyExpenses,
+    };
 
-    // Move to next step
-    const nextStepNumber = currentStep + 1;
-    if (nextStepNumber <= totalSteps) {
-      setCurrentStep(nextStepNumber as FormStepType);
+    try {
+      // Save user data to database
+      await updateUserMutation.mutateAsync(userUpdateData);
+
+      // Mark current step as completed
+      const newCompletedSteps = Array.from(new Set([...completedSteps, currentStep]));
+      setCompletedSteps(newCompletedSteps);
+
+      // Move to next step
+      const nextStepNumber = currentStep + 1;
+      if (nextStepNumber <= totalSteps) {
+        setCurrentStep(nextStepNumber as FormStepType);
+      }
+
+      // Save progress
+      await saveProgressMutation.mutateAsync({
+        userId,
+        currentStep: nextStepNumber <= totalSteps ? (nextStepNumber as FormStepType) : currentStep,
+        completedSteps: newCompletedSteps,
+        formData,
+        isCompleted: false,
+      });
+    } catch (error) {
+      console.error('Error saving step data:', error);
+      // Don't proceed to next step if save failed
+      return;
     }
-
-    // Save progress
-    await saveProgressMutation.mutateAsync({
-      userId,
-      currentStep: nextStepNumber <= totalSteps ? (nextStepNumber as FormStepType) : currentStep,
-      completedSteps: newCompletedSteps,
-      formData: form.getValues(),
-      isCompleted: false,
-    });
   };
 
   const prevStep = (): void => {
@@ -548,6 +590,8 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
       spouseCurrentIncome: formData.spouseCurrentIncome,
       spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
+      expenses: formData.expenses || [],
+      totalMonthlyExpenses: formData.totalMonthlyExpenses,
     };
 
     // Update user data
@@ -575,46 +619,6 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     }
   };
 
-  const submitForm = async (): Promise<void> => {
-    const isValid = await validateCurrentStep();
-    if (!isValid) return;
-
-    const formData = form.getValues();
-    
-    // Convert form data to user update format
-    const userUpdateData = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      currentAge: Number(formData.currentAge) || 0,
-      targetRetirementAge: Number(formData.targetRetirementAge) || 0,
-      currentLocation: formData.currentLocation,
-      maritalStatus: formData.maritalStatus,
-      dependents: Number(formData.dependents) || 0,
-      currentIncome: formData.currentIncome,
-      expectedFutureIncome: formData.expectedFutureIncome,
-      desiredLifestyle: formData.desiredLifestyle,
-      hasSpouse: formData.hasSpouse,
-      spouseFirstName: formData.spouseFirstName,
-      spouseLastName: formData.spouseLastName,
-      spouseCurrentAge: formData.spouseCurrentAge ? Number(formData.spouseCurrentAge) : undefined,
-      spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
-      spouseCurrentIncome: formData.spouseCurrentIncome,
-      spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
-    };
-
-    // Update user data
-    await updateUserMutation.mutateAsync(userUpdateData);
-
-    // Mark form as completed
-    await saveProgressMutation.mutateAsync({
-      userId,
-      currentStep,
-      completedSteps: Array.from(new Set([...completedSteps, currentStep])),
-      formData,
-      isCompleted: true,
-    });
-  };
 
   const contextValue: MultiStepFormContextType = {
     currentStep,
@@ -632,7 +636,6 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     isStepCompleted,
     validateCurrentStep,
     saveProgress,
-    submitForm,
     saveCurrentStep,
     getStepTitle,
     getStepDescription,
