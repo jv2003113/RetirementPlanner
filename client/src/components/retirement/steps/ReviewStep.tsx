@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { 
   User, 
   DollarSign, 
+  Receipt,
   PiggyBank, 
   CreditCard, 
   Target, 
@@ -62,6 +63,14 @@ export const ReviewStep: React.FC = () => {
       parseInt(formData.otherIncomeAmount1 || '0') +
       parseInt(formData.otherIncomeAmount2 || '0')
     );
+  };
+
+  const calculateTotalExpenses = () => {
+    const expenses = formData.expenses || [];
+    return expenses.reduce((sum: number, expense: any) => {
+      const amount = parseFloat(expense.amount) || 0;
+      return sum + amount;
+    }, 0);
   };
 
   const SectionHeader = ({ 
@@ -207,6 +216,45 @@ export const ReviewStep: React.FC = () => {
               <span className="text-lg font-semibold ml-2 text-green-600">
                 {formatCurrency(calculateTotalIncome())}
               </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Current Expenses */}
+      <Card>
+        <CardContent className="pt-6">
+          <SectionHeader
+            title="Current Expenses"
+            stepNumber={FORM_STEPS.CURRENT_EXPENSES}
+            icon={Receipt}
+            isComplete={isStepCompleted(FORM_STEPS.CURRENT_EXPENSES)}
+            onEdit={() => navigateToStep(FORM_STEPS.CURRENT_EXPENSES)}
+          />
+          <div className="space-y-3">
+            <div className="space-y-2 text-sm">
+              {(formData.expenses || []).filter((expense: any) => expense.amount && parseFloat(expense.amount) > 0).map((expense: any, index: number) => (
+                <div key={index} className="flex justify-between items-center">
+                  <div>
+                    <strong>{expense.category ? expense.category.charAt(0).toUpperCase() + expense.category.slice(1).replace('_', ' ') : 'Expense'}:</strong>
+                    {expense.description && <span className="text-gray-600 ml-2">{expense.description}</span>}
+                  </div>
+                  <div className="font-medium">
+                    {formatCurrency(expense.amount)}
+                  </div>
+                </div>
+              ))}
+              {(!formData.expenses || formData.expenses.filter((expense: any) => expense.amount && parseFloat(expense.amount) > 0).length === 0) && (
+                <div className="text-gray-500 italic text-center py-4">
+                  No expenses entered yet
+                </div>
+              )}
+            </div>
+            <Separator />
+            <div className="text-right">
+              <strong className="text-lg text-amber-600">
+                Total Monthly Expenses: {formatCurrency(calculateTotalExpenses())}
+              </strong>
             </div>
           </div>
         </CardContent>

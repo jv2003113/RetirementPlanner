@@ -11,11 +11,12 @@ import type { MultiStepFormProgress, User } from '@shared/schema';
 export const FORM_STEPS = {
   PERSONAL_INFO: 1,
   INCOME_INFO: 2,
-  CURRENT_ASSETS: 3,
-  LIABILITIES: 4,
-  RETIREMENT_GOALS: 5,
-  RISK_ASSESSMENT: 6,
-  REVIEW: 7,
+  CURRENT_EXPENSES: 3,
+  CURRENT_ASSETS: 4,
+  LIABILITIES: 5,
+  RETIREMENT_GOALS: 6,
+  RISK_ASSESSMENT: 7,
+  REVIEW: 8,
 } as const;
 
 export type FormStepType = typeof FORM_STEPS[keyof typeof FORM_STEPS];
@@ -48,7 +49,16 @@ const multiStepFormSchema = z.object({
   otherIncomeAmount2: z.string().optional(),
   expectedIncomeGrowth: z.coerce.number().min(0).max(20).optional(),
 
-  // Step 3: Current Assets
+  // Step 3: Current Expenses
+  expenses: z.array(z.object({
+    id: z.string(),
+    category: z.string(),
+    description: z.string(),
+    amount: z.string(),
+  })).default([]),
+  totalMonthlyExpenses: z.string().optional(),
+
+  // Step 4: Current Assets
   savingsBalance: z.string().optional(),
   checkingBalance: z.string().optional(),
   investmentBalance: z.string().optional(),
@@ -58,7 +68,7 @@ const multiStepFormSchema = z.object({
   realEstateValue: z.string().optional(),
   otherAssetsValue: z.string().optional(),
 
-  // Step 4: Liabilities
+  // Step 5: Liabilities
   mortgageBalance: z.string().optional(),
   mortgagePayment: z.string().optional(),
   mortgageRate: z.coerce.number().optional(),
@@ -68,7 +78,7 @@ const multiStepFormSchema = z.object({
   otherDebt: z.string().optional(),
   totalMonthlyDebtPayments: z.string().optional(),
 
-  // Step 5: Retirement Goals & Preferences
+  // Step 6: Retirement Goals & Preferences
   desiredLifestyle: z.string().optional(),
   expectedAnnualExpenses: z.string().optional(),
   healthcareExpectations: z.string().optional(),
@@ -76,7 +86,7 @@ const multiStepFormSchema = z.object({
   legacyGoals: z.string().optional(),
   retirementLocation: z.string().optional(),
 
-  // Step 6: Risk Assessment
+  // Step 7: Risk Assessment
   investmentExperience: z.string().optional(),
   riskTolerance: z.string().optional(),
   investmentTimeline: z.string().optional(),
@@ -114,6 +124,10 @@ export const stepSchemas = {
     otherIncomeSource2: true,
     otherIncomeAmount2: true,
     expectedIncomeGrowth: true,
+  }),
+  [FORM_STEPS.CURRENT_EXPENSES]: multiStepFormSchema.pick({
+    expenses: true,
+    totalMonthlyExpenses: true,
   }),
   [FORM_STEPS.CURRENT_ASSETS]: multiStepFormSchema.pick({
     savingsBalance: true,
@@ -288,6 +302,13 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         studentLoanDebt: '0',
         otherDebt: '0',
         totalMonthlyDebtPayments: '0',
+        expenses: [{
+          id: '1',
+          category: '',
+          description: '',
+          amount: '',
+        }],
+        totalMonthlyExpenses: '0',
         expectedAnnualExpenses: '0',
         healthcareExpectations: '',
         travelPlans: '',
@@ -366,7 +387,8 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
   const getStepTitle = (step: FormStepType): string => {
     const titles = {
       [FORM_STEPS.PERSONAL_INFO]: "Personal Information",
-      [FORM_STEPS.INCOME_INFO]: "Income Information",
+      [FORM_STEPS.INCOME_INFO]: "Income Information", 
+      [FORM_STEPS.CURRENT_EXPENSES]: "Current Expenses",
       [FORM_STEPS.CURRENT_ASSETS]: "Current Assets",
       [FORM_STEPS.LIABILITIES]: "Liabilities & Debts",
       [FORM_STEPS.RETIREMENT_GOALS]: "Retirement Goals & Lifestyle",
@@ -380,7 +402,8 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     const wizardDescriptions = {
       [FORM_STEPS.PERSONAL_INFO]: "Tell us about yourself and your family to get started",
       [FORM_STEPS.INCOME_INFO]: "Share your current and expected future income details",
-      [FORM_STEPS.CURRENT_ASSETS]: "Let us know about your savings, investments, and assets",
+      [FORM_STEPS.CURRENT_EXPENSES]: "Help us understand your current monthly spending habits",
+      [FORM_STEPS.CURRENT_ASSETS]: "Let us know about your savings, investments, and assets", 
       [FORM_STEPS.LIABILITIES]: "Tell us about your debts and monthly financial obligations",
       [FORM_STEPS.RETIREMENT_GOALS]: "Describe your retirement dreams and lifestyle expectations",
       [FORM_STEPS.RISK_ASSESSMENT]: "Help us understand your investment preferences and risk tolerance",
@@ -390,9 +413,10 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     const editDescriptions = {
       [FORM_STEPS.PERSONAL_INFO]: "Update your personal and family information",
       [FORM_STEPS.INCOME_INFO]: "Manage your current and expected future income",
+      [FORM_STEPS.CURRENT_EXPENSES]: "Review and update your monthly spending categories",
       [FORM_STEPS.CURRENT_ASSETS]: "Update your savings, investments, and asset information",
       [FORM_STEPS.LIABILITIES]: "Review and update your debts and monthly obligations",
-      [FORM_STEPS.RETIREMENT_GOALS]: "Adjust your retirement goals and lifestyle preferences",
+      [FORM_STEPS.RETIREMENT_GOALS]: "Adjust your retirement goals and lifestyle preferences", 
       [FORM_STEPS.RISK_ASSESSMENT]: "Update your investment preferences and risk tolerance",
       [FORM_STEPS.REVIEW]: "Review and verify all your retirement planning information",
     };

@@ -5,9 +5,6 @@ import {
   HomeIcon, 
   UserIcon, 
   BanknoteIcon, 
-  BarChart3Icon,
-  ActivitySquareIcon,
-  CalendarIcon,
   LogOutIcon
 } from "lucide-react";
 
@@ -25,7 +22,6 @@ const MobileNav = () => {
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: <HomeIcon className="h-5 w-5" /> },
-    { path: "/retirement-overview", label: "Overview", icon: <CalendarIcon className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <UserIcon className="h-5 w-5" /> },
     { path: "/portfolio", label: "Portfolio", icon: <BanknoteIcon className="h-5 w-5" /> },
   ];

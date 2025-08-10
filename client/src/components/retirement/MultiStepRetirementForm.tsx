@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Form } from '@/components/ui/form';
-import { CheckCircle, Circle, ArrowLeft, ArrowRight, Save, User, DollarSign, PiggyBank, CreditCard, Target, TrendingUp, FileText } from 'lucide-react';
+import { CheckCircle, Circle, ArrowLeft, ArrowRight, Save, User, DollarSign, Receipt, PiggyBank, CreditCard, Target, TrendingUp, FileText } from 'lucide-react';
 import { PersonalInfoStep } from './steps/PersonalInfoStep';
 import { IncomeInfoStep } from './steps/IncomeInfoStep';
+import { CurrentExpensesStep } from './steps/CurrentExpensesStep';
 import { CurrentAssetsStep } from './steps/CurrentAssetsStep';
 import { LiabilitiesStep } from './steps/LiabilitiesStep';
 import { RetirementGoalsStep } from './steps/RetirementGoalsStep';
@@ -20,6 +21,7 @@ const StepIndicator: React.FC = () => {
   const steps = [
     { number: FORM_STEPS.PERSONAL_INFO, title: 'Personal', icon: User, colors: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-600', ring: 'ring-blue-200' } },
     { number: FORM_STEPS.INCOME_INFO, title: 'Income', icon: DollarSign, colors: { bg: 'bg-green-600', hover: 'hover:bg-green-700', text: 'text-green-600', ring: 'ring-green-200' } },
+    { number: FORM_STEPS.CURRENT_EXPENSES, title: 'Expenses', icon: Receipt, colors: { bg: 'bg-amber-600', hover: 'hover:bg-amber-700', text: 'text-amber-600', ring: 'ring-amber-200' } },
     { number: FORM_STEPS.CURRENT_ASSETS, title: 'Assets', icon: PiggyBank, colors: { bg: 'bg-purple-600', hover: 'hover:bg-purple-700', text: 'text-purple-600', ring: 'ring-purple-200' } },
     { number: FORM_STEPS.LIABILITIES, title: 'Liabilities', icon: CreditCard, colors: { bg: 'bg-red-600', hover: 'hover:bg-red-700', text: 'text-red-600', ring: 'ring-red-200' } },
     { number: FORM_STEPS.RETIREMENT_GOALS, title: 'Goals', icon: Target, colors: { bg: 'bg-orange-600', hover: 'hover:bg-orange-700', text: 'text-orange-600', ring: 'ring-orange-200' } },
@@ -208,6 +210,8 @@ const StepContent: React.FC = () => {
         return <PersonalInfoStep />;
       case FORM_STEPS.INCOME_INFO:
         return <IncomeInfoStep />;
+      case FORM_STEPS.CURRENT_EXPENSES:
+        return <CurrentExpensesStep />;
       case FORM_STEPS.CURRENT_ASSETS:
         return <CurrentAssetsStep />;
       case FORM_STEPS.LIABILITIES:

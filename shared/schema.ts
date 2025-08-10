@@ -49,6 +49,9 @@ export const users = pgTable("users", {
   spouseTargetRetirementAge: integer("spouse_target_retirement_age"),
   spouseCurrentIncome: decimal("spouse_current_income", { precision: 10, scale: 2 }),
   spouseExpectedFutureIncome: decimal("spouse_expected_future_income", { precision: 10, scale: 2 }),
+  // Current Expenses (stored as JSON array)
+  expenses: jsonb("expenses"),
+  totalMonthlyExpenses: decimal("total_monthly_expenses", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
