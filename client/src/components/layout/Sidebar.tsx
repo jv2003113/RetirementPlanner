@@ -14,7 +14,8 @@ import {
   HeartPulseIcon,
   ActivitySquareIcon,
   CalendarIcon,
-  LogOutIcon
+  LogOutIcon,
+  Target
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -32,6 +33,7 @@ const Sidebar = () => {
   const navItems = [
     { path: "/", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
     { path: "/profile", label: "Profile & Goals", icon: <UserIcon className="h-6 w-6" /> },
+    { path: "/retirement-plan", label: "Retirement Plan", icon: <Target className="h-6 w-6" /> },
     { path: "/cash-flow", label: "Cash Flow", icon: <CreditCardIcon className="h-6 w-6" /> },
     { path: "/portfolio", label: "Portfolio", icon: <BanknoteIcon className="h-6 w-6" /> },
     { path: "/income-projections", label: "Income Projections", icon: <BarChart3Icon className="h-6 w-6" /> },

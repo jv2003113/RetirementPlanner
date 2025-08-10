@@ -265,3 +265,131 @@ export const insertMultiStepFormProgressSchema = createInsertSchema(multiStepFor
 
 export type MultiStepFormProgress = typeof multiStepFormProgress.$inferSelect;
 export type InsertMultiStepFormProgress = z.infer<typeof insertMultiStepFormProgressSchema>;
+
+// Retirement plan schema
+export const retirementPlans = pgTable("retirement_plans", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  planName: text("plan_name").notNull(),
+  planType: text("plan_type").default("comprehensive"), // comprehensive, roth_conversion, etc.
+  
+  // Plan parameters
+  startAge: integer("start_age").notNull(),
+  retirementAge: integer("retirement_age").notNull(),
+  endAge: integer("end_age").default(95).notNull(), // Plan horizon (death age)
+  spouseStartAge: integer("spouse_start_age"), // For married couples
+  spouseRetirementAge: integer("spouse_retirement_age"),
+  spouseEndAge: integer("spouse_end_age"),
+  
+  // Economic assumptions
+  inflationRate: decimal("inflation_rate", { precision: 5, scale: 2 }).default("3.0"), // %
+  portfolioGrowthRate: decimal("portfolio_growth_rate", { precision: 5, scale: 2 }).default("7.0"), // %
+  bondGrowthRate: decimal("bond_growth_rate", { precision: 5, scale: 2 }).default("4.0"), // %
+  
+  // Financial data
+  initialNetWorth: decimal("initial_net_worth", { precision: 12, scale: 2 }).notNull(),
+  totalLifetimeTax: decimal("total_lifetime_tax", { precision: 12, scale: 2 }).default("0"),
+  
+  // Plan metadata
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Annual financial snapshot schema - stores the financial picture for each year of the plan
+export const annualSnapshots = pgTable("annual_snapshots", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").references(() => retirementPlans.id, { onDelete: "cascade" }).notNull(),
+  year: integer("year").notNull(),
+  age: integer("age").notNull(),
+  grossIncome: decimal("gross_income", { precision: 12, scale: 2 }).default("0"),
+  netIncome: decimal("net_income", { precision: 12, scale: 2 }).default("0"),
+  totalExpenses: decimal("total_expenses", { precision: 12, scale: 2 }).default("0"),
+  totalAssets: decimal("total_assets", { precision: 12, scale: 2 }).notNull(),
+  totalLiabilities: decimal("total_liabilities", { precision: 12, scale: 2 }).default("0"),
+  netWorth: decimal("net_worth", { precision: 12, scale: 2 }).notNull(),
+  taxesPaid: decimal("taxes_paid", { precision: 12, scale: 2 }).default("0"),
+  cumulativeTax: decimal("cumulative_tax", { precision: 12, scale: 2 }).default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Account balances by year - tracks each account type balance over time
+export const accountBalances = pgTable("account_balances", {
+  id: serial("id").primaryKey(),
+  snapshotId: integer("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
+  accountType: text("account_type").notNull(), // 401k, traditional_ira, roth_ira, brokerage, savings, checking, etc.
+  accountName: text("account_name"), // Optional display name
+  balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
+  contribution: decimal("contribution", { precision: 10, scale: 2 }).default("0"), // Annual contribution
+  withdrawal: decimal("withdrawal", { precision: 10, scale: 2 }).default("0"), // Annual withdrawal
+  growth: decimal("growth", { precision: 10, scale: 2 }).default("0"), // Annual growth/return
+});
+
+// Milestones schema - both personal and standard milestones
+export const milestones = pgTable("milestones", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").references(() => retirementPlans.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id), // null for standard milestones
+  milestoneType: text("milestone_type").notNull(), // personal, standard
+  title: text("title").notNull(),
+  description: text("description"),
+  targetYear: integer("target_year"),
+  targetAge: integer("target_age"),
+  category: text("category"), // retirement, healthcare, financial, family, etc.
+  isCompleted: boolean("is_completed").default(false),
+  color: text("color").default("#3b82f6"), // Color for timeline display
+  icon: text("icon"), // Icon name for display
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Liabilities schema - tracks debts over time
+export const liabilities = pgTable("liabilities", {
+  id: serial("id").primaryKey(),
+  snapshotId: integer("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
+  liabilityType: text("liability_type").notNull(), // mortgage, car_loan, credit_card, student_loan, etc.
+  liabilityName: text("liability_name"),
+  balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
+  interestRate: decimal("interest_rate", { precision: 5, scale: 2 }),
+  monthlyPayment: decimal("monthly_payment", { precision: 8, scale: 2 }),
+});
+
+// Insert schemas
+export const insertRetirementPlanSchema = createInsertSchema(retirementPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAnnualSnapshotSchema = createInsertSchema(annualSnapshots).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAccountBalanceSchema = createInsertSchema(accountBalances).omit({
+  id: true,
+});
+
+export const insertMilestoneSchema = createInsertSchema(milestones).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLiabilitySchema = createInsertSchema(liabilities).omit({
+  id: true,
+});
+
+// Types
+export type RetirementPlan = typeof retirementPlans.$inferSelect;
+export type InsertRetirementPlan = z.infer<typeof insertRetirementPlanSchema>;
+
+export type AnnualSnapshot = typeof annualSnapshots.$inferSelect;
+export type InsertAnnualSnapshot = z.infer<typeof insertAnnualSnapshotSchema>;
+
+export type AccountBalance = typeof accountBalances.$inferSelect;
+export type InsertAccountBalance = z.infer<typeof insertAccountBalanceSchema>;
+
+export type Milestone = typeof milestones.$inferSelect;
+export type InsertMilestone = z.infer<typeof insertMilestoneSchema>;
+
+export type Liability = typeof liabilities.$inferSelect;
+export type InsertLiability = z.infer<typeof insertLiabilitySchema>;

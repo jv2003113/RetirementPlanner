@@ -14,8 +14,14 @@ import {
   insertRothConversionPlanSchema,
   insertRothConversionScenarioSchema,
   insertMultiStepFormProgressSchema,
+  insertRetirementPlanSchema,
+  insertAnnualSnapshotSchema,
+  insertAccountBalanceSchema,
+  insertMilestoneSchema,
+  insertLiabilitySchema,
 } from "../shared/schema";
 import { z } from "zod";
+import { generateRetirementPlan } from "./planGenerator";
 
 // Middleware to check if user is authenticated
 function requireAuth(req: Request, res: Response, next: any) {
@@ -1102,6 +1108,364 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     return res.status(204).end();
+  });
+
+  // Retirement plan routes
+  app.get("/api/retirement-plans", requireAuth, async (req: Request, res: Response) => {
+    const user = getCurrentUser(req);
+    const plans = await storage.getRetirementPlans(user.id);
+    return res.json(plans);
+  });
+
+  app.get("/api/retirement-plans/:id", requireAuth, async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+    
+    const plan = await storage.getRetirementPlan(planId);
+    
+    if (!plan) {
+      return res.status(404).json({ message: "Retirement plan not found" });
+    }
+    
+    return res.json(plan);
+  });
+
+  app.get("/api/retirement-plans/:id/details", requireAuth, async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+    
+    const plan = await storage.getRetirementPlan(planId);
+    
+    if (!plan) {
+      return res.status(404).json({ message: "Retirement plan not found" });
+    }
+    
+    // Get snapshots and milestones
+    const snapshots = await storage.getAnnualSnapshots(planId);
+    const milestones = await storage.getMilestones(planId);
+    
+    return res.json({
+      ...plan,
+      snapshots,
+      milestones
+    });
+  });
+
+  app.get("/api/retirement-plans/:id/year/:year", requireAuth, async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    const year = parseInt(req.params.year);
+    
+    if (isNaN(planId) || isNaN(year)) {
+      return res.status(400).json({ message: "Invalid plan ID or year" });
+    }
+    
+    const snapshot = await storage.getAnnualSnapshot(planId, year);
+    
+    if (!snapshot) {
+      return res.status(404).json({ message: "Year data not found" });
+    }
+    
+    // Get account balances and liabilities for this snapshot
+    const accountBalances = await storage.getAccountBalances(snapshot.id);
+    const liabilities = await storage.getLiabilities(snapshot.id);
+    
+    return res.json({
+      snapshot,
+      accountBalances,
+      liabilities
+    });
+  });
+
+  app.post("/api/retirement-plans", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = getCurrentUser(req);
+      
+      // Check 4 plan limit
+      const existingPlans = await storage.getRetirementPlans(user.id);
+      if (existingPlans.length >= 4) {
+        return res.status(400).json({ message: "Maximum of 4 plans allowed per user" });
+      }
+      
+      const planData = insertRetirementPlanSchema.parse({
+        ...req.body,
+        userId: user.id
+      });
+      
+      const plan = await storage.createRetirementPlan(planData);
+      
+      // Generate financial projections for the new plan
+      console.log(`🔄 Generating financial projections for plan: ${plan.planName}`);
+      try {
+        await generateRetirementPlan(plan);
+        console.log(`✅ Successfully generated projections for plan: ${plan.planName}`);
+      } catch (genError) {
+        console.error(`❌ Failed to generate projections for plan ${plan.id}:`, genError);
+        // Continue even if generation fails - user can regenerate later
+      }
+      
+      // Create an activity for this plan creation
+      await storage.createActivity({
+        userId: user.id,
+        activityType: "retirement_plan_created",
+        title: "Retirement Plan Created",
+        description: `Created retirement plan: ${planData.planName}`,
+        metadata: {
+          planId: plan.id,
+          planType: planData.planType
+        }
+      });
+      
+      return res.status(201).json(plan);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid plan data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to create retirement plan" });
+    }
+  });
+
+  app.patch("/api/retirement-plans/:id", requireAuth, async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+    
+    try {
+      const planData = insertRetirementPlanSchema.partial().parse(req.body);
+      const updatedPlan = await storage.updateRetirementPlan(planId, planData);
+      
+      if (!updatedPlan) {
+        return res.status(404).json({ message: "Retirement plan not found" });
+      }
+      
+      return res.json(updatedPlan);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid plan data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to update retirement plan" });
+    }
+  });
+
+  app.delete("/api/retirement-plans/:id", requireAuth, async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+    
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+    
+    const success = await storage.deleteRetirementPlan(planId);
+    
+    if (!success) {
+      return res.status(404).json({ message: "Retirement plan not found" });
+    }
+    
+    return res.status(204).end();
+  });
+
+  // Milestones routes
+  app.get("/api/milestones/standard", async (req: Request, res: Response) => {
+    const milestones = await storage.getStandardMilestones();
+    return res.json(milestones);
+  });
+
+  app.post("/api/milestones", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = getCurrentUser(req);
+      const milestoneData = insertMilestoneSchema.parse({
+        ...req.body,
+        userId: req.body.milestoneType === 'personal' ? user.id : undefined
+      });
+      
+      const milestone = await storage.createMilestone(milestoneData);
+      return res.status(201).json(milestone);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid milestone data", errors: error.errors });
+      }
+      return res.status(500).json({ message: "Failed to create milestone" });
+    }
+  });
+
+  // Demo data seeding endpoint (development only)
+  app.post("/api/seed-demo-data", async (req: Request, res: Response) => {
+    try {
+      console.log("🌱 Starting demo data creation...");
+      
+      // Create or find demo user
+      let demoUser;
+      try {
+        demoUser = await storage.getUserByUsername("demo_user");
+      } catch (e) {
+        // User doesn't exist
+      }
+
+      if (!demoUser) {
+        console.log("👤 Creating demo user...");
+        const hashedPassword = await bcrypt.hash("demo123", 10);
+        
+        demoUser = await storage.createUser({
+          username: "demo_user",
+          password: hashedPassword,
+          firstName: "Demo",
+          lastName: "User",
+          email: "demo@example.com",
+          currentAge: 30,
+          targetRetirementAge: 65,
+          currentLocation: "San Francisco, CA",
+          maritalStatus: "single",
+          dependents: 0,
+          currentIncome: "85000",
+          expectedFutureIncome: "120000",  
+          desiredLifestyle: "comfortable",
+          hasSpouse: false,
+          totalMonthlyExpenses: "4500"
+        });
+        console.log(`✅ Created demo user: ${demoUser.username}`);
+      }
+
+      // Check if plan exists
+      const existingPlans = await storage.getRetirementPlans(demoUser.id);
+      if (existingPlans.length > 0) {
+        return res.json({ 
+          message: "Demo data already exists", 
+          user: demoUser.username,
+          plans: existingPlans.length 
+        });
+      }
+
+      // Create basic retirement plan
+      const plan = await storage.createRetirementPlan({
+        userId: demoUser.id,
+        planName: "My Retirement Plan",
+        planType: "comprehensive",
+        startAge: 30,
+        retirementAge: 65,
+        endAge: 95,
+        initialNetWorth: "250000",
+        totalLifetimeTax: "750000",
+        isActive: true
+      });
+
+      console.log(`✅ Created retirement plan: ${plan.id}`);
+
+      // Create a few sample snapshots
+      const currentYear = new Date().getFullYear();
+      const snapshots = [];
+      
+      for (let age = 30; age <= 95; age += 5) {
+        const year = currentYear + (age - 30);
+        const isRetired = age >= 65;
+        const netWorth = 250000 + (age - 30) * 25000;
+        
+        const snapshot = await storage.createAnnualSnapshot({
+          planId: plan.id,
+          year,
+          age,
+          grossIncome: isRetired ? "50000" : "85000",
+          netIncome: isRetired ? "45000" : "65000", 
+          totalExpenses: "45000",
+          totalAssets: netWorth.toString(),
+          totalLiabilities: age < 50 ? "150000" : "0",
+          netWorth: (netWorth - (age < 50 ? 150000 : 0)).toString(),
+          taxesPaid: isRetired ? "5000" : "20000",
+          cumulativeTax: ((age - 30) * 15000).toString()
+        });
+        
+        snapshots.push(snapshot);
+        
+        // Add basic account balances
+        await storage.createAccountBalance({
+          snapshotId: snapshot.id,
+          accountType: "401k",
+          accountName: "Company 401(k)",
+          balance: (netWorth * 0.4).toString(),
+          contribution: isRetired ? "0" : "15000",
+          withdrawal: isRetired ? "25000" : "0",
+          growth: (netWorth * 0.04).toString()
+        });
+
+        await storage.createAccountBalance({
+          snapshotId: snapshot.id,
+          accountType: "roth_ira",
+          accountName: "Roth IRA", 
+          balance: (netWorth * 0.3).toString(),
+          contribution: isRetired ? "0" : "6000",
+          withdrawal: "0",
+          growth: (netWorth * 0.03).toString()
+        });
+
+        await storage.createAccountBalance({
+          snapshotId: snapshot.id,
+          accountType: "brokerage",
+          accountName: "Taxable Brokerage",
+          balance: (netWorth * 0.2).toString(),
+          contribution: "5000",
+          withdrawal: isRetired ? "10000" : "0",
+          growth: (netWorth * 0.02).toString()
+        });
+
+        await storage.createAccountBalance({
+          snapshotId: snapshot.id,
+          accountType: "savings", 
+          accountName: "Emergency Fund",
+          balance: (netWorth * 0.1).toString(),
+          contribution: "2000",
+          withdrawal: "0",
+          growth: (netWorth * 0.01).toString()
+        });
+      }
+
+      // Create sample milestones
+      await storage.createMilestone({
+        planId: plan.id,
+        userId: demoUser.id,
+        milestoneType: "personal",
+        title: "Pay Off Mortgage",
+        description: "Complete mortgage payments",
+        targetYear: currentYear + 20,
+        targetAge: 50,
+        category: "housing",
+        color: "#8b5cf6",
+        icon: "home"
+      });
+
+      await storage.createMilestone({
+        planId: null,
+        userId: null,
+        milestoneType: "standard", 
+        title: "Medicare Eligibility",
+        description: "Eligible for Medicare benefits",
+        targetYear: null,
+        targetAge: 65,
+        category: "healthcare",
+        color: "#ef4444", 
+        icon: "shield"
+      });
+
+      console.log(`✅ Created ${snapshots.length} snapshots and sample data`);
+
+      return res.json({
+        message: "Demo data created successfully!",
+        user: demoUser.username,
+        planId: plan.id,
+        snapshots: snapshots.length
+      });
+
+    } catch (error) {
+      console.error("Seeding error:", error);
+      return res.status(500).json({ 
+        message: "Failed to seed demo data", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
   });
 
   const httpServer = createServer(app);

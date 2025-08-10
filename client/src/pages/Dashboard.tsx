@@ -80,7 +80,8 @@ const Dashboard = () => {
       targetRetirementAge: user.targetRetirementAge,
       currentIncome: user.currentIncome,
       hasRetirementInfo,
-      hasFinancialInfo
+      hasFinancialInfo,
+      isNewUser: !(hasRetirementInfo && hasFinancialInfo)
     });
     
     // User is "new" if they lack retirement planning data

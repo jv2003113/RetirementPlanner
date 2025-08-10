@@ -16,6 +16,7 @@ import Healthcare from "@/pages/Healthcare";
 import EstatePlanning from "@/pages/EstatePlanning";
 import Reports from "@/pages/Reports";
 import Simulation from "@/pages/Simulation";
+import RetirementPlan from "@/pages/RetirementPlan";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileNav from "@/components/layout/MobileNav";
 import RothConversionCalculator from "@/components/tax/RothConversionCalculator";
@@ -50,6 +51,7 @@ function Router() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
             <Switch>
               <Route path="/" component={Dashboard} />
+              <Route path="/retirement-plan" component={RetirementPlan} />
               <Route path="/profile" component={Profile} />
               <Route path="/portfolio" component={Portfolio} />
               <Route path="/income-projections" component={IncomeProjections} />

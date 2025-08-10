@@ -12,9 +12,14 @@ import {
   rothConversionPlans, type RothConversionPlan, type InsertRothConversionPlan,
   rothConversionScenarios, type RothConversionScenario, type InsertRothConversionScenario,
   multiStepFormProgress, type MultiStepFormProgress, type InsertMultiStepFormProgress,
+  retirementPlans, type RetirementPlan, type InsertRetirementPlan,
+  annualSnapshots, type AnnualSnapshot, type InsertAnnualSnapshot,
+  accountBalances, type AccountBalance, type InsertAccountBalance,
+  milestones, type Milestone, type InsertMilestone,
+  liabilities, type Liability, type InsertLiability,
   type Recommendation, type Resource
 } from "@shared/schema";
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import type { IStorage } from './types';
 
 // Create PostgreSQL connection pool
@@ -393,6 +398,195 @@ export class PostgresStorage implements IStorage {
       .where(eq(multiStepFormProgress.userId, userId))
       .returning();
     return results.length > 0;
+  }
+
+  // Retirement plans operations
+  async getRetirementPlans(userId: number): Promise<RetirementPlan[]> {
+    return await db
+      .select()
+      .from(retirementPlans)
+      .where(eq(retirementPlans.userId, userId))
+      .orderBy(desc(retirementPlans.createdAt));
+  }
+
+  async getRetirementPlan(id: number): Promise<RetirementPlan | undefined> {
+    const results = await db
+      .select()
+      .from(retirementPlans)
+      .where(eq(retirementPlans.id, id));
+    return results[0];
+  }
+
+  async createRetirementPlan(planData: InsertRetirementPlan): Promise<RetirementPlan> {
+    const results = await db
+      .insert(retirementPlans)
+      .values(planData)
+      .returning();
+    return results[0];
+  }
+
+  async updateRetirementPlan(id: number, planData: Partial<InsertRetirementPlan>): Promise<RetirementPlan | undefined> {
+    const results = await db
+      .update(retirementPlans)
+      .set({ ...planData, updatedAt: new Date() })
+      .where(eq(retirementPlans.id, id))
+      .returning();
+    return results[0];
+  }
+
+  async deleteRetirementPlan(id: number): Promise<boolean> {
+    const results = await db
+      .delete(retirementPlans)
+      .where(eq(retirementPlans.id, id))
+      .returning();
+    return results.length > 0;
+  }
+
+  // Annual snapshots operations
+  async getAnnualSnapshots(planId: number): Promise<AnnualSnapshot[]> {
+    return await db
+      .select()
+      .from(annualSnapshots)
+      .where(eq(annualSnapshots.planId, planId))
+      .orderBy(annualSnapshots.year);
+  }
+
+  async getAnnualSnapshot(planId: number, year: number): Promise<AnnualSnapshot | undefined> {
+    const results = await db
+      .select()
+      .from(annualSnapshots)
+      .where(and(eq(annualSnapshots.planId, planId), eq(annualSnapshots.year, year)));
+    return results[0];
+  }
+
+  async createAnnualSnapshot(snapshotData: InsertAnnualSnapshot): Promise<AnnualSnapshot> {
+    const results = await db
+      .insert(annualSnapshots)
+      .values(snapshotData)
+      .returning();
+    return results[0];
+  }
+
+  async updateAnnualSnapshot(id: number, snapshotData: Partial<InsertAnnualSnapshot>): Promise<AnnualSnapshot | undefined> {
+    const results = await db
+      .update(annualSnapshots)
+      .set(snapshotData)
+      .where(eq(annualSnapshots.id, id))
+      .returning();
+    return results[0];
+  }
+
+  // Account balances operations
+  async getAccountBalances(snapshotId: number): Promise<AccountBalance[]> {
+    return await db
+      .select()
+      .from(accountBalances)
+      .where(eq(accountBalances.snapshotId, snapshotId));
+  }
+
+  async createAccountBalance(balanceData: InsertAccountBalance): Promise<AccountBalance> {
+    const results = await db
+      .insert(accountBalances)
+      .values(balanceData)
+      .returning();
+    return results[0];
+  }
+
+  async updateAccountBalance(id: number, balanceData: Partial<InsertAccountBalance>): Promise<AccountBalance | undefined> {
+    const results = await db
+      .update(accountBalances)
+      .set(balanceData)
+      .where(eq(accountBalances.id, id))
+      .returning();
+    return results[0];
+  }
+
+  // Milestones operations
+  async getMilestones(planId?: number, userId?: number): Promise<Milestone[]> {
+    let query = db.select().from(milestones);
+    
+    if (planId && userId) {
+      return await db
+        .select()
+        .from(milestones)
+        .where(and(eq(milestones.planId, planId), eq(milestones.userId, userId)))
+        .orderBy(milestones.targetYear);
+    } else if (planId) {
+      return await db
+        .select()
+        .from(milestones)
+        .where(eq(milestones.planId, planId))
+        .orderBy(milestones.targetYear);
+    } else if (userId) {
+      return await db
+        .select()
+        .from(milestones)
+        .where(eq(milestones.userId, userId))
+        .orderBy(milestones.targetYear);
+    }
+    
+    return await db
+      .select()
+      .from(milestones)
+      .orderBy(milestones.targetYear);
+  }
+
+  async getStandardMilestones(): Promise<Milestone[]> {
+    return await db
+      .select()
+      .from(milestones)
+      .where(eq(milestones.milestoneType, 'standard'))
+      .orderBy(milestones.targetAge);
+  }
+
+  async createMilestone(milestoneData: InsertMilestone): Promise<Milestone> {
+    const results = await db
+      .insert(milestones)
+      .values(milestoneData)
+      .returning();
+    return results[0];
+  }
+
+  async updateMilestone(id: number, milestoneData: Partial<InsertMilestone>): Promise<Milestone | undefined> {
+    const results = await db
+      .update(milestones)
+      .set(milestoneData)
+      .where(eq(milestones.id, id))
+      .returning();
+    return results[0];
+  }
+
+  async deleteMilestone(id: number): Promise<boolean> {
+    const results = await db
+      .delete(milestones)
+      .where(eq(milestones.id, id))
+      .returning();
+    return results.length > 0;
+  }
+
+  // Liabilities operations
+  async getLiabilities(snapshotId: number): Promise<Liability[]> {
+    return await db
+      .select()
+      .from(liabilities)
+      .where(eq(liabilities.snapshotId, snapshotId));
+  }
+
+  async createLiability(liabilityData: InsertLiability): Promise<Liability> {
+    const results = await db
+      .insert(liabilities)
+      .values(liabilityData)
+      .returning();
+    return results[0];
+  }
+
+  async updateLiability(id: number, liabilityData: Partial<InsertLiability>): Promise<Liability | undefined> {
+    const results = await db
+      .update(liabilities)
+      .set(liabilityData)
+      .where(eq(liabilities.id, id))
+      .returning();
+    return results[0];
   }
 }
 
