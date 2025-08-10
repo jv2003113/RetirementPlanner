@@ -38,13 +38,9 @@ function getCurrentUser(req: Request): any {
 
 // Function to generate sample scenarios for a Roth conversion plan
 async function generateSampleScenarios(plan: any) {
-  console.log('Generating scenarios for plan:', plan.id);
   const scenarios = [];
   const annualConversion = parseFloat(plan.conversionAmount) / plan.yearsToConvert;
   const currentTaxRate = parseFloat(plan.currentTaxRate) / 100;
-  
-  console.log('Annual conversion:', annualConversion);
-  console.log('Current tax rate:', currentTaxRate);
   
   let traditionalBalance = parseFloat(plan.traditionalIraBalance);
   let rothBalance = 0;
@@ -99,8 +95,6 @@ async function generateSampleScenarios(plan: any) {
     });
   }
   
-  console.log('Generated scenarios count:', scenarios.length);
-  
   // Save the generated scenarios to the database
   const createdScenarios = [];
   for (const scenario of scenarios) {
@@ -112,7 +106,6 @@ async function generateSampleScenarios(plan: any) {
     }
   }
   
-  console.log('Created scenarios count:', createdScenarios.length);
   return createdScenarios;
 }
 
@@ -746,15 +739,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/roth-conversion-plans", async (req: Request, res: Response) => {
     try {
-      console.log('Creating Roth conversion plan with data:', req.body);
       const planData = insertRothConversionPlanSchema.parse(req.body);
-      console.log('Parsed plan data:', planData);
       const plan = await storage.createRothConversionPlan(planData);
-      console.log('Created plan:', plan);
       
       // Generate scenarios for the new plan
       const scenarios = await generateSampleScenarios(plan);
-      console.log('Generated scenarios:', scenarios.length);
       
       // Create an activity for this plan creation
       await storage.createActivity({
@@ -1200,10 +1189,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const plan = await storage.createRetirementPlan(planData);
       
       // Generate financial projections for the new plan
-      console.log(`🔄 Generating financial projections for plan: ${plan.planName}`);
       try {
         await generateRetirementPlan(plan);
-        console.log(`✅ Successfully generated projections for plan: ${plan.planName}`);
       } catch (genError) {
         console.error(`❌ Failed to generate projections for plan ${plan.id}:`, genError);
         // Continue even if generation fails - user can regenerate later
@@ -1297,8 +1284,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Demo data seeding endpoint (development only)
   app.post("/api/seed-demo-data", async (req: Request, res: Response) => {
     try {
-      console.log("🌱 Starting demo data creation...");
-      
       // Create or find demo user
       let demoUser;
       try {
@@ -1308,7 +1293,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (!demoUser) {
-        console.log("👤 Creating demo user...");
         const hashedPassword = await bcrypt.hash("demo123", 10);
         
         demoUser = await storage.createUser({
@@ -1328,7 +1312,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hasSpouse: false,
           totalMonthlyExpenses: "4500"
         });
-        console.log(`✅ Created demo user: ${demoUser.username}`);
       }
 
       // Check if plan exists
@@ -1353,8 +1336,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalLifetimeTax: "750000",
         isActive: true
       });
-
-      console.log(`✅ Created retirement plan: ${plan.id}`);
 
       // Create a few sample snapshots
       const currentYear = new Date().getFullYear();
@@ -1449,8 +1430,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         color: "#ef4444", 
         icon: "shield"
       });
-
-      console.log(`✅ Created ${snapshots.length} snapshots and sample data`);
 
       return res.json({
         message: "Demo data created successfully!",

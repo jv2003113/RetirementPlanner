@@ -42,8 +42,6 @@ export class RetirementPlanGenerator {
   }
 
   async generateFullPlan(options: PlanGenerationOptions = { generateSnapshots: true, generateAccountBalances: true, generateMilestones: true }): Promise<void> {
-    console.log(`🚀 Generating retirement plan data for plan ${this.plan.id}: ${this.plan.planName}`);
-    
     // Generate financial projections for each year
     const projections = this.calculateFinancialProjections();
     
@@ -60,8 +58,6 @@ export class RetirementPlanGenerator {
     await storage.updateRetirementPlan(this.plan.id, {
       totalLifetimeTax: totalLifetimeTax.toFixed(2)
     });
-
-    console.log(`✅ Generated ${projections.length} annual snapshots and milestones for plan ${this.plan.id}`);
   }
 
   private calculateFinancialProjections(): FinancialProjection[] {
