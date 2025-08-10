@@ -5,6 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer,
+  Legend,
+  Tooltip
+} from "recharts";
+import { 
   User, 
   DollarSign, 
   Receipt,
@@ -71,6 +79,49 @@ export const ReviewStep: React.FC = () => {
       const amount = parseFloat(expense.amount) || 0;
       return sum + amount;
     }, 0);
+  };
+
+  // Colors for pie charts
+  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#F97316', '#84CC16', '#6366F1', '#64748B'];
+
+  // Prepare Assets pie chart data
+  const prepareAssetsChartData = () => {
+    const assets = [
+      { name: 'Cash & Savings', value: parseInt(formData.savingsBalance || '0') + parseInt(formData.checkingBalance || '0') },
+      { name: 'Investments', value: parseInt(formData.investmentBalance || '0') },
+      { name: '401(k)', value: parseInt(formData.retirementAccount401k || '0') },
+      { name: 'IRA', value: parseInt(formData.retirementAccountIRA || '0') },
+      { name: 'Roth IRA', value: parseInt(formData.retirementAccountRoth || '0') },
+      { name: 'Real Estate', value: parseInt(formData.realEstateValue || '0') },
+      { name: 'Other Assets', value: parseInt(formData.otherAssetsValue || '0') },
+    ];
+    return assets.filter(asset => asset.value > 0);
+  };
+
+  // Prepare Liabilities pie chart data
+  const prepareLiabilitiesChartData = () => {
+    const liabilities = [
+      { name: 'Mortgage', value: parseInt(formData.mortgageBalance || '0') },
+      { name: 'Credit Cards', value: parseInt(formData.creditCardDebt || '0') },
+      { name: 'Student Loans', value: parseInt(formData.studentLoanDebt || '0') },
+      { name: 'Other Debt', value: parseInt(formData.otherDebt || '0') },
+    ];
+    return liabilities.filter(liability => liability.value > 0);
+  };
+
+  // Prepare Expenses pie chart data
+  const prepareExpensesChartData = () => {
+    const expenses = formData.expenses || [];
+    const categoryTotals: Record<string, number> = {};
+    
+    expenses.forEach((expense: any) => {
+      if (expense.category && expense.amount && parseFloat(expense.amount) > 0) {
+        const categoryLabel = expense.category.charAt(0).toUpperCase() + expense.category.slice(1).replace('_', ' ');
+        categoryTotals[categoryLabel] = (categoryTotals[categoryLabel] || 0) + parseFloat(expense.amount);
+      }
+    });
+    
+    return Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
   };
 
   const SectionHeader = ({ 
@@ -231,25 +282,54 @@ export const ReviewStep: React.FC = () => {
             isComplete={isStepCompleted(FORM_STEPS.CURRENT_EXPENSES)}
             onEdit={() => navigateToStep(FORM_STEPS.CURRENT_EXPENSES)}
           />
-          <div className="space-y-3">
-            <div className="space-y-2 text-sm">
-              {(formData.expenses || []).filter((expense: any) => expense.amount && parseFloat(expense.amount) > 0).map((expense: any, index: number) => (
-                <div key={index} className="flex justify-between items-center">
-                  <div>
-                    <strong>{expense.category ? expense.category.charAt(0).toUpperCase() + expense.category.slice(1).replace('_', ' ') : 'Expense'}:</strong>
-                    {expense.description && <span className="text-gray-600 ml-2">{expense.description}</span>}
+          <div className="space-y-4">
+            {(() => {
+              const expensesChartData = prepareExpensesChartData();
+              return expensesChartData.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={expensesChartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {expensesChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div className="font-medium">
-                    {formatCurrency(expense.amount)}
+                  <div className="space-y-2">
+                    {expensesChartData.map((item, index) => (
+                      <div key={item.name} className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <div 
+                            className="w-4 h-4 rounded"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-sm font-medium">{item.name}</span>
+                        </div>
+                        <span className="text-sm font-semibold">{formatCurrency(item.value)}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-              {(!formData.expenses || formData.expenses.filter((expense: any) => expense.amount && parseFloat(expense.amount) > 0).length === 0) && (
-                <div className="text-gray-500 italic text-center py-4">
+              ) : (
+                <div className="text-gray-500 italic text-center py-8">
                   No expenses entered yet
                 </div>
-              )}
-            </div>
+              );
+            })()}
             <Separator />
             <div className="text-right">
               <strong className="text-lg text-amber-600">
@@ -270,28 +350,54 @@ export const ReviewStep: React.FC = () => {
             isComplete={isStepCompleted(FORM_STEPS.CURRENT_ASSETS)}
             onEdit={() => navigateToStep(FORM_STEPS.CURRENT_ASSETS)}
           />
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <strong>Cash & Savings:</strong> 
-                {formatCurrency(parseInt(formData.savingsBalance || '0') + parseInt(formData.checkingBalance || '0'))}
-              </div>
-              <div>
-                <strong>Investments:</strong> {formatCurrency(formData.investmentBalance)}
-              </div>
-              <div>
-                <strong>Retirement Accounts:</strong> 
-                {formatCurrency(
-                  parseInt(formData.retirementAccount401k || '0') + 
-                  parseInt(formData.retirementAccountIRA || '0') + 
-                  parseInt(formData.retirementAccountRoth || '0')
-                )}
-              </div>
-              <div>
-                <strong>Real Estate & Other:</strong> 
-                {formatCurrency(parseInt(formData.realEstateValue || '0') + parseInt(formData.otherAssetsValue || '0'))}
-              </div>
-            </div>
+          <div className="space-y-4">
+            {(() => {
+              const assetsChartData = prepareAssetsChartData();
+              return assetsChartData.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={assetsChartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {assetsChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="space-y-2">
+                    {assetsChartData.map((item, index) => (
+                      <div key={item.name} className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <div 
+                            className="w-4 h-4 rounded"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-sm font-medium">{item.name}</span>
+                        </div>
+                        <span className="text-sm font-semibold">{formatCurrency(item.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-gray-500 italic text-center py-8">
+                  No assets entered yet
+                </div>
+              );
+            })()}
             <Separator />
             <div className="text-right">
               <strong className="text-lg text-green-600">
@@ -312,24 +418,59 @@ export const ReviewStep: React.FC = () => {
             isComplete={isStepCompleted(FORM_STEPS.LIABILITIES)}
             onEdit={() => navigateToStep(FORM_STEPS.LIABILITIES)}
           />
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <strong>Mortgage:</strong> {formatCurrency(formData.mortgageBalance)}
+          <div className="space-y-4">
+            {(() => {
+              const liabilitiesChartData = prepareLiabilitiesChartData();
+              return liabilitiesChartData.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={liabilitiesChartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {liabilitiesChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="space-y-2">
+                    {liabilitiesChartData.map((item, index) => (
+                      <div key={item.name} className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <div 
+                            className="w-4 h-4 rounded"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          />
+                          <span className="text-sm font-medium">{item.name}</span>
+                        </div>
+                        <span className="text-sm font-semibold">{formatCurrency(item.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-gray-500 italic text-center py-8">
+                  No liabilities entered yet
+                </div>
+              );
+            })()}
+            {formData.totalMonthlyDebtPayments && parseInt(formData.totalMonthlyDebtPayments) > 0 && (
+              <div className="text-sm text-center p-3 bg-red-50 rounded-lg">
+                <strong>Monthly Debt Payments:</strong> {formatCurrency(formData.totalMonthlyDebtPayments)}
               </div>
-              <div>
-                <strong>Credit Cards:</strong> {formatCurrency(formData.creditCardDebt)}
-              </div>
-              <div>
-                <strong>Student Loans:</strong> {formatCurrency(formData.studentLoanDebt)}
-              </div>
-              <div>
-                <strong>Other Debt:</strong> {formatCurrency(formData.otherDebt)}
-              </div>
-            </div>
-            <div className="text-sm">
-              <strong>Monthly Debt Payments:</strong> {formatCurrency(formData.totalMonthlyDebtPayments)}
-            </div>
+            )}
             <Separator />
             <div className="text-right">
               <strong className="text-lg text-red-600">

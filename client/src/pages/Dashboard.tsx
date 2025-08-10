@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { BarChart3, BanknoteIcon, WalletIcon } from "lucide-react";
 import RetirementReadinessCard from "@/components/dashboard/RetirementReadinessCard";
 import PortfolioAllocationChart from "@/components/dashboard/PortfolioAllocationChart";
@@ -12,7 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Recommendation, Resource, Activity, RetirementGoal, User } from "@shared/schema";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "wouter";
 
 // Define interface for the dashboard data
 interface DashboardData {
@@ -50,16 +52,42 @@ interface DashboardData {
 }
 
 const Dashboard = () => {
-  const userId = 1; // For demo purposes
+  const { user: authUser } = useAuth();
+  const [, setLocation] = useLocation();
+  const userId = authUser?.id || 1;
+
+  // Fetch user data to check if profile is complete
+  const { data: userData, isLoading: isLoadingUser } = useQuery<User>({
+    queryKey: [`/api/users/${userId}`],
+  });
 
   const { data, isLoading, error } = useQuery<DashboardData>({
     queryKey: [`/api/users/${userId}/dashboard`],
     refetchOnWindowFocus: false,
   });
 
+  // Check if user is new (has minimal profile information)
+  const isNewUser = (user: User | undefined) => {
+    if (!user) return true;
+    
+    // Consider user "new" if they haven't filled out essential retirement planning info
+    const hasRetirementInfo = user.currentAge && user.targetRetirementAge;
+    const hasFinancialInfo = user.currentIncome && parseFloat(user.currentIncome) > 0;
+    
+    // User is "new" if they lack retirement planning data
+    return !(hasRetirementInfo && hasFinancialInfo);
+  };
+
+  // Redirect new users to profile wizard
+  useEffect(() => {
+    if (!isLoadingUser && userData && isNewUser(userData)) {
+      setLocation('/profile');
+    }
+  }, [userData, isLoadingUser, setLocation]);
+
   // Recommendations and resources are now fetched from the API and included in the data object
 
-  if (isLoading) {
+  if (isLoading || isLoadingUser) {
     return (
       <div className="py-4">
         <Skeleton className="h-8 w-64 mb-1" />

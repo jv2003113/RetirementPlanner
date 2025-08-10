@@ -5,6 +5,7 @@ import {
   HomeIcon, 
   UserIcon, 
   BanknoteIcon, 
+  CreditCardIcon,
   LogOutIcon
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const MobileNav = () => {
   const navItems = [
     { path: "/", label: "Dashboard", icon: <HomeIcon className="h-5 w-5" /> },
     { path: "/profile", label: "Profile", icon: <UserIcon className="h-5 w-5" /> },
+    { path: "/cash-flow", label: "Cash Flow", icon: <CreditCardIcon className="h-5 w-5" /> },
     { path: "/portfolio", label: "Portfolio", icon: <BanknoteIcon className="h-5 w-5" /> },
   ];
 

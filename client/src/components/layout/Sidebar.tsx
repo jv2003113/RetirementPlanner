@@ -32,10 +32,10 @@ const Sidebar = () => {
   const navItems = [
     { path: "/", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
     { path: "/profile", label: "Profile & Goals", icon: <UserIcon className="h-6 w-6" /> },
+    { path: "/cash-flow", label: "Cash Flow", icon: <CreditCardIcon className="h-6 w-6" /> },
     { path: "/portfolio", label: "Portfolio", icon: <BanknoteIcon className="h-6 w-6" /> },
     { path: "/income-projections", label: "Income Projections", icon: <BarChart3Icon className="h-6 w-6" /> },
     { path: "/simulation", label: "Monte Carlo Sim", icon: <ActivitySquareIcon className="h-6 w-6" /> },
-    { path: "/cash-flow", label: "Cash Flow", icon: <CreditCardIcon className="h-6 w-6" /> },
     { path: "/tax-planning", label: "Tax Planning", icon: <FileTextIcon className="h-6 w-6" /> },
     { path: "/healthcare", label: "Healthcare", icon: <HeartPulseIcon className="h-6 w-6" /> },
     { path: "/estate-planning", label: "Estate Planning", icon: <LayoutPanelLeftIcon className="h-6 w-6" /> },
