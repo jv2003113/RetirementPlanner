@@ -36,7 +36,6 @@ const Sidebar = () => {
     { path: "/retirement-plan", label: "Retirement Plan", icon: <Target className="h-6 w-6" /> },
     { path: "/cash-flow", label: "Cash Flow", icon: <CreditCardIcon className="h-6 w-6" /> },
     { path: "/portfolio", label: "Portfolio", icon: <BanknoteIcon className="h-6 w-6" /> },
-    { path: "/income-projections", label: "Income Projections", icon: <BarChart3Icon className="h-6 w-6" /> },
     { path: "/simulation", label: "Monte Carlo Sim", icon: <ActivitySquareIcon className="h-6 w-6" /> },
     { path: "/tax-planning", label: "Tax Planning", icon: <FileTextIcon className="h-6 w-6" /> },
     { path: "/healthcare", label: "Healthcare", icon: <HeartPulseIcon className="h-6 w-6" /> },
@@ -60,18 +59,18 @@ const Sidebar = () => {
         <div className="mt-5 flex-grow flex flex-col">
           <nav className="flex-1 space-y-1 px-2">
             {navItems.map((item) => (
-              <Link href={item.path} key={item.path}>
-                <a
-                  className={cn(
-                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
-                    location === item.path
-                      ? "bg-primary text-white"
-                      : "text-gray-600 hover:bg-gray-100"
-                  )}
-                >
-                  <span className="mr-3">{item.icon}</span>
-                  {item.label}
-                </a>
+              <Link 
+                href={item.path} 
+                key={item.path}
+                className={cn(
+                  "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
+                  location === item.path
+                    ? "bg-primary text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.label}
               </Link>
             ))}
           </nav>
@@ -88,10 +87,11 @@ const Sidebar = () => {
                 <p className="text-sm font-medium text-gray-700">
                   {user ? `${user.firstName || user.username}` : 'Loading...'}
                 </p>
-                <Link href="/profile">
-                  <a className="text-xs font-medium text-gray-500 hover:text-gray-700">
-                    Settings
-                  </a>
+                <Link 
+                  href="/profile"
+                  className="text-xs font-medium text-gray-500 hover:text-gray-700"
+                >
+                  Settings
                 </Link>
               </div>
             </div>

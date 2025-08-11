@@ -929,8 +929,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Calculate retirement readiness score (simplified)
     const retirementReadinessScore = 78;
     
-    // Calculate projected monthly income (simplified)
-    const projectedMonthlyIncome = 5250;
     
     // Find the primary income goal if exists
     const primaryIncomeGoal = goals.find(goal => goal.category === "income") || null;
@@ -973,7 +971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetRetirementAge: user.targetRetirementAge
       },
       monthlyIncome: {
-        projected: projectedMonthlyIncome,
+        projected: 5250,
         goal: primaryIncomeGoal?.targetMonthlyIncome || 6000,
         percentOfCurrent: 87
       },
@@ -1001,11 +999,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             value: aggregateAssetAllocation.cash
           }
         }
-      },
-      incomeProjection: {
-        portfolioIncome: 3800,
-        socialSecurity: 1450,
-        estimatedExpenses: totalMonthlyExpenses
       },
       recommendations: recommendations,
       resources: resources,

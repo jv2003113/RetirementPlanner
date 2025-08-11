@@ -331,7 +331,7 @@ const Reports = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span>Monthly Expenses in Retirement</span>
-                        <span className="font-medium">{formatCurrency(dashboardData.incomeProjection.estimatedExpenses)}</span>
+                        <span className="font-medium">{formatCurrency(4500)}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -565,7 +565,7 @@ const Reports = () => {
             <TabsContent value="projection" className="mt-4 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Retirement Income Projection</CardTitle>
+                  <CardTitle className="text-lg">Retirement Financial Overview</CardTitle>
                   <CardDescription>
                     Projected income and expenses throughout retirement
                   </CardDescription>
@@ -778,7 +778,6 @@ const Reports = () => {
             <CardContent className="flex-grow">
               <ul className="list-disc list-inside text-sm space-y-1">
                 <li>Portfolio analysis and recommendations</li>
-                <li>Detailed income projections</li>
                 <li>Expense analysis</li>
                 <li>Tax considerations</li>
                 <li>Monte Carlo simulation results</li>

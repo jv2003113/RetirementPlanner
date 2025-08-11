@@ -9,7 +9,6 @@ import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import Portfolio from "@/pages/Portfolio";
-import IncomeProjections from "@/pages/IncomeProjections";
 import CashFlow from "@/pages/CashFlow";
 import TaxPlanning from "@/pages/TaxPlanning";
 import Healthcare from "@/pages/Healthcare";
@@ -54,7 +53,6 @@ function Router() {
               <Route path="/retirement-plan" component={RetirementPlan} />
               <Route path="/profile" component={Profile} />
               <Route path="/portfolio" component={Portfolio} />
-              <Route path="/income-projections" component={IncomeProjections} />
               <Route path="/cash-flow" component={CashFlow} />
               <Route path="/tax-planning" component={TaxPlanning} />
               <Route path="/healthcare" component={Healthcare} />

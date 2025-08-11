@@ -4,7 +4,6 @@ import { useLocation } from "wouter";
 import { BarChart3, BanknoteIcon, WalletIcon } from "lucide-react";
 import RetirementReadinessCard from "@/components/dashboard/RetirementReadinessCard";
 import PortfolioAllocationChart from "@/components/dashboard/PortfolioAllocationChart";
-import IncomeProjectionChart from "@/components/dashboard/IncomeProjectionChart";
 import RecommendationsCard from "@/components/dashboard/RecommendationsCard";
 import RetirementMilestones from "@/components/dashboard/RetirementMilestones";
 import ResourceCard from "@/components/dashboard/ResourceCard";
@@ -39,11 +38,6 @@ interface DashboardData {
       realEstate: { percentage: number; value: number };
       cash: { percentage: number; value: number };
     };
-  };
-  incomeProjection: {
-    portfolioIncome: number;
-    socialSecurity: number;
-    estimatedExpenses: number;
   };
   recommendations: Recommendation[];
   resources: Resource[];
@@ -152,29 +146,19 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Portfolio and Projection Section */}
+      {/* Portfolio Section */}
       <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <PortfolioAllocationChart data={data!.portfolioAllocation} />
-        <IncomeProjectionChart data={data!.incomeProjection} />
-      </div>
-
-      {/* Retirement Goals & Milestones Section */}
-      <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <RetirementGoalsCard goals={data!.retirementGoals || []} />
-        <RetirementMilestones 
-          user={{
-            id: userId,
-            username: 'john.doe',
-            password: '',
-            firstName: 'John',
-            lastName: 'Doe',
-            email: 'john.doe@example.com',
-            currentAge: 40,
-            targetRetirementAge: data!.retirementReadiness.targetRetirementAge || 65,
-            createdAt: null
-          }}
-          portfolioTotal={data!.portfolioAllocation.total}
-        />
+        <div className="grid grid-cols-1 gap-5">
+          <RetirementGoalsCard goals={data!.retirementGoals || []} />
+          <RetirementMilestones 
+            user={{
+              currentAge: userData?.currentAge || 30,
+              targetRetirementAge: data!.retirementReadiness.targetRetirementAge || 65,
+            } as User}
+            portfolioTotal={data!.portfolioAllocation.total}
+          />
+        </div>
       </div>
       
       {/* Recommendations Section */}
