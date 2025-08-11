@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { User } from "@shared/schema";
+import { User, MultiStepFormProgress } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import MultiStepRetirementForm from "@/components/retirement/MultiStepRetirementForm";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,24 +14,36 @@ const Profile = () => {
     queryKey: [`/api/users/${userId}`],
   });
 
-  // Check if user is new (has minimal profile information)
-  const isNewUser = (user: User | undefined) => {
+  // Fetch form progress data
+  const { data: formProgress, isLoading: isLoadingProgress } = useQuery<MultiStepFormProgress | null>({
+    queryKey: [`/api/users/${userId}/multi-step-form-progress`],
+  });
+
+  // Determine if user should be in wizard mode
+  const shouldUseWizardMode = (user: User | undefined, progress: MultiStepFormProgress | null) => {
     if (!user) return true;
     
-    // Consider user "new" if they haven't filled out essential retirement planning info
-    // Check for retirement-specific data, not just basic signup info
+    // If there's form progress and user hasn't completed all steps, use wizard mode
+    if (progress) {
+      const totalSteps = 8; // Total number of steps in the form
+      const isFormComplete = progress.completedSteps && Array.isArray(progress.completedSteps) && 
+                           progress.completedSteps.length >= totalSteps;
+      
+      // If form is not complete, use wizard mode
+      if (!isFormComplete) {
+        return true;
+      }
+    }
+    
+    // Check if user is new based on essential retirement planning info
     const hasRetirementInfo = user.currentAge && user.targetRetirementAge;
     const hasFinancialInfo = user.currentIncome && parseFloat(user.currentIncome) > 0;
-    const hasRetirementGoals = user.desiredLifestyle;
-    
-    // For testing wizard mode: uncomment the line below
-    // return true;
     
     // User is "new" if they lack retirement planning data
     return !(hasRetirementInfo && hasFinancialInfo);
   };
 
-  if (isLoadingUser) {
+  if (isLoadingUser || isLoadingProgress) {
     return (
       <div className="py-4">
         <Skeleton className="h-8 w-64 mb-1" />
@@ -41,7 +53,7 @@ const Profile = () => {
     );
   }
 
-  const userIsNew = isNewUser(userData);
+  const userIsNew = shouldUseWizardMode(userData, formProgress);
 
   return (
     <div>

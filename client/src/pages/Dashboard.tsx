@@ -1,6 +1,4 @@
-import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { BarChart3, BanknoteIcon, WalletIcon } from "lucide-react";
 import RetirementReadinessCard from "@/components/dashboard/RetirementReadinessCard";
 import PortfolioAllocationChart from "@/components/dashboard/PortfolioAllocationChart";
@@ -47,42 +45,14 @@ interface DashboardData {
 
 const Dashboard = () => {
   const { user: authUser } = useAuth();
-  const [, setLocation] = useLocation();
   const userId = authUser?.id || 1;
-
-  // Fetch user data to check if profile is complete
-  const { data: userData, isLoading: isLoadingUser } = useQuery<User>({
-    queryKey: [`/api/users/${userId}`],
-  });
 
   const { data, isLoading, error } = useQuery<DashboardData>({
     queryKey: [`/api/users/${userId}/dashboard`],
     refetchOnWindowFocus: false,
   });
 
-  // Check if user is new (has minimal profile information)
-  const isNewUser = (user: User | undefined) => {
-    if (!user) return true;
-    
-    // Consider user "new" if they haven't filled out essential retirement planning info
-    const hasRetirementInfo = user.currentAge && user.targetRetirementAge;
-    const hasFinancialInfo = user.currentIncome && parseFloat(user.currentIncome) > 0;
-    
-    
-    // User is "new" if they lack retirement planning data
-    return !(hasRetirementInfo && hasFinancialInfo);
-  };
-
-  // Redirect new users to profile wizard
-  useEffect(() => {
-    if (!isLoadingUser && userData && isNewUser(userData)) {
-      setLocation('/profile');
-    }
-  }, [userData, isLoadingUser, setLocation]);
-
-  // Recommendations and resources are now fetched from the API and included in the data object
-
-  if (isLoading || isLoadingUser) {
+  if (isLoading) {
     return (
       <div className="py-4">
         <Skeleton className="h-8 w-64 mb-1" />
@@ -153,7 +123,7 @@ const Dashboard = () => {
           <RetirementGoalsCard goals={data!.retirementGoals || []} />
           <RetirementMilestones 
             user={{
-              currentAge: userData?.currentAge || 30,
+              currentAge: 30,
               targetRetirementAge: data!.retirementReadiness.targetRetirementAge || 65,
             } as User}
             portfolioTotal={data!.portfolioAllocation.total}
