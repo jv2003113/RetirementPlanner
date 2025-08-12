@@ -6,12 +6,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, DollarSign, TrendingUp, AlertCircle, Eye, Plus, Edit3 } from "lucide-react";
 import TimelineComponent from "@/components/retirement-plan/TimelineComponent";
+import InteractiveTimeline from "@/components/retirement-plan/InteractiveTimeline";
+import FinancialMindMap from "@/components/retirement-plan/FinancialMindMap";
 import AccountBucketsDisplay from "@/components/retirement-plan/AccountBucketsDisplay";
 import YearDetailView from "@/components/retirement-plan/YearDetailView";
 import LifetimeTaxDisplay from "@/components/retirement-plan/LifetimeTaxDisplay";
 import PlanParametersPanel from "@/components/retirement-plan/PlanParametersPanel";
 import CreatePlanForm from "@/components/retirement-plan/CreatePlanForm";
-import type { RetirementPlan, AnnualSnapshot, AccountBalance, Milestone } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
+import type { RetirementPlan, AnnualSnapshot, AccountBalance, Milestone, User } from "@shared/schema";
 
 interface RetirementPlanWithDetails extends RetirementPlan {
   snapshots: AnnualSnapshot[];
@@ -24,6 +27,15 @@ export default function RetirementPlanPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id || 1;
+
+  // Fetch user data to get current age
+  const { data: userData } = useQuery<User>({
+    queryKey: [`/api/users/${userId}`],
+    enabled: !!userId,
+  });
+
   const { data: plans, isLoading: plansLoading } = useQuery<RetirementPlan[]>({
     queryKey: ["retirement-plans"],
     queryFn: async () => {
@@ -188,145 +200,31 @@ export default function RetirementPlanPage() {
               onEdit={() => setShowEditForm(true)} 
             />
           )}
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Net Worth at End</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {planDetails?.snapshots && planDetails.snapshots.length > 0 
-                    ? `$${Number(planDetails.snapshots[planDetails.snapshots.length - 1].netWorth || 0).toLocaleString()}`
-                    : "$0"}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  At age {activePlan?.endAge}
-                </p>
-              </CardContent>
-            </Card>
-            
-            <LifetimeTaxDisplay 
-              totalLifetimeTax={activePlan?.totalLifetimeTax || "0"} 
-              planDetails={planDetails}
-            />
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Years to Retirement</CardTitle>
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {activePlan ? (activePlan.retirementAge - activePlan.startAge) : 0}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Until age {activePlan?.retirementAge}
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Plan Timeline</CardTitle>
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {activePlan ? (activePlan.endAge - activePlan.startAge + 1) : 0} years
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Financial projection span
-                </p>
-              </CardContent>
-            </Card>
-          </div>
 
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="timeline">Timeline</TabsTrigger>
-              <TabsTrigger value="buckets">Account Buckets</TabsTrigger>
-              <TabsTrigger value="details">Year Details</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview" className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Plan Summary</CardTitle>
-                    <CardDescription>
-                      Key highlights of your retirement plan
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-600">Start Age:</span>
-                        <div className="text-lg font-semibold">{activePlan?.startAge}</div>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">Retirement Age:</span>
-                        <div className="text-lg font-semibold">{activePlan?.retirementAge}</div>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">Initial Net Worth:</span>
-                        <div className="text-lg font-semibold">
-                          ${Number(activePlan?.initialNetWorth || 0).toLocaleString()}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">Plan Type:</span>
-                        <div className="text-lg font-semibold capitalize">
-                          {activePlan?.planType?.replace('_', ' ')}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {planDetails && (
-                  <AccountBucketsDisplay 
-                    snapshots={planDetails.snapshots}
-                    retirementAge={activePlan?.retirementAge || 65}
-                  />
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="timeline">
-              {planDetails && (
-                <TimelineComponent
-                  snapshots={planDetails.snapshots}
-                  milestones={planDetails.milestones}
-                  onYearSelect={handleYearSelect}
-                  selectedYear={selectedYear}
-                  retirementAge={activePlan?.retirementAge || 65}
-                />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="buckets">
-              {planDetails && (
-                <AccountBucketsDisplay 
-                  snapshots={planDetails.snapshots}
-                  retirementAge={activePlan?.retirementAge || 65}
-                  detailed={true}
-                />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="details">
-              <YearDetailView
-                yearData={yearData}
-                selectedYear={selectedYear}
-                isLoading={yearLoading}
-                onYearChange={setSelectedYear}
-                planDetails={planDetails}
-              />
-            </TabsContent>
-          </Tabs>
+          {/* Interactive Timeline */}
+          {activePlan && planDetails && (
+            <InteractiveTimeline
+              snapshots={planDetails.snapshots}
+              milestones={planDetails.milestones}
+              onYearSelect={handleYearSelect}
+              selectedYear={selectedYear}
+              retirementAge={activePlan.retirementAge}
+              startAge={activePlan.startAge}
+              endAge={activePlan.endAge}
+              currentAge={userData?.currentAge || activePlan.startAge}
+            />
+          )}
+
+          {/* Financial Mind Map View */}
+          {selectedYear && planDetails && (
+            <FinancialMindMap
+              year={selectedYear}
+              age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : activePlan.startAge + (selectedYear - new Date().getFullYear())}
+              snapshot={yearData?.snapshot || null}
+              accountBalances={yearData?.accountBalances || []}
+              isLoading={yearLoading}
+            />
+          )}
         </div>
       )}
     </div>
