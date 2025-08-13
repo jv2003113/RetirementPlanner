@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   CalendarDays, 
   TrendingUp, 
@@ -173,6 +172,12 @@ export default function InteractiveTimeline({
   currentAge
 }: InteractiveTimelineProps) {
   const [hoveredYear, setHoveredYear] = useState<number | null>(null);
+  const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; content: any }>({ 
+    visible: false, 
+    x: 0, 
+    y: 0, 
+    content: null 
+  });
   const timelineRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -287,91 +292,76 @@ export default function InteractiveTimeline({
                   ];
                   
                   return (
-                    <TooltipProvider key={age}>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <div
-                            className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
-                            style={{ 
-                              left: `${2 + (position * 0.96)}%`, // Add 2% margin and compress to 96% width
-                              top: '50%' 
-                            }}
-                            onClick={() => handleYearClick(age)}
-                            onMouseEnter={() => setHoveredYear(age)}
-                            onMouseLeave={() => setHoveredYear(null)}
-                          >
-                            {/* Clickable age number */}
+                    <div key={age}>
+                      <div
+                        className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
+                        style={{ 
+                          left: `${2 + (position * 0.96)}%`, // Add 2% margin and compress to 96% width
+                          top: '50%' 
+                        }}
+                        onClick={() => handleYearClick(age)}
+                        onMouseEnter={(e) => {
+                          setHoveredYear(age);
+                          setTooltip({
+                            visible: true,
+                            x: e.clientX,
+                            y: e.clientY - 10,
+                            content: { age, year, milestones: allMilestonesAtAge }
+                          });
+                        }}
+                        onMouseMove={(e) => {
+                          if (tooltip.visible) {
+                            setTooltip(prev => ({
+                              ...prev,
+                              x: e.clientX,
+                              y: e.clientY - 10
+                            }));
+                          }
+                        }}
+                        onMouseLeave={() => {
+                          setHoveredYear(null);
+                          setTooltip({ visible: false, x: 0, y: 0, content: null });
+                        }}
+                      >
+                        {/* Clickable age number */}
+                        <div className={`
+                          px-2 py-1 rounded text-xs font-bold transition-all duration-200 border-2 min-w-[32px] text-center
+                          ${isCurrent ? 'bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300' : ''}
+                          ${isSelected ? 'bg-yellow-500 text-white border-yellow-600' : ''}
+                          ${isRetired && !isCurrent && !isSelected ? 'bg-green-500 text-white border-green-600' : ''}
+                          ${!isCurrent && !isSelected && !isRetired ? 'bg-white text-gray-700 border-gray-300 hover:border-gray-400' : ''}
+                          hover:scale-110 hover:shadow-lg
+                        `}>
+                          {age}
+                        </div>
+
+                        {/* Plan milestone above - aligned to center */}
+                        {planMilestone && (
+                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
                             <div className={`
-                              px-2 py-1 rounded text-xs font-bold transition-all duration-200 border-2 min-w-[32px] text-center
-                              ${isCurrent ? 'bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300' : ''}
-                              ${isSelected ? 'bg-yellow-500 text-white border-yellow-600' : ''}
-                              ${isRetired && !isCurrent && !isSelected ? 'bg-green-500 text-white border-green-600' : ''}
-                              ${!isCurrent && !isSelected && !isRetired ? 'bg-white text-gray-700 border-gray-300 hover:border-gray-400' : ''}
-                              hover:scale-110 hover:shadow-lg
+                              w-4 h-4 rounded-full border flex items-center justify-center shadow-sm
+                              hover:scale-125 transition-all duration-200
+                              ${getMilestoneColor(planMilestone.category, planMilestone.milestoneType)}
                             `}>
-                              {age}
+                              {getMilestoneIcon(planMilestone.category, planMilestone.milestoneType, planMilestone.title)}
                             </div>
-
-                            {/* Plan milestone above - aligned to center */}
-                            {planMilestone && (
-                              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                                <div className={`
-                                  w-4 h-4 rounded-full border flex items-center justify-center shadow-sm
-                                  hover:scale-125 transition-all duration-200
-                                  ${getMilestoneColor(planMilestone.category, planMilestone.milestoneType)}
-                                `}>
-                                  {getMilestoneIcon(planMilestone.category, planMilestone.milestoneType, planMilestone.title)}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* General milestones below - moved down to prevent overlap */}
-                            {generalMilestone && (
-                              <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
-                                <div className={`
-                                  w-4 h-4 rounded-full border flex items-center justify-center shadow-sm
-                                  hover:scale-125 transition-all duration-200
-                                  ${getMilestoneColor(generalMilestone.category, generalMilestone.milestoneType)}
-                                `}>
-                                  {getMilestoneIcon(generalMilestone.category, generalMilestone.milestoneType, generalMilestone.title)}
-                                </div>
-                              </div>
-                            )}
                           </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" sideOffset={5} className="max-w-xs">
-                          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-3 rounded-lg shadow-xl border border-slate-600">
-                            <div className="font-bold text-sm mb-2 text-blue-300">Age {age} • {year}</div>
-                            
-                            {allMilestonesAtAge.length > 0 ? (
-                              <div className="space-y-2">
-                                {allMilestonesAtAge.map((milestone, index) => (
-                                  <div key={index} className={`
-                                    p-2 rounded-md text-xs
-                                    ${milestone.milestoneType === 'plan' ? 'bg-blue-500/20 border border-blue-400/30' : ''}
-                                    ${milestone.milestoneType === 'personal' ? 'bg-purple-500/20 border border-purple-400/30' : ''}
-                                    ${milestone.milestoneType === 'standard' ? 'bg-gray-500/20 border border-gray-400/30' : ''}
-                                  `}>
-                                    <div className="flex items-center gap-2">
-                                      <div className={`
-                                        w-3 h-3 rounded-full flex items-center justify-center
-                                        ${getMilestoneColor(milestone.category, milestone.milestoneType)}
-                                      `}>
-                                        {getMilestoneIcon(milestone.category, milestone.milestoneType, milestone.title)}
-                                      </div>
-                                      <div className="font-medium text-white">{milestone.title}</div>
-                                    </div>
-                                    <div className="text-gray-300 text-xs mt-1">{milestone.description}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400">Click to view financial details</div>
-                            )}
+                        )}
+
+                        {/* General milestones below - moved down to prevent overlap */}
+                        {generalMilestone && (
+                          <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
+                            <div className={`
+                              w-4 h-4 rounded-full border flex items-center justify-center shadow-sm
+                              hover:scale-125 transition-all duration-200
+                              ${getMilestoneColor(generalMilestone.category, generalMilestone.milestoneType)}
+                            `}>
+                              {getMilestoneIcon(generalMilestone.category, generalMilestone.milestoneType, generalMilestone.title)}
+                            </div>
                           </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -395,6 +385,48 @@ export default function InteractiveTimeline({
             </div>
           </div>
         </div>
+
+        {/* Custom Cursor-Following Tooltip */}
+        {tooltip.visible && tooltip.content && (
+          <div
+            className="fixed z-[10000] bg-gradient-to-r from-slate-800 to-slate-900 text-white p-3 rounded-lg shadow-xl border border-slate-600 max-w-xs pointer-events-none"
+            style={{
+              left: `${tooltip.x}px`,
+              top: `${tooltip.y}px`,
+              transform: 'translate(-50%, -100%)',
+            }}
+          >
+            <div className="font-bold text-sm mb-2 text-blue-300">
+              Age {tooltip.content.age} • {tooltip.content.year}
+            </div>
+            
+            {tooltip.content.milestones.length > 0 ? (
+              <div className="space-y-2">
+                {tooltip.content.milestones.map((milestone: any, index: number) => (
+                  <div key={index} className={`
+                    p-2 rounded-md text-xs
+                    ${milestone.milestoneType === 'plan' ? 'bg-blue-500/20 border border-blue-400/30' : ''}
+                    ${milestone.milestoneType === 'personal' ? 'bg-purple-500/20 border border-purple-400/30' : ''}
+                    ${milestone.milestoneType === 'standard' ? 'bg-gray-500/20 border border-gray-400/30' : ''}
+                  `}>
+                    <div className="flex items-center gap-2">
+                      <div className={`
+                        w-3 h-3 rounded-full flex items-center justify-center
+                        ${getMilestoneColor(milestone.category, milestone.milestoneType)}
+                      `}>
+                        {getMilestoneIcon(milestone.category, milestone.milestoneType, milestone.title)}
+                      </div>
+                      <div className="font-medium text-white">{milestone.title}</div>
+                    </div>
+                    <div className="text-gray-300 text-xs mt-1">{milestone.description}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-400">Click to view financial details</div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
