@@ -33,20 +33,32 @@ interface InteractiveTimelineProps {
   currentAge: number;
 }
 
-// Enhanced milestone icon mapping with smaller icons
+// Enhanced milestone icon mapping
 const getMilestoneIcon = (category: string | null, milestoneType: string, title: string) => {
-  if (milestoneType === 'personal') {
+  if (milestoneType === 'plan') {
+    // Plan milestones - same size as standard milestones
+    if (title.toLowerCase().includes('retirement')) {
+      return <Briefcase className="h-3 w-3" />;
+    }
+    if (title.toLowerCase().includes('social security')) {
+      return <Clock className="h-3 w-3" />;
+    }
+    if (title.toLowerCase().includes('roth')) {
+      return <TrendingUp className="h-3 w-3" />;
+    }
+    return <Target className="h-3 w-3" />;
+  } else if (milestoneType === 'personal') {
     switch (category) {
-      case 'family': return <Heart className="h-3 w-3" />;
-      case 'travel': return <Plane className="h-3 w-3" />;
-      case 'financial': return <DollarSign className="h-3 w-3" />;
-      case 'healthcare': return <Shield className="h-3 w-3" />;
-      case 'education': return <GraduationCap className="h-3 w-3" />;
-      case 'housing': return <Home className="h-3 w-3" />;
-      case 'career': return <Briefcase className="h-3 w-3" />;
-      case 'vehicle': return <Car className="h-3 w-3" />;
-      case 'achievement': return <Trophy className="h-3 w-3" />;
-      default: return <Target className="h-3 w-3" />;
+      case 'family': return <Heart className="h-2 w-2" />;
+      case 'travel': return <Plane className="h-2 w-2" />;
+      case 'financial': return <DollarSign className="h-2 w-2" />;
+      case 'healthcare': return <Shield className="h-2 w-2" />;
+      case 'education': return <GraduationCap className="h-2 w-2" />;
+      case 'housing': return <Home className="h-2 w-2" />;
+      case 'career': return <Briefcase className="h-2 w-2" />;
+      case 'vehicle': return <Car className="h-2 w-2" />;
+      case 'achievement': return <Trophy className="h-2 w-2" />;
+      default: return <Target className="h-2 w-2" />;
     }
   } else {
     // Standard milestones
@@ -65,7 +77,10 @@ const getMilestoneIcon = (category: string | null, milestoneType: string, title:
 
 // Enhanced color scheme
 const getMilestoneColor = (category: string | null, milestoneType: string) => {
-  if (milestoneType === 'personal') {
+  if (milestoneType === 'plan') {
+    // Plan milestones - distinctive colors
+    return 'bg-blue-600 border-blue-700 text-white';
+  } else if (milestoneType === 'personal') {
     const colors = {
       'family': 'bg-pink-500 border-pink-600 text-white',
       'travel': 'bg-blue-500 border-blue-600 text-white',
@@ -84,6 +99,19 @@ const getMilestoneColor = (category: string | null, milestoneType: string) => {
     return 'bg-slate-600 border-slate-700 text-white';
   }
 };
+
+// Plan-specific milestones based on user's retirement plan
+const getPlanMilestones = (retirementAge: number, currentAge: number) => [
+  {
+    id: 'plan-retirement',
+    title: 'Planned Retirement',
+    description: 'Your selected retirement age',
+    targetAge: retirementAge,
+    category: 'retirement',
+    milestoneType: 'plan' as const,
+    icon: 'briefcase'
+  }
+];
 
 // Standard milestones that apply to all users
 const getStandardMilestones = (currentAge: number) => [
@@ -168,8 +196,11 @@ export default function InteractiveTimeline({
   const totalYears = endAge - startAge + 1;
   const yearWidth = 100 / totalYears;
 
-  // Get all milestones (personal + standard)
+  // Get all milestones (personal + plan + standard)
   const personalMilestones = milestones.filter(m => m.milestoneType === 'personal');
+  const planMilestones = getPlanMilestones(retirementAge, currentAge).filter(
+    m => m.targetAge >= startAge && m.targetAge <= endAge
+  );
   const standardMilestones = getStandardMilestones(currentAge).filter(
     m => m.targetAge >= startAge && m.targetAge <= endAge
   );
@@ -210,17 +241,10 @@ export default function InteractiveTimeline({
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CalendarDays className="h-5 w-5" />
-          Interactive Life & Retirement Timeline
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-8">
+      <CardContent className="pt-6">
+        <div className="space-y-4">
           {/* Main Timeline with Integrated Milestones */}
-          <div className="relative py-8">
-            <div className="text-sm font-medium text-gray-600 mb-6 text-center">Life & Retirement Timeline</div>
+          <div className="relative py-2">
             
             {/* Scrollable Timeline Container */}
             <div 
@@ -230,11 +254,17 @@ export default function InteractiveTimeline({
             >
               <div 
                 ref={timelineRef} 
-                className="relative h-20 min-w-full"
+                className="relative h-24 min-w-full"
                 style={{ width: `${Math.max(totalYears * 60, 800)}px` }} // 60px per year, minimum 800px
               >
                 {/* Main timeline line */}
-                <div className="absolute top-1/2 left-8 right-8 h-1 bg-gradient-to-r from-blue-400 via-green-400 to-purple-400 rounded-full transform -translate-y-1/2"></div>
+                <div 
+                  className="absolute top-1/2 h-1 bg-gradient-to-r from-blue-400 via-green-400 to-purple-400 rounded-full transform -translate-y-1/2"
+                  style={{ 
+                    left: '2%', 
+                    right: '2%'
+                  }}
+                ></div>
                 
                 {/* Age numbers with milestones */}
                 {Array.from({ length: totalYears }, (_, i) => {
@@ -246,8 +276,15 @@ export default function InteractiveTimeline({
                   const position = (i / (totalYears - 1)) * 100; // Even distribution
                   
                   // Find milestones at this age
-                  const personalMilestone = personalMilestones.find(m => m.targetAge === age);
+                  const planMilestone = planMilestones.find(m => m.targetAge === age);
                   const standardMilestone = standardMilestones.find(m => m.targetAge === age);
+                  
+                  // Get all milestones for this age for tooltip
+                  const allMilestonesAtAge = [
+                    ...planMilestones.filter(m => m.targetAge === age),
+                    ...personalMilestones.filter(m => m.targetAge === age),
+                    ...standardMilestones.filter(m => m.targetAge === age)
+                  ];
                   
                   return (
                     <TooltipProvider key={age}>
@@ -256,7 +293,7 @@ export default function InteractiveTimeline({
                           <div
                             className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
                             style={{ 
-                              left: `${8 + (position * 0.84)}%`, // Account for padding
+                              left: `${2 + (position * 0.96)}%`, // Add 2% margin and compress to 96% width
                               top: '50%' 
                             }}
                             onClick={() => handleYearClick(age)}
@@ -273,52 +310,24 @@ export default function InteractiveTimeline({
                               hover:scale-110 hover:shadow-lg
                             `}>
                               {age}
-                              
-                              {/* Current age indicator */}
-                              {isCurrent && (
-                                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                                  <div className="bg-blue-600 text-white text-[10px] px-1 py-0.5 rounded font-semibold">
-                                    NOW
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {/* Retirement marker */}
-                              {age === retirementAge && !isCurrent && (
-                                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                                  <div className="bg-green-600 text-white text-[10px] px-1 py-0.5 rounded font-semibold">
-                                    RETIRE
-                                  </div>
-                                </div>
-                              )}
                             </div>
 
-                            {/* Personal milestone above */}
-                            {personalMilestone && (
-                              <div 
-                                className="absolute -top-10 left-1/2 transform -translate-x-1/2"
-                                style={{ 
-                                  marginLeft: `${calculateMilestoneOffset(age, personalMilestones, true)}px` 
-                                }}
-                              >
+                            {/* Plan milestone above - aligned to center */}
+                            {planMilestone && (
+                              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
                                 <div className={`
                                   w-4 h-4 rounded-full border flex items-center justify-center shadow-sm
                                   hover:scale-125 transition-all duration-200
-                                  ${getMilestoneColor(personalMilestone.category, personalMilestone.milestoneType)}
+                                  ${getMilestoneColor(planMilestone.category, planMilestone.milestoneType)}
                                 `}>
-                                  {getMilestoneIcon(personalMilestone.category, personalMilestone.milestoneType, personalMilestone.title)}
+                                  {getMilestoneIcon(planMilestone.category, planMilestone.milestoneType, planMilestone.title)}
                                 </div>
                               </div>
                             )}
 
-                            {/* Standard milestone below */}
+                            {/* Standard milestone below - aligned to center */}
                             {standardMilestone && (
-                              <div 
-                                className="absolute top-10 left-1/2 transform -translate-x-1/2"
-                                style={{ 
-                                  marginLeft: `${calculateMilestoneOffset(age, standardMilestones, false)}px` 
-                                }}
-                              >
+                              <div className="absolute top-6 left-1/2 transform -translate-x-1/2">
                                 <div className={`
                                   w-4 h-4 rounded-full border flex items-center justify-center shadow-sm
                                   hover:scale-125 transition-all duration-200
@@ -330,23 +339,34 @@ export default function InteractiveTimeline({
                             )}
                           </div>
                         </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="max-w-xs">
-                            <div className="font-semibold mb-1">Age {age} • Year {year}</div>
-                            {personalMilestone && (
-                              <div className="mb-2 p-2 bg-blue-50 rounded">
-                                <div className="font-medium text-sm">{personalMilestone.title}</div>
-                                <div className="text-xs text-gray-600">{personalMilestone.description}</div>
+                        <TooltipContent side="top" sideOffset={5} className="max-w-xs">
+                          <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-3 rounded-lg shadow-xl border border-slate-600">
+                            <div className="font-bold text-sm mb-2 text-blue-300">Age {age} • {year}</div>
+                            
+                            {allMilestonesAtAge.length > 0 ? (
+                              <div className="space-y-2">
+                                {allMilestonesAtAge.map((milestone, index) => (
+                                  <div key={index} className={`
+                                    p-2 rounded-md text-xs
+                                    ${milestone.milestoneType === 'plan' ? 'bg-blue-500/20 border border-blue-400/30' : ''}
+                                    ${milestone.milestoneType === 'personal' ? 'bg-purple-500/20 border border-purple-400/30' : ''}
+                                    ${milestone.milestoneType === 'standard' ? 'bg-gray-500/20 border border-gray-400/30' : ''}
+                                  `}>
+                                    <div className="flex items-center gap-2">
+                                      <div className={`
+                                        w-3 h-3 rounded-full flex items-center justify-center
+                                        ${getMilestoneColor(milestone.category, milestone.milestoneType)}
+                                      `}>
+                                        {getMilestoneIcon(milestone.category, milestone.milestoneType, milestone.title)}
+                                      </div>
+                                      <div className="font-medium text-white">{milestone.title}</div>
+                                    </div>
+                                    <div className="text-gray-300 text-xs mt-1">{milestone.description}</div>
+                                  </div>
+                                ))}
                               </div>
-                            )}
-                            {standardMilestone && (
-                              <div className="mb-2 p-2 bg-gray-50 rounded">
-                                <div className="font-medium text-sm">{standardMilestone.title}</div>
-                                <div className="text-xs text-gray-600">{standardMilestone.description}</div>
-                              </div>
-                            )}
-                            {!personalMilestone && !standardMilestone && (
-                              <div className="text-sm text-gray-500">Click to view financial details</div>
+                            ) : (
+                              <div className="text-xs text-gray-400">Click to view financial details</div>
                             )}
                           </div>
                         </TooltipContent>
@@ -356,11 +376,6 @@ export default function InteractiveTimeline({
                 })}
               </div>
               
-              {/* Scroll indicators */}
-              <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                <span>← Scroll to see earlier ages</span>
-                <span>Scroll to see later ages →</span>
-              </div>
             </div>
           </div>
 

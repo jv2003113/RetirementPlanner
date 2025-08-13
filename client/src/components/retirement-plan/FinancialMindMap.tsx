@@ -61,7 +61,6 @@ export default function FinancialMindMap({
   isLoading 
 }: FinancialMindMapProps) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -110,7 +109,7 @@ export default function FinancialMindMap({
       id: 'center',
       title: 'Net Worth',
       value: netWorth,
-      color: netWorth >= 0 ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600',
+      color: 'bg-purple-500 border-purple-600',
       icon: <Target className="h-8 w-8 text-white" />,
       category: 'assets',
       position: { x: 50, y: 50 },
@@ -121,7 +120,7 @@ export default function FinancialMindMap({
       ]
     },
 
-    // Income node (top-left)
+    // Income node (top)
     {
       id: 'income',
       title: 'Income',
@@ -129,7 +128,7 @@ export default function FinancialMindMap({
       color: 'bg-blue-500 border-blue-600',
       icon: <Briefcase className="h-6 w-6 text-white" />,
       category: 'income',
-      position: { x: 15, y: 15 },
+      position: { x: 50, y: 25 },
       details: [
         { label: 'Gross Income', value: grossIncome },
         { label: 'Taxes Paid', value: taxesPaid },
@@ -137,7 +136,7 @@ export default function FinancialMindMap({
       ]
     },
 
-    // Expenses node (top-right)
+    // Expenses node (right)
     {
       id: 'expenses',
       title: 'Expenses',
@@ -145,14 +144,14 @@ export default function FinancialMindMap({
       color: 'bg-red-500 border-red-600',
       icon: <Receipt className="h-6 w-6 text-white" />,
       category: 'expenses',
-      position: { x: 85, y: 15 },
+      position: { x: 75, y: 50 },
       details: [
         { label: 'Total Expenses', value: totalExpenses },
         { label: 'Monthly Average', value: totalExpenses / 12, description: 'Average monthly spending' }
       ]
     },
 
-    // Assets node (bottom-left)
+    // Assets node (bottom)
     {
       id: 'assets',
       title: 'Assets',
@@ -160,14 +159,14 @@ export default function FinancialMindMap({
       color: 'bg-green-500 border-green-600',
       icon: <PiggyBank className="h-6 w-6 text-white" />,
       category: 'assets',
-      position: { x: 15, y: 85 },
+      position: { x: 50, y: 75 },
       details: Object.entries(accountsByType).map(([type, accounts]) => ({
         label: type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
         value: accounts.reduce((sum, acc) => sum + parseFloat(acc.balance || "0"), 0)
       }))
     },
 
-    // Liabilities node (bottom-right)
+    // Liabilities node (left)
     {
       id: 'liabilities',
       title: 'Liabilities',
@@ -175,7 +174,7 @@ export default function FinancialMindMap({
       color: 'bg-orange-500 border-orange-600',
       icon: <CreditCard className="h-6 w-6 text-white" />,
       category: 'liabilities',
-      position: { x: 85, y: 85 },
+      position: { x: 25, y: 50 },
       details: [
         { label: 'Total Debt', value: totalLiabilities },
         { label: 'Debt-to-Assets Ratio', value: totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0, description: 'Percentage of assets financed by debt' }
@@ -183,21 +182,97 @@ export default function FinancialMindMap({
     }
   ];
 
-  const handleNodeClick = (nodeId: string) => {
-    setSelectedNode(selectedNode === nodeId ? null : nodeId);
+  // Always show all detail nodes - no need for click to expand
+
+  const getDetailNodes = () => {
+    const detailNodes: any[] = [];
+    
+    // Show all detail nodes for all main nodes
+    nodes.filter(n => n.id !== 'center').forEach(parentNode => {
+      const detailPositions = getDetailPositions(parentNode.position, parentNode.id, parentNode.details.length);
+      
+      parentNode.details.forEach((detail, index) => {
+        detailNodes.push({
+          id: `${parentNode.id}-detail-${index}`,
+          parentId: parentNode.id,
+          title: detail.label,
+          value: detail.value,
+          description: detail.description,
+          position: detailPositions[index],
+          color: 'bg-gray-600 border-gray-700',
+          icon: <DollarSign className="h-4 w-4 text-white" />
+        });
+      });
+    });
+    
+    return detailNodes;
+  };
+
+  const getDetailPositions = (parentPos: {x: number, y: number}, parentId: string, count: number) => {
+    const positions: Array<{x: number, y: number}> = [];
+    
+    // Define specific positions for each node's details to prevent overlaps
+    const detailConfigs = {
+      'income': [
+        { x: 35, y: 8 },  // Gross Income - top left
+        { x: 50, y: 8 },  // Taxes Paid - top center  
+        { x: 65, y: 8 }   // Net Income - top right
+      ],
+      'expenses': [
+        { x: 92, y: 35 }, // Total Expenses - right top
+        { x: 92, y: 50 }  // Monthly Average - right center
+      ],
+      'assets': [
+        { x: 20, y: 92 }, // First asset type - bottom far left
+        { x: 35, y: 92 }, // Second asset type - bottom left
+        { x: 50, y: 92 }, // Third asset type - bottom center
+        { x: 65, y: 92 }, // Fourth asset type - bottom right
+        { x: 80, y: 92 }  // Fifth asset type - bottom far right
+      ],
+      'liabilities': [
+        { x: 8, y: 35 },  // Total Debt - left top
+        { x: 8, y: 65 }   // Debt-to-Assets Ratio - left bottom
+      ]
+    };
+
+    const config = detailConfigs[parentId as keyof typeof detailConfigs];
+    if (!config) return positions;
+
+    // Return the predefined positions, taking only as many as we need
+    return config.slice(0, count);
   };
 
   const getConnectionLines = () => {
     const centerNode = nodes.find(n => n.id === 'center');
     if (!centerNode) return [];
 
-    return nodes
+    const lines: Array<{from: {x: number, y: number}, to: {x: number, y: number}, color: string}> = [];
+    
+    // Main node connections
+    nodes
       .filter(n => n.id !== 'center')
-      .map(node => ({
-        from: centerNode.position,
-        to: node.position,
-        color: node.category === 'income' || node.category === 'assets' ? '#10b981' : '#ef4444'
-      }));
+      .forEach(node => {
+        lines.push({
+          from: centerNode.position,
+          to: node.position,
+          color: node.category === 'income' || node.category === 'assets' ? '#10b981' : '#ef4444'
+        });
+      });
+
+    // Detail node connections
+    const detailNodes = getDetailNodes();
+    detailNodes.forEach(detailNode => {
+      const parentNode = nodes.find(n => n.id === detailNode.parentId);
+      if (parentNode) {
+        lines.push({
+          from: parentNode.position,
+          to: detailNode.position,
+          color: '#6b7280'
+        });
+      }
+    });
+
+    return lines;
   };
 
   return (
@@ -209,12 +284,12 @@ export default function FinancialMindMap({
             Financial Overview - {year} (Age {age})
           </div>
           <div className="text-sm text-gray-500">
-            Click nodes for details
+            Complete financial breakdown
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="relative h-[500px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border overflow-hidden">
+        <div className="relative h-[600px] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border overflow-hidden">
           {/* Connection Lines */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none">
             {getConnectionLines().map((line, index) => (
@@ -235,7 +310,6 @@ export default function FinancialMindMap({
           {/* Financial Nodes */}
           {nodes.map((node) => {
             const isCenter = node.id === 'center';
-            const isSelected = selectedNode === node.id;
             const isHovered = hoveredNode === node.id;
             
             return (
@@ -243,34 +317,32 @@ export default function FinancialMindMap({
                 <Tooltip>
                   <TooltipTrigger>
                     <div
-                      className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 group"
+                      className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 group"
                       style={{ 
                         left: `${node.position.x}%`, 
                         top: `${node.position.y}%`,
-                        zIndex: isSelected ? 20 : isCenter ? 15 : 10
+                        zIndex: isCenter ? 15 : 10
                       }}
-                      onClick={() => handleNodeClick(node.id)}
                       onMouseEnter={() => setHoveredNode(node.id)}
                       onMouseLeave={() => setHoveredNode(null)}
                     >
                       {/* Main Node Circle */}
                       <div className={`
-                        ${isCenter ? 'w-24 h-24' : 'w-16 h-16'}
+                        ${isCenter ? 'w-20 h-20' : 'w-14 h-14'}
                         rounded-full border-4 flex items-center justify-center shadow-lg
                         transition-all duration-200 hover:shadow-xl
                         ${node.color} text-white
-                        ${isHovered || isSelected ? 'scale-110' : 'scale-100'}
-                        ${isSelected ? 'ring-4 ring-blue-300' : ''}
+                        ${isHovered ? 'scale-110' : 'scale-100'}
                       `}>
                         {node.icon}
                       </div>
 
                       {/* Node Label */}
                       <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 text-center">
-                        <div className="font-semibold text-sm text-gray-800">
+                        <div className="font-semibold text-xs text-gray-800">
                           {node.title}
                         </div>
-                        <div className="font-bold text-lg text-gray-900">
+                        <div className="font-bold text-sm text-gray-900">
                           {formatCurrency(node.value)}
                         </div>
                       </div>
@@ -279,10 +351,16 @@ export default function FinancialMindMap({
                       {!isCenter && (
                         <div className="absolute inset-0 pointer-events-none">
                           {node.category === 'income' && (
-                            <ArrowRight className="absolute -right-8 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                            <TrendingUp className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 h-3 w-3 text-green-500" />
                           )}
                           {node.category === 'expenses' && (
-                            <ArrowLeft className="absolute -left-8 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
+                            <TrendingDown className="absolute -top-6 left-1/2 transform -translate-x-1/2 h-3 w-3 text-red-500" />
+                          )}
+                          {node.category === 'assets' && (
+                            <TrendingUp className="absolute -top-6 left-1/2 transform -translate-x-1/2 h-3 w-3 text-green-500" />
+                          )}
+                          {node.category === 'liabilities' && (
+                            <TrendingDown className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 h-3 w-3 text-orange-500" />
                           )}
                         </div>
                       )}
@@ -290,23 +368,10 @@ export default function FinancialMindMap({
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     <div className="max-w-xs">
-                      <div className="font-semibold mb-2">{node.title} Breakdown</div>
-                      {node.details.map((detail, index) => (
-                        <div key={index} className="flex justify-between items-center text-sm mb-1">
-                          <span>{detail.label}:</span>
-                          <span className="font-medium ml-2">
-                            {detail.label.toLowerCase().includes('ratio') 
-                              ? `${detail.value.toFixed(1)}%`
-                              : formatCurrency(detail.value)
-                            }
-                          </span>
-                        </div>
-                      ))}
-                      {node.details.some(d => d.description) && (
-                        <div className="text-xs text-gray-400 mt-2 border-t pt-1">
-                          {node.details.find(d => d.description)?.description}
-                        </div>
-                      )}
+                      <div className="font-semibold mb-2">{node.title} Summary</div>
+                      <div className="text-sm text-gray-600">
+                        Total: {formatCurrency(node.value)}
+                      </div>
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -314,87 +379,62 @@ export default function FinancialMindMap({
             );
           })}
 
-          {/* Legend */}
-          <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-md p-3">
-            <div className="text-xs font-semibold mb-2 text-gray-700">Categories</div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span>Income</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span>Expenses</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span>Assets</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                <span>Liabilities</span>
-              </div>
-            </div>
-          </div>
+          {/* Detail Nodes */}
+          {getDetailNodes().map((detailNode) => (
+            <TooltipProvider key={detailNode.id}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 animate-in fade-in zoom-in"
+                    style={{ 
+                      left: `${detailNode.position.x}%`, 
+                      top: `${detailNode.position.y}%`,
+                      zIndex: 5
+                    }}
+                  >
+                    {/* Detail Node Circle */}
+                    <div className={`
+                      w-8 h-8 rounded-full border-2 flex items-center justify-center shadow-md
+                      ${detailNode.color} text-white
+                      hover:shadow-lg hover:scale-105 transition-all duration-200
+                    `}>
+                      <DollarSign className="h-3 w-3 text-white" />
+                    </div>
 
-          {/* Financial Health Indicators */}
-          <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md p-3">
-            <div className="text-xs font-semibold mb-2 text-gray-700">Key Ratios</div>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span>Savings Rate:</span>
-                <span className="font-medium">
-                  {grossIncome > 0 ? formatPercentage(grossIncome - totalExpenses, grossIncome) : "0%"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax Rate:</span>
-                <span className="font-medium">
-                  {grossIncome > 0 ? formatPercentage(taxesPaid, grossIncome) : "0%"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Asset Growth:</span>
-                <span className={`font-medium ${netWorth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {netWorth >= 0 ? '+' : ''}{formatCurrency(netWorth)}
-                </span>
-              </div>
-            </div>
-          </div>
+                    {/* Detail Label */}
+                    <div className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 text-center">
+                      <div className="font-medium text-xs text-gray-700 max-w-[100px] truncate">
+                        {detailNode.title}
+                      </div>
+                      <div className="font-bold text-xs text-gray-900">
+                        {detailNode.title.toLowerCase().includes('ratio') 
+                          ? `${detailNode.value.toFixed(1)}%`
+                          : formatCurrency(detailNode.value)
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <div className="max-w-xs">
+                    <div className="font-semibold mb-1">{detailNode.title}</div>
+                    <div className="text-lg font-bold">
+                      {detailNode.title.toLowerCase().includes('ratio') 
+                        ? `${detailNode.value.toFixed(1)}%`
+                        : formatCurrency(detailNode.value)
+                      }
+                    </div>
+                    {detailNode.description && (
+                      <div className="text-sm text-gray-600 mt-1">{detailNode.description}</div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
+
         </div>
 
-        {/* Detailed View Panel */}
-        {selectedNode && (
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">
-                {nodes.find(n => n.id === selectedNode)?.title} Details
-              </h3>
-              <button
-                onClick={() => setSelectedNode(null)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {nodes.find(n => n.id === selectedNode)?.details.map((detail, index) => (
-                <div key={index} className="bg-white p-3 rounded border">
-                  <div className="text-sm text-gray-600">{detail.label}</div>
-                  <div className="text-xl font-bold text-gray-900">
-                    {detail.label.toLowerCase().includes('ratio') 
-                      ? `${detail.value.toFixed(1)}%`
-                      : formatCurrency(detail.value)
-                    }
-                  </div>
-                  {detail.description && (
-                    <div className="text-xs text-gray-500 mt-1">{detail.description}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

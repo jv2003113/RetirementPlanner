@@ -80,6 +80,14 @@ export default function RetirementPlanPage() {
     }
   }, [plans, selectedPlanId]);
 
+  // Auto-select current year when plan details and user data are available
+  useEffect(() => {
+    if (planDetails && userData && !selectedYear) {
+      const currentYear = new Date().getFullYear();
+      setSelectedYear(currentYear);
+    }
+  }, [planDetails, userData, selectedYear]);
+
   // Handle year selection from timeline
   const handleYearSelect = (year: number) => {
     setSelectedYear(year);

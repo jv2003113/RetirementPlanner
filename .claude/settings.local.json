@@ -6,7 +6,8 @@
       "Bash(rm:*)",
       "Bash(npm run lint)",
       "Bash(npm run:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(lsof:*)"
     ],
     "deny": []
   }
