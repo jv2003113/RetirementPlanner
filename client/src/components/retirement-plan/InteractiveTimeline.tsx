@@ -113,7 +113,7 @@ const getPlanMilestones = (retirementAge: number, currentAge: number) => [
   }
 ];
 
-// Standard milestones that apply to all users
+// General milestones that apply to all users (same for everybody regardless of plan setup)
 const getStandardMilestones = (currentAge: number) => [
   {
     id: 'ss-early',
@@ -196,12 +196,12 @@ export default function InteractiveTimeline({
   const totalYears = endAge - startAge + 1;
   const yearWidth = 100 / totalYears;
 
-  // Get all milestones (personal + plan + standard)
+  // Get all milestones (personal + plan + general)
   const personalMilestones = milestones.filter(m => m.milestoneType === 'personal');
   const planMilestones = getPlanMilestones(retirementAge, currentAge).filter(
     m => m.targetAge >= startAge && m.targetAge <= endAge
   );
-  const standardMilestones = getStandardMilestones(currentAge).filter(
+  const generalMilestones = getStandardMilestones(currentAge).filter(
     m => m.targetAge >= startAge && m.targetAge <= endAge
   );
 
@@ -277,13 +277,13 @@ export default function InteractiveTimeline({
                   
                   // Find milestones at this age
                   const planMilestone = planMilestones.find(m => m.targetAge === age);
-                  const standardMilestone = standardMilestones.find(m => m.targetAge === age);
+                  const generalMilestone = generalMilestones.find(m => m.targetAge === age);
                   
                   // Get all milestones for this age for tooltip
                   const allMilestonesAtAge = [
                     ...planMilestones.filter(m => m.targetAge === age),
                     ...personalMilestones.filter(m => m.targetAge === age),
-                    ...standardMilestones.filter(m => m.targetAge === age)
+                    ...generalMilestones.filter(m => m.targetAge === age)
                   ];
                   
                   return (
@@ -325,15 +325,15 @@ export default function InteractiveTimeline({
                               </div>
                             )}
 
-                            {/* Standard milestone below - aligned to center */}
-                            {standardMilestone && (
-                              <div className="absolute top-6 left-1/2 transform -translate-x-1/2">
+                            {/* General milestones below - moved down to prevent overlap */}
+                            {generalMilestone && (
+                              <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
                                 <div className={`
                                   w-4 h-4 rounded-full border flex items-center justify-center shadow-sm
                                   hover:scale-125 transition-all duration-200
-                                  ${getMilestoneColor(standardMilestone.category, standardMilestone.milestoneType)}
+                                  ${getMilestoneColor(generalMilestone.category, generalMilestone.milestoneType)}
                                 `}>
-                                  {getMilestoneIcon(standardMilestone.category, standardMilestone.milestoneType, standardMilestone.title)}
+                                  {getMilestoneIcon(generalMilestone.category, generalMilestone.milestoneType, generalMilestone.title)}
                                 </div>
                               </div>
                             )}
