@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
+import { storage as dbStorage } from "./db";
 
 const app = express();
 app.use(express.json());
@@ -102,6 +103,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Populate standard milestones on startup
+  try {
+    await dbStorage.populateStandardMilestones();
+  } catch (error) {
+    console.error("Failed to populate standard milestones:", error);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

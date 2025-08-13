@@ -353,6 +353,20 @@ export const liabilities = pgTable("liabilities", {
   monthlyPayment: decimal("monthly_payment", { precision: 8, scale: 2 }),
 });
 
+// Standard milestones schema - general milestones that apply to all users
+export const standardMilestones = pgTable("standard_milestones", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  targetAge: integer("target_age").notNull(),
+  category: text("category").notNull(), // retirement, healthcare, financial, etc.
+  icon: text("icon").notNull(), // Icon name for display
+  isActive: boolean("is_active").default(true), // Allow enabling/disabling milestones
+  sortOrder: integer("sort_order").default(0), // For ordering milestones at same age
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertRetirementPlanSchema = createInsertSchema(retirementPlans).omit({
   id: true,
@@ -378,6 +392,12 @@ export const insertLiabilitySchema = createInsertSchema(liabilities).omit({
   id: true,
 });
 
+export const insertStandardMilestoneSchema = createInsertSchema(standardMilestones).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type RetirementPlan = typeof retirementPlans.$inferSelect;
 export type InsertRetirementPlan = z.infer<typeof insertRetirementPlanSchema>;
@@ -393,3 +413,6 @@ export type InsertMilestone = z.infer<typeof insertMilestoneSchema>;
 
 export type Liability = typeof liabilities.$inferSelect;
 export type InsertLiability = z.infer<typeof insertLiabilitySchema>;
+
+export type StandardMilestone = typeof standardMilestones.$inferSelect;
+export type InsertStandardMilestone = z.infer<typeof insertStandardMilestoneSchema>;

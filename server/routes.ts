@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import passport from "passport";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
+import { storage as dbStorage } from "./db";
 import {
   insertUserSchema,
   insertRetirementGoalSchema,
@@ -1252,7 +1253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Milestones routes
   app.get("/api/milestones/standard", async (req: Request, res: Response) => {
-    const milestones = await storage.getStandardMilestones();
+    const milestones = await dbStorage.getStandardMilestones();
     return res.json(milestones);
   });
 

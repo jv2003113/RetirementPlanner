@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +20,7 @@ import {
   MapPin,
   Trophy
 } from "lucide-react";
-import type { AnnualSnapshot, Milestone } from "@shared/schema";
+import type { AnnualSnapshot, Milestone, StandardMilestone } from "@shared/schema";
 
 interface InteractiveTimelineProps {
   snapshots: AnnualSnapshot[];
@@ -112,54 +113,16 @@ const getPlanMilestones = (retirementAge: number, currentAge: number) => [
   }
 ];
 
-// General milestones that apply to all users (same for everybody regardless of plan setup)
-const getStandardMilestones = (currentAge: number) => [
-  {
-    id: 'ss-early',
-    title: 'Early Social Security',
-    description: 'Eligible for reduced Social Security benefits (75% of full benefit)',
-    targetAge: 62,
-    category: 'retirement',
-    milestoneType: 'standard' as const,
-    icon: 'clock'
-  },
-  {
-    id: 'medicare',
-    title: 'Medicare Eligibility',
-    description: 'Eligible for Medicare health insurance',
-    targetAge: 65,
-    category: 'healthcare',
-    milestoneType: 'standard' as const,
-    icon: 'shield'
-  },
-  {
-    id: 'ss-full',
-    title: 'Full Retirement Age',
-    description: 'Eligible for full Social Security benefits',
-    targetAge: currentAge < 1960 ? 66 : 67, // Simplified calculation
-    category: 'retirement',
-    milestoneType: 'standard' as const,
-    icon: 'clock'
-  },
-  {
-    id: 'catch-up',
-    title: 'Catch-up Contributions',
-    description: 'Eligible for additional 401(k) and IRA contributions',
-    targetAge: 50,
-    category: 'financial',
-    milestoneType: 'standard' as const,
-    icon: 'dollar-sign'
-  },
-  {
-    id: 'rmd',
-    title: 'Required Minimum Distributions',
-    description: 'Must begin taking RMDs from retirement accounts',
-    targetAge: 73,
-    category: 'financial',
-    milestoneType: 'standard' as const,
-    icon: 'dollar-sign'
-  }
-];
+// Transform StandardMilestone to match the expected interface
+const transformStandardMilestone = (milestone: StandardMilestone) => ({
+  id: milestone.id.toString(),
+  title: milestone.title,
+  description: milestone.description,
+  targetAge: milestone.targetAge,
+  category: milestone.category,
+  milestoneType: 'standard' as const,
+  icon: milestone.icon
+});
 
 export default function InteractiveTimeline({
   snapshots,
@@ -180,6 +143,16 @@ export default function InteractiveTimeline({
   });
   const timelineRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch standard milestones from API
+  const { data: standardMilestonesData, isLoading: standardMilestonesLoading } = useQuery<StandardMilestone[]>({
+    queryKey: ["standard-milestones"],
+    queryFn: async () => {
+      const response = await fetch("/api/milestones/standard");
+      if (!response.ok) throw new Error("Failed to fetch standard milestones");
+      return response.json();
+    },
+  });
 
   // Auto-scroll to current age on mount
   useEffect(() => {
@@ -206,9 +179,12 @@ export default function InteractiveTimeline({
   const planMilestones = getPlanMilestones(retirementAge, currentAge).filter(
     m => m.targetAge >= startAge && m.targetAge <= endAge
   );
-  const generalMilestones = getStandardMilestones(currentAge).filter(
-    m => m.targetAge >= startAge && m.targetAge <= endAge
-  );
+  // Transform and filter standard milestones from API
+  const generalMilestones = standardMilestonesData 
+    ? standardMilestonesData
+        .map(transformStandardMilestone)
+        .filter(m => m.targetAge >= startAge && m.targetAge <= endAge)
+    : [];
 
   // Calculate milestone offsets to prevent overlap
   const calculateMilestoneOffset = (age: number, milestones: any[], isPersonal: boolean) => {
@@ -243,6 +219,19 @@ export default function InteractiveTimeline({
   const getPositionForAge = (age: number) => {
     return ((age - startAge) / totalYears) * 100;
   };
+
+  // Show loading state if standard milestones are still loading
+  if (standardMilestonesLoading) {
+    return (
+      <Card className="w-full">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full">

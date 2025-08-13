@@ -17,6 +17,7 @@ import {
   accountBalances, type AccountBalance, type InsertAccountBalance,
   milestones, type Milestone, type InsertMilestone,
   liabilities, type Liability, type InsertLiability,
+  standardMilestones, type StandardMilestone, type InsertStandardMilestone,
   type Recommendation, type Resource
 } from "@shared/schema";
 import { eq, desc, and } from 'drizzle-orm';
@@ -531,13 +532,6 @@ export class PostgresStorage implements IStorage {
       .orderBy(milestones.targetYear);
   }
 
-  async getStandardMilestones(): Promise<Milestone[]> {
-    return await db
-      .select()
-      .from(milestones)
-      .where(eq(milestones.milestoneType, 'standard'))
-      .orderBy(milestones.targetAge);
-  }
 
   async createMilestone(milestoneData: InsertMilestone): Promise<Milestone> {
     const results = await db
@@ -587,6 +581,77 @@ export class PostgresStorage implements IStorage {
       .where(eq(liabilities.id, id))
       .returning();
     return results[0];
+  }
+
+  // Standard milestones methods
+  async getStandardMilestones(): Promise<StandardMilestone[]> {
+    const results = await db.select().from(standardMilestones).where(eq(standardMilestones.isActive, true));
+    return results;
+  }
+
+  async createStandardMilestone(milestone: InsertStandardMilestone): Promise<StandardMilestone> {
+    const results = await db.insert(standardMilestones).values(milestone).returning();
+    return results[0];
+  }
+
+  async populateStandardMilestones(): Promise<void> {
+    // Check if milestones already exist
+    const existingMilestones = await db.select().from(standardMilestones);
+    if (existingMilestones.length > 0) {
+      console.log("Standard milestones already exist, skipping population");
+      return;
+    }
+
+    const defaultMilestones: InsertStandardMilestone[] = [
+      {
+        title: "Catch-up Contributions",
+        description: "Eligible for additional 401(k) and IRA contributions",
+        targetAge: 50,
+        category: "financial",
+        icon: "dollar-sign",
+        isActive: true,
+        sortOrder: 1,
+      },
+      {
+        title: "Early Social Security",
+        description: "Eligible for reduced Social Security benefits (75% of full benefit)",
+        targetAge: 62,
+        category: "retirement",
+        icon: "clock",
+        isActive: true,
+        sortOrder: 1,
+      },
+      {
+        title: "Medicare Eligibility",
+        description: "Eligible for Medicare health insurance",
+        targetAge: 65,
+        category: "healthcare",
+        icon: "shield",
+        isActive: true,
+        sortOrder: 1,
+      },
+      {
+        title: "Full Retirement Age",
+        description: "Eligible for full Social Security benefits",
+        targetAge: 67,
+        category: "retirement",
+        icon: "clock",
+        isActive: true,
+        sortOrder: 1,
+      },
+      {
+        title: "Required Minimum Distributions",
+        description: "Must begin taking RMDs from retirement accounts",
+        targetAge: 73,
+        category: "financial",
+        icon: "dollar-sign",
+        isActive: true,
+        sortOrder: 1,
+      },
+    ];
+
+    await db.insert(standardMilestones).values(defaultMilestones);
+    console.log(`✅ Successfully populated ${defaultMilestones.length} standard milestones`);
   }
 }
 
