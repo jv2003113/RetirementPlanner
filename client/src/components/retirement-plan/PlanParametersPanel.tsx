@@ -46,6 +46,9 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
   const formatCurrency = (amount: string | null, abbreviated = false) => {
     if (!amount) return '$0';
     const value = parseFloat(amount);
+    if (abbreviated && value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    }
     if (abbreviated && value >= 1000) {
       return `$${(value / 1000).toFixed(0)}K`;
     }
@@ -60,10 +63,20 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
     return plan.retirementAge - getCurrentAge();
   };
 
+  const getTotalIncome = () => {
+    return (
+      parseFloat(plan.estimatedSocialSecurityBenefit?.toString() || '0') +
+      parseFloat(plan.spouseEstimatedSocialSecurityBenefit?.toString() || '0') +
+      parseFloat(plan.pensionIncome?.toString() || '0') +
+      parseFloat(plan.spousePensionIncome?.toString() || '0') +
+      parseFloat(plan.otherRetirementIncome?.toString() || '0')
+    );
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <CardTitle className="text-lg">{plan.planName}</CardTitle>
             <Badge variant="outline" className="flex items-center gap-1 text-xs">
@@ -82,7 +95,7 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
               className="flex items-center gap-1 text-xs"
             >
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              {isExpanded ? 'Less' : 'More'}
+              {isExpanded ? 'Less' : 'Details'}
             </Button>
             <Button variant="outline" size="sm" onClick={onEdit} className="flex items-center gap-1">
               <Edit3 className="h-3 w-3" />
@@ -93,53 +106,53 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
       </CardHeader>
       
       <CardContent className="pt-0">
-        {/* Compact Key Parameters - Always Visible */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-          {/* Age & Timeline */}
-          <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg border">
-            <Target className="h-4 w-4 text-blue-500 mb-1" />
-            <div className="text-xs text-gray-500">Retirement Age</div>
-            <div className="font-bold text-blue-600">{formatAge(plan.retirementAge)}</div>
-          </div>
-          
-          <div className="flex flex-col items-center p-3 bg-purple-50 rounded-lg border">
-            <Clock className="h-4 w-4 text-purple-500 mb-1" />
-            <div className="text-xs text-gray-500">Life Expectancy</div>
-            <div className="font-bold text-purple-600">{formatAge(plan.endAge)}</div>
-          </div>
-          
-          <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg border">
-            <Shield className="h-4 w-4 text-green-500 mb-1" />
-            <div className="text-xs text-gray-500">SS Start Age</div>
-            <div className="font-bold text-green-600">{formatAge(plan.socialSecurityStartAge)}</div>
-          </div>
-          
-          {/* Economic Assumptions */}
-          <div className="flex flex-col items-center p-3 bg-emerald-50 rounded-lg border">
-            <TrendingUp className="h-4 w-4 text-emerald-500 mb-1" />
-            <div className="text-xs text-gray-500">Growth Rate</div>
-            <div className="font-bold text-emerald-600">{formatRate(plan.portfolioGrowthRate)}</div>
-          </div>
-          
-          <div className="flex flex-col items-center p-3 bg-yellow-50 rounded-lg border">
-            <Percent className="h-4 w-4 text-yellow-600 mb-1" />
-            <div className="text-xs text-gray-500">Inflation</div>
-            <div className="font-bold text-yellow-600">{formatRate(plan.inflationRate)}</div>
-          </div>
-          
-          {/* Retirement Spending */}
-          <div className="flex flex-col items-center p-3 bg-orange-50 rounded-lg border">
-            <Home className="h-4 w-4 text-orange-500 mb-1" />
-            <div className="text-xs text-gray-500">Annual Spending</div>
-            <div className="font-bold text-orange-600 text-xs">
-              {formatCurrency(plan.desiredAnnualRetirementSpending, true)}
+        {/* Compact Summary - Always Visible */}
+        <div className="space-y-3">
+          {/* Key Information Grid */}
+          <div className={`grid gap-3 ${isCouplePlan ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-4'}`}>
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Retire Age</div>
+              <div className="font-semibold text-blue-600">{formatAge(plan.retirementAge)}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Life Expectancy</div>
+              <div className="font-semibold text-purple-600">{formatAge(plan.endAge)}</div>
+            </div>
+            {isCouplePlan && (
+              <>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500">Spouse Retire</div>
+                  <div className="font-semibold text-pink-600">{formatAge(plan.spouseRetirementAge)}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500">Spouse Life Exp</div>
+                  <div className="font-semibold text-pink-600">{formatAge(plan.spouseEndAge)}</div>
+                </div>
+              </>
+            )}
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Growth Rate</div>
+              <div className="font-semibold text-emerald-600">{formatRate(plan.portfolioGrowthRate)}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Inflation</div>
+              <div className="font-semibold text-yellow-600">{formatRate(plan.inflationRate)}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Annual Spending</div>
+              <div className="font-semibold text-orange-600">{formatCurrency(plan.desiredAnnualRetirementSpending, true)}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-gray-500">Guaranteed Income</div>
+              <div className="font-semibold text-blue-600">{formatCurrency(getTotalIncome().toString(), true)}</div>
             </div>
           </div>
+
         </div>
 
         {/* Expanded Details - Collapsible */}
         {isExpanded && (
-          <div className="space-y-6 pt-4 border-t border-gray-100">
+          <div className="space-y-6 pt-4 border-t border-gray-100 mt-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Age & Timeline Details */}
