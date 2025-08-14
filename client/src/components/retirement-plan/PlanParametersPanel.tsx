@@ -33,6 +33,16 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
   const [isExpanded, setIsExpanded] = useState(false);
   const isCouplePlan = !!(plan.spouseStartAge && plan.spouseRetirementAge && plan.spouseEndAge);
   
+  const getPlanTypeDisplay = (planType: string | null) => {
+    switch (planType) {
+      case 'P': return 'Primary';
+      case 'A': return 'Plan-A';
+      case 'B': return 'Plan-B';
+      case 'C': return 'Plan-C';
+      default: return planType || 'Primary';
+    }
+  };
+  
   const formatRate = (rate: string | null) => {
     if (!rate) return 'N/A';
     return `${parseFloat(rate).toFixed(1)}%`;
@@ -78,13 +88,8 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <CardTitle className="text-lg">{plan.planName}</CardTitle>
-            <Badge variant="outline" className="flex items-center gap-1 text-xs">
-              {isCouplePlan ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-              {isCouplePlan ? 'Couple' : 'Single'}
-            </Badge>
-            <Badge variant="secondary" className="capitalize text-xs">
-              {plan.planType}
+            <Badge variant="secondary" className="text-xs">
+              {getPlanTypeDisplay(plan.planType)}
             </Badge>
           </div>
           <div className="flex items-center gap-2">

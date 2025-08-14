@@ -19,6 +19,7 @@ interface CreatePlanFormProps {
 interface PlanFormData {
   planName: string;
   planType: 'single' | 'couple';
+  planVariant: 'P' | 'A' | 'B' | 'C';
   
   // Primary person
   startAge: number;
@@ -59,6 +60,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
   const [formData, setFormData] = useState<PlanFormData>({
     planName: '',
     planType: 'single',
+    planVariant: 'P',
     startAge: user?.currentAge || 30,
     retirementAge: user?.targetRetirementAge || 65,
     endAge: 95,
@@ -82,7 +84,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planName: data.planName,
-          planType: 'comprehensive',
+          planType: data.planVariant,
           startAge: data.startAge,
           retirementAge: data.retirementAge,
           endAge: data.endAge,
@@ -208,6 +210,21 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                         Married Couple
                       </div>
                     </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="planVariant">Plan Variant</Label>
+                <Select value={formData.planVariant} onValueChange={(value: 'P' | 'A' | 'B' | 'C') => updateFormData('planVariant', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="P">Primary</SelectItem>
+                    <SelectItem value="A">Plan-A</SelectItem>
+                    <SelectItem value="B">Plan-B</SelectItem>
+                    <SelectItem value="C">Plan-C</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

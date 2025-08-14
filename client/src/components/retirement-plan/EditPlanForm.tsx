@@ -20,6 +20,7 @@ interface EditPlanFormProps {
 interface PlanFormData {
   planName: string;
   planType: 'single' | 'couple';
+  planVariant: 'P' | 'A' | 'B' | 'C';
   
   // Primary person
   startAge: number;
@@ -56,10 +57,21 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
+  const getPlanVariant = (planType: string | null): 'P' | 'A' | 'B' | 'C' => {
+    switch (planType) {
+      case 'P': return 'P';
+      case 'A': return 'A';
+      case 'B': return 'B';
+      case 'C': return 'C';
+      default: return 'P';
+    }
+  };
+  
   // Initialize form data with existing plan values
   const [formData, setFormData] = useState<PlanFormData>({
     planName: plan.planName,
     planType: plan.spouseStartAge ? 'couple' : 'single',
+    planVariant: getPlanVariant(plan.planType),
     startAge: plan.startAge,
     retirementAge: plan.retirementAge,
     endAge: plan.endAge || 95,
@@ -89,7 +101,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planName: data.planName,
-          planType: 'comprehensive',
+          planType: data.planVariant,
           startAge: data.startAge,
           retirementAge: data.retirementAge,
           endAge: data.endAge,
@@ -214,6 +226,21 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                         Married Couple
                       </div>
                     </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="planVariant">Plan Variant</Label>
+                <Select value={formData.planVariant} onValueChange={(value: 'P' | 'A' | 'B' | 'C') => updateFormData('planVariant', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="P">Primary</SelectItem>
+                    <SelectItem value="A">Plan-A</SelectItem>
+                    <SelectItem value="B">Plan-B</SelectItem>
+                    <SelectItem value="C">Plan-C</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
