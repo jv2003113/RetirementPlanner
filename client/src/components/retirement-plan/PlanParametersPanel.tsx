@@ -20,16 +20,18 @@ import {
   Home,
   Briefcase,
   PiggyBank,
-  Gift
+  Gift,
+  X
 } from "lucide-react";
 import type { RetirementPlan } from "@shared/schema";
 
 interface PlanParametersPanelProps {
   plan: RetirementPlan;
   onEdit: () => void;
+  onDelete?: () => void;
 }
 
-export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPanelProps) {
+export default function PlanParametersPanel({ plan, onEdit, onDelete }: PlanParametersPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const isCouplePlan = !!(plan.spouseStartAge && plan.spouseRetirementAge && plan.spouseEndAge);
   
@@ -88,9 +90,11 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="text-xs">
-              {getPlanTypeDisplay(plan.planType)}
-            </Badge>
+            {plan.planType === 'P' && (
+              <Badge variant="secondary" className="text-xs">
+                {getPlanTypeDisplay(plan.planType)}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button 
@@ -160,6 +164,15 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
         {/* Expanded Details - Collapsible */}
         {isExpanded && (
           <div className="space-y-6 pt-4 border-t border-gray-100 mt-4">
+            {/* Delete Plan Button for non-primary plans */}
+            {plan.planType !== 'P' && onDelete && (
+              <div className="flex justify-end">
+                <Button variant="destructive" size="sm" onClick={onDelete} className="flex items-center gap-1">
+                  <X className="h-3 w-3" />
+                  Delete Plan
+                </Button>
+              </div>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Age & Timeline Details */}

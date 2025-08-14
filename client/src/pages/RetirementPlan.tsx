@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, DollarSign, TrendingUp, AlertCircle, Eye, Plus, Edit3 } from "lucide-react";
+import { CalendarDays, DollarSign, TrendingUp, AlertCircle, Eye, Plus, Edit3, X } from "lucide-react";
 import TimelineComponent from "@/components/retirement-plan/TimelineComponent";
 import InteractiveTimeline from "@/components/retirement-plan/InteractiveTimeline";
 import FinancialMindMap from "@/components/retirement-plan/FinancialMindMap";
@@ -30,6 +30,38 @@ export default function RetirementPlanPage() {
   
   const { user: authUser } = useAuth();
   const userId = authUser?.id || 1;
+  const queryClient = useQueryClient();
+
+  // Delete plan mutation
+  const deletePlanMutation = useMutation({
+    mutationFn: async (planId: number) => {
+      const response = await fetch(`/api/retirement-plans/${planId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete plan');
+      return response.json();
+    },
+    onSuccess: (_, deletedPlanId) => {
+      queryClient.invalidateQueries({ queryKey: ['retirement-plans'] });
+      // If we deleted the currently selected plan, select another one
+      if (selectedPlanId === deletedPlanId && plans) {
+        const remainingPlans = plans.filter(p => p.id !== deletedPlanId);
+        if (remainingPlans.length > 0) {
+          setSelectedPlanId(remainingPlans[0].id);
+        } else {
+          setSelectedPlanId(null);
+        }
+      }
+    },
+  });
+
+  const handleDeletePlan = (planId: number, planType: string | null) => {
+    if (planType === 'P') return; // Cannot delete primary plan
+    
+    if (confirm('Are you sure you want to delete this plan? This action cannot be undone.')) {
+      deletePlanMutation.mutate(planId);
+    }
+  };
 
   // Fetch user data to get current age
   const { data: userData } = useQuery<User>({
@@ -177,23 +209,12 @@ export default function RetirementPlanPage() {
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header with Plan Tabs */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Retirement Plans</h1>
-          <Button 
-            onClick={() => setShowCreateForm(true)}
-            disabled={plans.length >= 4}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            {plans.length === 0 ? 'Create Plan' : 'Add Plan'}
-            {plans.length >= 4 && (
-              <Badge variant="secondary" className="ml-2">Max 4</Badge>
-            )}
-          </Button>
         </div>
         
         {/* Plan Tabs */}
-        <div className="flex items-center gap-1 mb-4 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center gap-3 mb-4 overflow-x-auto scrollbar-hide">
           <div className="flex bg-gray-100 rounded-lg p-1 min-w-fit">
             {plans
               .sort((a, b) => {
@@ -225,13 +246,22 @@ export default function RetirementPlanPage() {
                     }`}
                   >
                     <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-xs text-gray-500">{getPlanTypeDisplay(plan.planType)}</span>
                       <span className="text-sm font-medium">{plan.planName}</span>
                     </div>
                   </button>
                 );
               })}
           </div>
+          <Button 
+            onClick={() => setShowCreateForm(true)}
+            disabled={plans.length >= 4}
+            variant="outline"
+            size="sm"
+            className="flex items-center justify-center w-8 h-8 p-0 rounded-full"
+            title="Add new plan"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -246,6 +276,7 @@ export default function RetirementPlanPage() {
             <PlanParametersPanel 
               plan={activePlan} 
               onEdit={() => setShowEditForm(true)} 
+              onDelete={activePlan.planType !== 'P' ? () => handleDeletePlan(activePlan.id, activePlan.planType) : undefined}
             />
           )}
 
