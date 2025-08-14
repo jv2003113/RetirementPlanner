@@ -273,22 +273,38 @@ export const retirementPlans = pgTable("retirement_plans", {
   planName: text("plan_name").notNull(),
   planType: text("plan_type").default("comprehensive"), // comprehensive, roth_conversion, etc.
   
-  // Plan parameters
+  // Age & Timeline Parameters
   startAge: integer("start_age").notNull(),
   retirementAge: integer("retirement_age").notNull(),
-  endAge: integer("end_age").default(95).notNull(), // Plan horizon (death age)
+  endAge: integer("end_age").default(95).notNull(), // Life expectancy
   spouseStartAge: integer("spouse_start_age"), // For married couples
   spouseRetirementAge: integer("spouse_retirement_age"),
-  spouseEndAge: integer("spouse_end_age"),
+  spouseEndAge: integer("spouse_end_age"), // Spouse life expectancy
   
-  // Economic assumptions
-  inflationRate: decimal("inflation_rate", { precision: 5, scale: 2 }).default("3.0"), // %
-  portfolioGrowthRate: decimal("portfolio_growth_rate", { precision: 5, scale: 2 }).default("7.0"), // %
-  bondGrowthRate: decimal("bond_growth_rate", { precision: 5, scale: 2 }).default("4.0"), // %
+  // Social Security Parameters
+  socialSecurityStartAge: integer("social_security_start_age").default(67), // When to start SS
+  spouseSocialSecurityStartAge: integer("spouse_social_security_start_age"), // Spouse SS start age
+  estimatedSocialSecurityBenefit: decimal("estimated_social_security_benefit", { precision: 10, scale: 2 }).default("0"), // Annual SS benefit
+  spouseEstimatedSocialSecurityBenefit: decimal("spouse_estimated_social_security_benefit", { precision: 10, scale: 2 }).default("0"), // Spouse annual SS benefit
   
-  // Financial data
-  initialNetWorth: decimal("initial_net_worth", { precision: 12, scale: 2 }).notNull(),
-  totalLifetimeTax: decimal("total_lifetime_tax", { precision: 12, scale: 2 }).default("0"),
+  // Economic Assumptions
+  portfolioGrowthRate: decimal("portfolio_growth_rate", { precision: 5, scale: 2 }).default("7.0"), // Expected annual portfolio growth %
+  inflationRate: decimal("inflation_rate", { precision: 5, scale: 2 }).default("3.0"), // Annual inflation rate %
+  
+  // Retirement Income Sources
+  pensionIncome: decimal("pension_income", { precision: 10, scale: 2 }).default("0"), // Annual pension income
+  spousePensionIncome: decimal("spouse_pension_income", { precision: 10, scale: 2 }).default("0"), // Spouse annual pension
+  otherRetirementIncome: decimal("other_retirement_income", { precision: 10, scale: 2 }).default("0"), // Other annual income (rental, part-time, etc.)
+  
+  // Retirement Spending
+  desiredAnnualRetirementSpending: decimal("desired_annual_retirement_spending", { precision: 10, scale: 2 }).default("80000").notNull(), // Target annual spending
+  majorOneTimeExpenses: decimal("major_one_time_expenses", { precision: 12, scale: 2 }).default("0"), // One-time expenses (home, trips, etc.)
+  majorExpensesDescription: text("major_expenses_description"), // Description of major expenses
+  
+  // Legacy fields (for backwards compatibility)
+  bondGrowthRate: decimal("bond_growth_rate", { precision: 5, scale: 2 }).default("4.0"), // Keep for existing data
+  initialNetWorth: decimal("initial_net_worth", { precision: 12, scale: 2 }).default("0"), // Keep for existing data
+  totalLifetimeTax: decimal("total_lifetime_tax", { precision: 12, scale: 2 }).default("0"), // Keep for existing data
   
   // Plan metadata
   isActive: boolean("is_active").default(true),

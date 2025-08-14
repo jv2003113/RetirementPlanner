@@ -11,7 +11,16 @@ import {
   TrendingUp, 
   Percent,
   Clock,
-  Heart
+  Heart,
+  ChevronDown,
+  ChevronUp,
+  Target,
+  DollarSign,
+  Shield,
+  Home,
+  Briefcase,
+  PiggyBank,
+  Gift
 } from "lucide-react";
 import type { RetirementPlan } from "@shared/schema";
 
@@ -21,6 +30,7 @@ interface PlanParametersPanelProps {
 }
 
 export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPanelProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const isCouplePlan = !!(plan.spouseStartAge && plan.spouseRetirementAge && plan.spouseEndAge);
   
   const formatRate = (rate: string | null) => {
@@ -33,9 +43,16 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
     return age.toString();
   };
 
+  const formatCurrency = (amount: string | null, abbreviated = false) => {
+    if (!amount) return '$0';
+    const value = parseFloat(amount);
+    if (abbreviated && value >= 1000) {
+      return `$${(value / 1000).toFixed(0)}K`;
+    }
+    return `$${value.toLocaleString()}`;
+  };
+
   const getCurrentAge = () => {
-    const currentYear = new Date().getFullYear();
-    // This is a simplified calculation - in real app you'd track the plan start year
     return plan.startAge;
   };
 
@@ -43,165 +60,241 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
     return plan.retirementAge - getCurrentAge();
   };
 
-  const getPlanDuration = () => {
-    return plan.endAge - plan.startAge;
-  };
-
   return (
     <Card className="mb-6">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CardTitle className="text-xl">{plan.planName}</CardTitle>
-            <Badge variant="outline" className="flex items-center gap-1">
+            <CardTitle className="text-lg">{plan.planName}</CardTitle>
+            <Badge variant="outline" className="flex items-center gap-1 text-xs">
               {isCouplePlan ? <Users className="h-3 w-3" /> : <User className="h-3 w-3" />}
-              {isCouplePlan ? 'Couple Plan' : 'Single Plan'}
+              {isCouplePlan ? 'Couple' : 'Single'}
             </Badge>
-            <Badge variant="secondary" className="capitalize">
+            <Badge variant="secondary" className="capitalize text-xs">
               {plan.planType}
             </Badge>
           </div>
-          <Button variant="outline" size="sm" onClick={onEdit} className="flex items-center gap-2">
-            <Edit3 className="h-4 w-4" />
-            Edit Parameters
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-1 text-xs"
+            >
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {isExpanded ? 'Less' : 'More'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={onEdit} className="flex items-center gap-1">
+              <Edit3 className="h-3 w-3" />
+              Edit
+            </Button>
+          </div>
         </div>
       </CardHeader>
       
-      <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <CardContent className="pt-0">
+        {/* Compact Key Parameters - Always Visible */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
           {/* Age & Timeline */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Calendar className="h-4 w-4 text-blue-500" />
-              Age & Timeline
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-gray-500">Current Age:</span>
-                <div className="font-semibold">{formatAge(plan.startAge)}</div>
-              </div>
-              <div>
-                <span className="text-gray-500">Retirement Age:</span>
-                <div className="font-semibold">{formatAge(plan.retirementAge)}</div>
-              </div>
-              <div>
-                <span className="text-gray-500">Plan End Age:</span>
-                <div className="font-semibold">{formatAge(plan.endAge)}</div>
-              </div>
-              <div>
-                <span className="text-gray-500">Years to Retirement:</span>
-                <div className="font-semibold text-blue-600">{getYearsToRetirement()}</div>
-              </div>
-            </div>
-
-            {/* Spouse Ages (if couple plan) */}
-            {isCouplePlan && (
-              <div className="mt-4 pt-3 border-t border-gray-100">
-                <div className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                  <Heart className="h-3 w-3" />
-                  Spouse
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-gray-500">Current Age:</span>
-                    <div className="font-semibold">{formatAge(plan.spouseStartAge)}</div>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Retirement:</span>
-                    <div className="font-semibold">{formatAge(plan.spouseRetirementAge)}</div>
-                  </div>
-                  <div className="colspan-2">
-                    <span className="text-gray-500">Plan End Age:</span>
-                    <div className="font-semibold">{formatAge(plan.spouseEndAge)}</div>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg border">
+            <Target className="h-4 w-4 text-blue-500 mb-1" />
+            <div className="text-xs text-gray-500">Retirement Age</div>
+            <div className="font-bold text-blue-600">{formatAge(plan.retirementAge)}</div>
           </div>
-
+          
+          <div className="flex flex-col items-center p-3 bg-purple-50 rounded-lg border">
+            <Clock className="h-4 w-4 text-purple-500 mb-1" />
+            <div className="text-xs text-gray-500">Life Expectancy</div>
+            <div className="font-bold text-purple-600">{formatAge(plan.endAge)}</div>
+          </div>
+          
+          <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg border">
+            <Shield className="h-4 w-4 text-green-500 mb-1" />
+            <div className="text-xs text-gray-500">SS Start Age</div>
+            <div className="font-bold text-green-600">{formatAge(plan.socialSecurityStartAge)}</div>
+          </div>
+          
           {/* Economic Assumptions */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <TrendingUp className="h-4 w-4 text-green-500" />
-              Economic Assumptions
-            </div>
-            
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Inflation Rate:</span>
-                <div className="font-semibold text-yellow-600">
-                  {formatRate(plan.inflationRate)}
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Portfolio Growth:</span>
-                <div className="font-semibold text-green-600">
-                  {formatRate(plan.portfolioGrowthRate)}
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Bond Growth:</span>
-                <div className="font-semibold text-blue-600">
-                  {formatRate(plan.bondGrowthRate)}
-                </div>
-              </div>
-            </div>
-
-            {/* Real Growth Rate Calculation */}
-            <div className="mt-4 pt-3 border-t border-gray-100">
-              <div className="text-xs font-medium text-gray-600 mb-2">Real Growth Rate</div>
-              <div className="text-sm">
-                <span className="text-gray-500">After Inflation:</span>
-                <div className="font-semibold text-indigo-600">
-                  {(parseFloat(plan.portfolioGrowthRate || '7') - parseFloat(plan.inflationRate || '3')).toFixed(1)}%
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col items-center p-3 bg-emerald-50 rounded-lg border">
+            <TrendingUp className="h-4 w-4 text-emerald-500 mb-1" />
+            <div className="text-xs text-gray-500">Growth Rate</div>
+            <div className="font-bold text-emerald-600">{formatRate(plan.portfolioGrowthRate)}</div>
           </div>
-
-          {/* Plan Summary */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Clock className="h-4 w-4 text-purple-500" />
-              Plan Summary
-            </div>
-            
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Plan Duration:</span>
-                <div className="font-semibold">{getPlanDuration()} years</div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Working Years:</span>
-                <div className="font-semibold text-blue-600">{plan.retirementAge - plan.startAge}</div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Retirement Years:</span>
-                <div className="font-semibold text-green-600">{plan.endAge - plan.retirementAge}</div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Initial Net Worth:</span>
-                <div className="font-semibold">
-                  ${parseFloat(plan.initialNetWorth || '0').toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            {/* Creation Date */}
-            <div className="mt-4 pt-3 border-t border-gray-100">
-              <div className="text-xs text-gray-500">
-                Created: {new Date(plan.createdAt || '').toLocaleDateString()}
-              </div>
-              {plan.updatedAt && plan.updatedAt !== plan.createdAt && (
-                <div className="text-xs text-gray-500">
-                  Updated: {new Date(plan.updatedAt).toLocaleDateString()}
-                </div>
-              )}
+          
+          <div className="flex flex-col items-center p-3 bg-yellow-50 rounded-lg border">
+            <Percent className="h-4 w-4 text-yellow-600 mb-1" />
+            <div className="text-xs text-gray-500">Inflation</div>
+            <div className="font-bold text-yellow-600">{formatRate(plan.inflationRate)}</div>
+          </div>
+          
+          {/* Retirement Spending */}
+          <div className="flex flex-col items-center p-3 bg-orange-50 rounded-lg border">
+            <Home className="h-4 w-4 text-orange-500 mb-1" />
+            <div className="text-xs text-gray-500">Annual Spending</div>
+            <div className="font-bold text-orange-600 text-xs">
+              {formatCurrency(plan.desiredAnnualRetirementSpending, true)}
             </div>
           </div>
         </div>
+
+        {/* Expanded Details - Collapsible */}
+        {isExpanded && (
+          <div className="space-y-6 pt-4 border-t border-gray-100">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Age & Timeline Details */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Calendar className="h-4 w-4 text-blue-500" />
+                  Age & Timeline
+                </div>
+                
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Current Age:</span>
+                    <div className="font-semibold">{formatAge(plan.startAge)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Retirement Age:</span>
+                    <div className="font-semibold text-blue-600">{formatAge(plan.retirementAge)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Life Expectancy:</span>
+                    <div className="font-semibold text-purple-600">{formatAge(plan.endAge)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Years to Retirement:</span>
+                    <div className="font-semibold text-green-600">{getYearsToRetirement()}</div>
+                  </div>
+                </div>
+
+                {/* Spouse Age Details (if couple plan) */}
+                {isCouplePlan && (
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <div className="text-xs font-medium text-gray-600 mb-3 flex items-center gap-1">
+                      <Heart className="h-3 w-3 text-pink-500" />
+                      Spouse Ages
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Current Age:</span>
+                        <div className="font-semibold">{formatAge(plan.spouseStartAge)}</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Retirement Age:</span>
+                        <div className="font-semibold">{formatAge(plan.spouseRetirementAge)}</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Life Expectancy:</span>
+                        <div className="font-semibold">{formatAge(plan.spouseEndAge)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Social Security & Income Sources */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Shield className="h-4 w-4 text-green-500" />
+                  Social Security & Income
+                </div>
+                
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">SS Start Age:</span>
+                    <div className="font-semibold text-green-600">{formatAge(plan.socialSecurityStartAge)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">SS Benefit (Annual):</span>
+                    <div className="font-semibold">{formatCurrency(plan.estimatedSocialSecurityBenefit)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Pension Income:</span>
+                    <div className="font-semibold">{formatCurrency(plan.pensionIncome)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Other Income:</span>
+                    <div className="font-semibold">{formatCurrency(plan.otherRetirementIncome)}</div>
+                  </div>
+                </div>
+
+                {/* Spouse Social Security (if couple plan) */}
+                {isCouplePlan && (
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <div className="text-xs font-medium text-gray-600 mb-3 flex items-center gap-1">
+                      <Heart className="h-3 w-3 text-pink-500" />
+                      Spouse Social Security
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">SS Start Age:</span>
+                        <div className="font-semibold">{formatAge(plan.spouseSocialSecurityStartAge)}</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">SS Benefit (Annual):</span>
+                        <div className="font-semibold">{formatCurrency(plan.spouseEstimatedSocialSecurityBenefit)}</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Pension Income:</span>
+                        <div className="font-semibold">{formatCurrency(plan.spousePensionIncome)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Economic Assumptions & Spending */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <TrendingUp className="h-4 w-4 text-orange-500" />
+                  Economics & Spending
+                </div>
+                
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Portfolio Growth:</span>
+                    <div className="font-semibold text-green-600">{formatRate(plan.portfolioGrowthRate)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Inflation Rate:</span>
+                    <div className="font-semibold text-yellow-600">{formatRate(plan.inflationRate)}</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Real Growth Rate:</span>
+                    <div className="font-semibold text-indigo-600">
+                      {(parseFloat(plan.portfolioGrowthRate || '7') - parseFloat(plan.inflationRate || '3')).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Spending Details */}
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <div className="text-xs font-medium text-gray-600 mb-3 flex items-center gap-1">
+                    <Home className="h-3 w-3 text-orange-500" />
+                    Retirement Spending
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Annual Spending:</span>
+                      <div className="font-semibold text-orange-600">{formatCurrency(plan.desiredAnnualRetirementSpending)}</div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">One-time Expenses:</span>
+                      <div className="font-semibold">{formatCurrency(plan.majorOneTimeExpenses)}</div>
+                    </div>
+                    {plan.majorExpensesDescription && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                        <span className="font-medium">Major Expenses: </span>
+                        {plan.majorExpensesDescription}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -13,6 +13,7 @@ import YearDetailView from "@/components/retirement-plan/YearDetailView";
 import LifetimeTaxDisplay from "@/components/retirement-plan/LifetimeTaxDisplay";
 import PlanParametersPanel from "@/components/retirement-plan/PlanParametersPanel";
 import CreatePlanForm from "@/components/retirement-plan/CreatePlanForm";
+import EditPlanForm from "@/components/retirement-plan/EditPlanForm";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RetirementPlan, AnnualSnapshot, AccountBalance, Milestone, User } from "@shared/schema";
 
@@ -157,6 +158,21 @@ export default function RetirementPlanPage() {
     );
   }
 
+  // Show edit form if requested
+  if (showEditForm && activePlan) {
+    return (
+      <div className="container mx-auto p-6">
+        <EditPlanForm 
+          plan={activePlan}
+          onCancel={() => setShowEditForm(false)}
+          onSuccess={() => {
+            setShowEditForm(false);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header with Plan Tabs */}
@@ -218,7 +234,7 @@ export default function RetirementPlanPage() {
               selectedYear={selectedYear}
               retirementAge={activePlan.retirementAge}
               startAge={activePlan.startAge}
-              endAge={activePlan.endAge}
+              endAge={activePlan.endAge || 95}
               currentAge={userData?.currentAge || activePlan.startAge}
             />
           )}
@@ -227,7 +243,7 @@ export default function RetirementPlanPage() {
           {selectedYear && planDetails && (
             <FinancialMindMap
               year={selectedYear}
-              age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : activePlan.startAge + (selectedYear - new Date().getFullYear())}
+              age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : (activePlan?.startAge || 30) + (selectedYear - new Date().getFullYear())}
               snapshot={yearData?.snapshot || null}
               accountBalances={yearData?.accountBalances || []}
               isLoading={yearLoading}

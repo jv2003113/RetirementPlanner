@@ -1226,6 +1226,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Retirement plan not found" });
       }
       
+      // Regenerate financial projections for the updated plan
+      try {
+        await generateRetirementPlan(updatedPlan);
+      } catch (genError) {
+        console.error(`❌ Failed to regenerate projections for plan ${updatedPlan.id}:`, genError);
+        // Continue even if generation fails - user can regenerate later
+      }
+      
+      // Create an activity for this plan update
+      await storage.createActivity({
+        userId: updatedPlan.userId,
+        activityType: "retirement_plan_updated",
+        title: "Retirement Plan Updated",
+        description: `Updated retirement plan: ${updatedPlan.planName}`,
+        metadata: {
+          planId: updatedPlan.id,
+          planType: updatedPlan.planType
+        }
+      });
+      
       return res.json(updatedPlan);
     } catch (error) {
       if (error instanceof z.ZodError) {

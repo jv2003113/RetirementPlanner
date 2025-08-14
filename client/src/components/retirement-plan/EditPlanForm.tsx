@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Plus, User, Users, TrendingUp, Calendar, Shield, DollarSign, Home, PiggyBank, Briefcase } from "lucide-react";
+import { AlertCircle, Edit3, User, Users, TrendingUp, Calendar, Shield, DollarSign, Home, PiggyBank, Briefcase } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { RetirementPlan } from "@shared/schema";
 
-interface CreatePlanFormProps {
+interface EditPlanFormProps {
+  plan: RetirementPlan;
   onCancel: () => void;
-  onSuccess: (planId: number) => void;
+  onSuccess: () => void;
 }
 
 interface PlanFormData {
@@ -49,36 +50,42 @@ interface PlanFormData {
   // Economic assumptions
   inflationRate: number;
   portfolioGrowthRate: number;
-  bondGrowthRate: number;
 }
 
-export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormProps) {
+export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
+  // Initialize form data with existing plan values
   const [formData, setFormData] = useState<PlanFormData>({
-    planName: '',
-    planType: 'single',
-    startAge: user?.currentAge || 30,
-    retirementAge: user?.targetRetirementAge || 65,
-    endAge: 95,
-    inflationRate: 3.0,
-    portfolioGrowthRate: 7.0,
-    bondGrowthRate: 4.0,
-    socialSecurityStartAge: 67,
-    estimatedSocialSecurityBenefit: 30000,
-    pensionIncome: 0,
-    otherRetirementIncome: 0,
-    desiredAnnualRetirementSpending: 80000,
-    majorOneTimeExpenses: 0,
+    planName: plan.planName,
+    planType: plan.spouseStartAge ? 'couple' : 'single',
+    startAge: plan.startAge,
+    retirementAge: plan.retirementAge,
+    endAge: plan.endAge || 95,
+    spouseStartAge: plan.spouseStartAge || undefined,
+    spouseRetirementAge: plan.spouseRetirementAge || undefined,
+    spouseEndAge: plan.spouseEndAge || undefined,
+    inflationRate: parseFloat(plan.inflationRate?.toString() || '3.0'),
+    portfolioGrowthRate: parseFloat(plan.portfolioGrowthRate?.toString() || '7.0'),
+    socialSecurityStartAge: plan.socialSecurityStartAge || 67,
+    estimatedSocialSecurityBenefit: parseFloat(plan.estimatedSocialSecurityBenefit?.toString() || '0'),
+    spouseSocialSecurityStartAge: plan.spouseSocialSecurityStartAge || undefined,
+    spouseEstimatedSocialSecurityBenefit: parseFloat(plan.spouseEstimatedSocialSecurityBenefit?.toString() || '0'),
+    pensionIncome: parseFloat(plan.pensionIncome?.toString() || '0'),
+    spousePensionIncome: parseFloat(plan.spousePensionIncome?.toString() || '0'),
+    otherRetirementIncome: parseFloat(plan.otherRetirementIncome?.toString() || '0'),
+    desiredAnnualRetirementSpending: parseFloat(plan.desiredAnnualRetirementSpending?.toString() || '80000'),
+    majorOneTimeExpenses: parseFloat(plan.majorOneTimeExpenses?.toString() || '0'),
+    majorExpensesDescription: plan.majorExpensesDescription || undefined,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const createPlanMutation = useMutation({
+  const updatePlanMutation = useMutation({
     mutationFn: async (data: PlanFormData) => {
-      const response = await fetch('/api/retirement-plans', {
-        method: 'POST',
+      const response = await fetch(`/api/retirement-plans/${plan.id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planName: data.planName,
@@ -91,7 +98,6 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
           spouseEndAge: data.planType === 'couple' ? data.spouseEndAge : null,
           inflationRate: data.inflationRate.toString(),
           portfolioGrowthRate: data.portfolioGrowthRate.toString(),
-          bondGrowthRate: data.bondGrowthRate.toString(),
           socialSecurityStartAge: data.socialSecurityStartAge,
           estimatedSocialSecurityBenefit: data.estimatedSocialSecurityBenefit.toString(),
           spouseSocialSecurityStartAge: data.planType === 'couple' ? data.spouseSocialSecurityStartAge : null,
@@ -102,19 +108,19 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
           desiredAnnualRetirementSpending: data.desiredAnnualRetirementSpending.toString(),
           majorOneTimeExpenses: data.majorOneTimeExpenses.toString(),
           majorExpensesDescription: data.majorExpensesDescription,
-          initialNetWorth: "0", // Will be calculated
         }),
       });
       
       if (!response.ok) {
-        throw new Error('Failed to create plan');
+        throw new Error('Failed to update plan');
       }
       
       return response.json();
     },
-    onSuccess: (newPlan) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['retirement-plans'] });
-      onSuccess(newPlan.id);
+      queryClient.invalidateQueries({ queryKey: ['retirement-plan-details'] });
+      onSuccess();
     },
   });
 
@@ -146,7 +152,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      createPlanMutation.mutate(formData);
+      updatePlanMutation.mutate(formData);
     }
   };
 
@@ -163,11 +169,11 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Create New Retirement Plan
+            <Edit3 className="h-5 w-5" />
+            Edit Retirement Plan
           </CardTitle>
           <CardDescription>
-            Configure the key parameters for your retirement scenario analysis
+            Update the parameters for your retirement scenario analysis
           </CardDescription>
         </CardHeader>
         
@@ -556,18 +562,18 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
               </Button>
               <Button 
                 type="submit" 
-                disabled={createPlanMutation.isPending}
+                disabled={updatePlanMutation.isPending}
                 className="min-w-32"
               >
-                {createPlanMutation.isPending ? 'Creating...' : 'Create Plan'}
+                {updatePlanMutation.isPending ? 'Updating...' : 'Update Plan'}
               </Button>
             </div>
             
-            {createPlanMutation.error && (
+            {updatePlanMutation.error && (
               <Alert className="mt-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Failed to create plan. Please try again.
+                  Failed to update plan. Please try again.
                 </AlertDescription>
               </Alert>
             )}
