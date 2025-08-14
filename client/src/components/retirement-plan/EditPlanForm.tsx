@@ -20,7 +20,7 @@ interface EditPlanFormProps {
 interface PlanFormData {
   planName: string;
   planType: 'single' | 'couple';
-  planVariant: 'P' | 'A' | 'B' | 'C';
+  planVariant: 'A' | 'B' | 'C';
   
   // Primary person
   startAge: number;
@@ -57,13 +57,12 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  const getPlanVariant = (planType: string | null): 'P' | 'A' | 'B' | 'C' => {
+  const getPlanVariant = (planType: string | null): 'A' | 'B' | 'C' => {
     switch (planType) {
-      case 'P': return 'P';
       case 'A': return 'A';
       case 'B': return 'B';
       case 'C': return 'C';
-      default: return 'P';
+      default: return 'A';
     }
   };
   
@@ -232,12 +231,11 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
 
               <div>
                 <Label htmlFor="planVariant">Plan Variant</Label>
-                <Select value={formData.planVariant} onValueChange={(value: 'P' | 'A' | 'B' | 'C') => updateFormData('planVariant', value)}>
+                <Select value={formData.planVariant} onValueChange={(value: 'A' | 'B' | 'C') => updateFormData('planVariant', value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="P">Primary</SelectItem>
                     <SelectItem value="A">Plan-A</SelectItem>
                     <SelectItem value="B">Plan-B</SelectItem>
                     <SelectItem value="C">Plan-C</SelectItem>

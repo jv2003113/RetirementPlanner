@@ -102,10 +102,12 @@ export default function PlanParametersPanel({ plan, onEdit }: PlanParametersPane
               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               {isExpanded ? 'Less' : 'Details'}
             </Button>
-            <Button variant="outline" size="sm" onClick={onEdit} className="flex items-center gap-1">
-              <Edit3 className="h-3 w-3" />
-              Edit
-            </Button>
+            {plan.planType !== 'P' && (
+              <Button variant="outline" size="sm" onClick={onEdit} className="flex items-center gap-1">
+                <Edit3 className="h-3 w-3" />
+                Edit
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
