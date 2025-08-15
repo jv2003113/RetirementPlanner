@@ -1271,6 +1271,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(204).end();
   });
 
+  // Generate retirement plan endpoint - creates or updates primary plan
+  app.post("/api/retirement-plans/generate", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = getCurrentUser(req);
+      
+      // Get user's current data to build the plan
+      const userData = await storage.getUser(user.id);
+      if (!userData) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check for existing primary plan and delete it
+      const existingPlans = await storage.getRetirementPlans(user.id);
+      const existingPrimaryPlan = existingPlans.find(plan => plan.planType === 'P');
+      
+      if (existingPrimaryPlan) {
+        await storage.deleteRetirementPlan(existingPrimaryPlan.id);
+      }
+
+      // Calculate total assets from form data (if provided) or use defaults
+      const formData = req.body.formData || {};
+      const calculateTotalAssets = () => {
+        return (
+          parseInt(formData.savingsBalance || '0') +
+          parseInt(formData.checkingBalance || '0') +
+          parseInt(formData.investmentBalance || '0') +
+          parseInt(formData.retirementAccount401k || '0') +
+          parseInt(formData.retirementAccountIRA || '0') +
+          parseInt(formData.retirementAccountRoth || '0') +
+          parseInt(formData.realEstateValue || '0') +
+          parseInt(formData.otherAssetsValue || '0')
+        );
+      };
+
+      // Create retirement plan from user data with proper validation
+      const planData = {
+        userId: user.id,
+        planName: "Primary Retirement Plan",
+        planType: "P" as const, // Primary plan
+        startAge: Number(userData.currentAge) || 30,
+        retirementAge: Number(userData.targetRetirementAge) || 65,
+        endAge: 95, // Default life expectancy
+        spouseStartAge: userData.hasSpouse && userData.spouseCurrentAge ? Number(userData.spouseCurrentAge) : null,
+        spouseRetirementAge: userData.hasSpouse && userData.spouseTargetRetirementAge ? Number(userData.spouseTargetRetirementAge) : null,
+        spouseEndAge: userData.hasSpouse ? 95 : null,
+        socialSecurityStartAge: 67, // Default full retirement age
+        spouseSocialSecurityStartAge: userData.hasSpouse ? 67 : null,
+        estimatedSocialSecurityBenefit: "30000", // Default estimate
+        spouseEstimatedSocialSecurityBenefit: userData.hasSpouse ? "25000" : "0",
+        portfolioGrowthRate: "7.0", // Default growth rate
+        inflationRate: "3.0", // Default inflation rate
+        pensionIncome: "0", // Default - can be updated later
+        spousePensionIncome: "0",
+        otherRetirementIncome: "0",
+        desiredAnnualRetirementSpending: formData.expectedAnnualExpenses || "80000",
+        majorOneTimeExpenses: "0",
+        majorExpensesDescription: null,
+        bondGrowthRate: "4.0", // Default bond rate
+        initialNetWorth: calculateTotalAssets().toString(),
+        totalLifetimeTax: "0", // Will be calculated by generator
+        isActive: true
+      };
+
+      // Validate the data before creating
+      const validatedPlanData = insertRetirementPlanSchema.parse(planData);
+
+      const plan = await storage.createRetirementPlan(validatedPlanData);
+      
+      // Generate financial projections for the new plan
+      try {
+        await generateRetirementPlan(plan);
+      } catch (genError) {
+        console.error(`❌ Failed to generate projections for plan ${plan.id}:`, genError);
+        // Continue even if generation fails - user can regenerate later
+      }
+      
+      // Create an activity for this plan generation
+      await storage.createActivity({
+        userId: user.id,
+        activityType: existingPrimaryPlan ? "retirement_plan_updated" : "retirement_plan_created",
+        title: existingPrimaryPlan ? "Retirement Plan Updated" : "Retirement Plan Generated",
+        description: existingPrimaryPlan 
+          ? "Updated primary retirement plan with latest information"
+          : "Generated new primary retirement plan",
+        metadata: {
+          planId: plan.id,
+          planType: "P",
+          replacedPlanId: existingPrimaryPlan?.id
+        }
+      });
+      
+      return res.status(201).json({
+        plan,
+        message: existingPrimaryPlan ? "Retirement plan updated successfully" : "Retirement plan generated successfully"
+      });
+    } catch (error) {
+      console.error('Error generating retirement plan:', error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid plan data", 
+          errors: error.errors,
+          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+        });
+      }
+      
+      return res.status(500).json({ 
+        message: "Failed to generate retirement plan",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Milestones routes
   app.get("/api/milestones/standard", async (req: Request, res: Response) => {
     const milestones = await dbStorage.getStandardMilestones();

@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMultiStepForm, FORM_STEPS } from '@/contexts/MultiStepFormContext';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import type { RetirementPlan } from '@shared/schema';
 import { 
   PieChart, 
   Pie, 
@@ -22,12 +26,56 @@ import {
   TrendingUp,
   CheckCircle,
   Edit,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 export const ReviewStep: React.FC = () => {
   const { form, navigateToStep, canGoToStep, isStepCompleted } = useMultiStepForm();
-  const formData = form.getValues();
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  
+  // Get form data only when needed to avoid validation errors
+  const getFormData = React.useCallback(() => {
+    try {
+      return form.getValues();
+    } catch (error) {
+      console.error('Error getting form values:', error);
+      return {};
+    }
+  }, [form]);
+
+  // For display purposes, create a safe default data object
+  const formData = React.useMemo(() => {
+    try {
+      // Try to get form state without validation
+      const state = form.formState;
+      return state.defaultValues || {};
+    } catch (error) {
+      console.error('Error accessing form state:', error);
+      return {};
+    }
+  }, [form.formState]);
+  
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
+
+  // Fetch existing retirement plans to determine button text and behavior
+  const { data: existingPlans = [], isLoading: plansLoading } = useQuery<RetirementPlan[]>({
+    queryKey: ["retirement-plans"],
+    queryFn: async () => {
+      const response = await fetch("/api/retirement-plans");
+      if (!response.ok) throw new Error("Failed to fetch retirement plans");
+      return response.json();
+    },
+  });
+
+  // Check if there's already a primary plan
+  const existingPrimaryPlan = existingPlans.find(plan => plan.planType === 'P');
+  const hasExistingPlans = existingPlans.length > 0;
 
   const formatCurrency = (value: string | number | undefined) => {
     const num = typeof value === 'string' ? parseInt(value) || 0 : (value || 0);
@@ -623,9 +671,131 @@ export const ReviewStep: React.FC = () => {
                 You can edit any section by clicking on the step indicators above or navigating to specific pages.
               </p>
             </div>
+            
+            {/* Generate Retirement Plan Button - Always visible */}
+            <div className="mt-6 pt-4 border-t border-green-200">
+                <Button
+                  onClick={handleGenerateRetirementPlan}
+                  disabled={isGeneratingPlan || plansLoading}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold"
+                  size="lg"
+                >
+                  {isGeneratingPlan ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      {hasExistingPlans ? 'Updating Your Retirement Plan...' : 'Generating Your Retirement Plan...'}
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      {hasExistingPlans ? 'Update Retirement Plan' : 'Generate Retirement Plan'}
+                    </>
+                  )}
+                </Button>
+                <p className="text-center text-sm text-green-700 mt-2">
+                  {hasExistingPlans 
+                    ? 'This will update your existing retirement plan with your latest information'
+                    : 'This will create a comprehensive retirement plan with financial projections and timeline'
+                  }
+                </p>
+              </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
+
+  // Function to generate or update retirement plan
+  async function handleGenerateRetirementPlan() {
+    try {
+      setIsGeneratingPlan(true);
+      
+      // Get current form data when button is clicked
+      const currentFormData = getFormData();
+      console.log('Starting plan generation with form data:', currentFormData);
+      
+      // Clean form data to ensure it's JSON serializable
+      const cleanFormData = {};
+      for (const [key, value] of Object.entries(currentFormData)) {
+        // Only include primitive values and arrays of primitives
+        if (value !== undefined && value !== null) {
+          if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            cleanFormData[key] = value;
+          } else if (Array.isArray(value)) {
+            // Clean arrays to only include serializable items
+            cleanFormData[key] = value.filter(item => 
+              item !== null && item !== undefined && 
+              (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean' || 
+               (typeof item === 'object' && item.constructor === Object))
+            );
+          } else if (typeof value === 'object' && value.constructor === Object) {
+            // Include plain objects
+            cleanFormData[key] = value;
+          }
+        }
+      }
+      
+      console.log('Cleaned form data:', cleanFormData);
+      
+      // Call the new generate API endpoint
+      const requestBody = {
+        formData: cleanFormData // Send cleaned form data
+      };
+      
+      console.log('Request body:', requestBody);
+      
+      let stringifiedBody;
+      try {
+        stringifiedBody = JSON.stringify(requestBody);
+        console.log('Successfully stringified body');
+      } catch (jsonError) {
+        console.error('JSON stringify error:', jsonError);
+        throw new Error('Failed to serialize form data');
+      }
+      
+      const response = await fetch('/api/retirement-plans/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: stringifiedBody,
+      });
+      
+      console.log('API Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', errorData);
+        const errorMessage = errorData.details || errorData.message || `HTTP ${response.status}: Failed to generate retirement plan`;
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['retirement-plans'] });
+      
+      toast({
+        title: hasExistingPlans ? "Retirement Plan Updated!" : "Retirement Plan Generated!",
+        description: result.message || (hasExistingPlans 
+          ? "Your retirement plan has been updated with your latest information."
+          : "Your comprehensive retirement plan has been created successfully."),
+      });
+
+      // Navigate to the retirement plan page
+      setLocation('/retirement-plan');
+      
+    } catch (error) {
+      console.error('Error generating retirement plan:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : (hasExistingPlans 
+          ? "Failed to update retirement plan. Please try again."
+          : "Failed to generate retirement plan. Please try again."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  }
 };

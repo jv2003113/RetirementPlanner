@@ -19,29 +19,7 @@ const Profile = () => {
     queryKey: [`/api/users/${userId}/multi-step-form-progress`],
   });
 
-  // Determine if user should be in wizard mode
-  const shouldUseWizardMode = (user: User | undefined, progress: MultiStepFormProgress | null) => {
-    if (!user) return true;
-    
-    // If there's form progress and user hasn't completed all steps, use wizard mode
-    if (progress) {
-      const totalSteps = 8; // Total number of steps in the form
-      const isFormComplete = progress.completedSteps && Array.isArray(progress.completedSteps) && 
-                           progress.completedSteps.length >= totalSteps;
-      
-      // If form is not complete, use wizard mode
-      if (!isFormComplete) {
-        return true;
-      }
-    }
-    
-    // Check if user is new based on essential retirement planning info
-    const hasRetirementInfo = user.currentAge && user.targetRetirementAge;
-    const hasFinancialInfo = user.currentIncome && parseFloat(user.currentIncome) > 0;
-    
-    // User is "new" if they lack retirement planning data
-    return !(hasRetirementInfo && hasFinancialInfo);
-  };
+  // All users get the same step-by-step experience
 
   if (isLoadingUser || isLoadingProgress) {
     return (
@@ -53,22 +31,16 @@ const Profile = () => {
     );
   }
 
-  const userIsNew = shouldUseWizardMode(userData, formProgress);
 
   return (
     <div>
       <div className="py-4 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {userIsNew ? "Welcome to Your Retirement Planning Journey!" : "Profile & Goals"}
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile & Goals</h1>
         <p className="text-lg text-gray-600 mb-4">
-          {userIsNew 
-            ? "Let's create your personalized retirement plan step by step"
-            : "Manage your retirement planning information and goals"
-          }
+          Manage your retirement planning information and goals
         </p>
       </div>
-      <MultiStepRetirementForm userId={userId} isWizardMode={userIsNew} />
+      <MultiStepRetirementForm userId={userId} />
     </div>
   );
 };

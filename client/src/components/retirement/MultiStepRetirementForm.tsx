@@ -16,7 +16,7 @@ import { ReviewStep } from './steps/ReviewStep';
 
 // Progress indicator component
 const StepIndicator: React.FC = () => {
-  const { currentStep, completedSteps, totalSteps, navigateToStep, canGoToStep, getStepTitle, isWizardMode } = useMultiStepForm();
+  const { currentStep, completedSteps, totalSteps, navigateToStep, canGoToStep, getStepTitle } = useMultiStepForm();
   
   const steps = [
     { number: FORM_STEPS.PERSONAL_INFO, title: 'Personal', icon: User, colors: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-600', ring: 'ring-blue-200' } },
@@ -29,9 +29,7 @@ const StepIndicator: React.FC = () => {
     { number: FORM_STEPS.REVIEW, title: 'Summary', icon: FileText, colors: { bg: 'bg-gray-600', hover: 'hover:bg-gray-700', text: 'text-gray-600', ring: 'ring-gray-200' } },
   ];
 
-  const progressPercentage = isWizardMode 
-    ? (completedSteps.length / totalSteps) * 100
-    : 100; // In edit mode, show full progress
+  const progressPercentage = (completedSteps.length / totalSteps) * 100;
 
   return (
     <div className="mb-8">
@@ -111,39 +109,20 @@ const NavigationButtons: React.FC = () => {
   const { 
     currentStep, 
     prevStep, 
-    nextStep, 
-    saveCurrentStep,
+    nextStep,
     isLoading,
-    totalSteps,
-    isWizardMode
+    totalSteps
   } = useMultiStepForm();
 
   const isFirstStep = currentStep === FORM_STEPS.PERSONAL_INFO;
   const isLastStep = currentStep === FORM_STEPS.REVIEW;
 
-  // For edit mode (existing users), show save button for each step (except summary)
-  if (!isWizardMode) {
-    // Don't show any buttons on the summary step
-    if (currentStep === FORM_STEPS.REVIEW) {
-      return null;
-    }
-    
-    return (
-      <div className="flex justify-center mt-8 pt-6 border-t border-gray-200">
-        <Button
-          type="button"
-          onClick={saveCurrentStep}
-          disabled={isLoading}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
-        >
-          <Save className="w-4 h-4" />
-          <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
-        </Button>
-      </div>
-    );
+  // Don't show navigation buttons on the summary step
+  if (isLastStep) {
+    return null;
   }
 
-  // For wizard mode (new users), show navigation controls
+  // Show navigation controls for all steps
   return (
     <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
       {/* Previous button */}
@@ -158,19 +137,17 @@ const NavigationButtons: React.FC = () => {
         <span>Previous</span>
       </Button>
 
-      {/* Save & Continue button (no submit button on last step since data is already saved) */}
-      {!isLastStep && (
-        <Button
-          type="button"
-          onClick={nextStep}
-          disabled={isLoading}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
-        >
-          <Save className="w-4 h-4" />
-          <span>{isLoading ? 'Saving...' : 'Save & Continue'}</span>
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      )}
+      {/* Save & Continue button */}
+      <Button
+        type="button"
+        onClick={nextStep}
+        disabled={isLoading}
+        className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+      >
+        <Save className="w-4 h-4" />
+        <span>{isLoading ? 'Saving...' : 'Save & Continue'}</span>
+        <ArrowRight className="w-4 h-4" />
+      </Button>
     </div>
   );
 };
@@ -239,12 +216,11 @@ const MultiStepFormContent: React.FC = () => {
 // Main component with provider
 interface MultiStepRetirementFormProps {
   userId: number;
-  isWizardMode?: boolean;
 }
 
-const MultiStepRetirementForm: React.FC<MultiStepRetirementFormProps> = ({ userId, isWizardMode = false }) => {
+const MultiStepRetirementForm: React.FC<MultiStepRetirementFormProps> = ({ userId }) => {
   return (
-    <MultiStepFormProvider userId={userId} isWizardMode={isWizardMode}>
+    <MultiStepFormProvider userId={userId}>
       <div className="py-6">
         <MultiStepFormContent />
       </div>

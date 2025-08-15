@@ -176,7 +176,6 @@ interface MultiStepFormContextType {
   form: ReturnType<typeof useForm<MultiStepFormData>>;
   isLoading: boolean;
   progress: MultiStepFormProgress | null;
-  isWizardMode: boolean;
   goToStep: (step: FormStepType) => Promise<void>;
   navigateToStep: (step: FormStepType) => Promise<void>;
   nextStep: () => Promise<void>;
@@ -185,7 +184,6 @@ interface MultiStepFormContextType {
   isStepCompleted: (step: FormStepType) => boolean;
   validateCurrentStep: () => Promise<boolean>;
   saveProgress: () => Promise<void>;
-  saveCurrentStep: () => Promise<void>;
   getStepTitle: (step: FormStepType) => string;
   getStepDescription: (step: FormStepType) => string;
 }
@@ -203,10 +201,9 @@ export const useMultiStepForm = () => {
 interface MultiStepFormProviderProps {
   children: ReactNode;
   userId: number;
-  isWizardMode?: boolean;
 }
 
-export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ children, userId, isWizardMode = false }) => {
+export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ children, userId }) => {
   const [currentStep, setCurrentStep] = useState<FormStepType>(FORM_STEPS.PERSONAL_INFO);
   const [completedSteps, setCompletedSteps] = useState<FormStepType[]>([]);
   const { toast } = useToast();
@@ -392,25 +389,14 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       [FORM_STEPS.LIABILITIES]: "Liabilities & Debts",
       [FORM_STEPS.RETIREMENT_GOALS]: "Retirement Goals & Lifestyle",
       [FORM_STEPS.RISK_ASSESSMENT]: "Investment Risk Assessment",
-      [FORM_STEPS.REVIEW]: isWizardMode ? "Review & Submit Plan" : "Summary",
+      [FORM_STEPS.REVIEW]: "Summary",
     };
     return titles[step];
   };
 
   const getStepDescription = (step: FormStepType): string => {
-    const wizardDescriptions = {
-      [FORM_STEPS.PERSONAL_INFO]: "Tell us about yourself and your family to get started",
-      [FORM_STEPS.INCOME_INFO]: "Share your current and expected future income details",
-      [FORM_STEPS.CURRENT_EXPENSES]: "Help us understand your current monthly spending habits",
-      [FORM_STEPS.CURRENT_ASSETS]: "Let us know about your savings, investments, and assets", 
-      [FORM_STEPS.LIABILITIES]: "Tell us about your debts and monthly financial obligations",
-      [FORM_STEPS.RETIREMENT_GOALS]: "Describe your retirement dreams and lifestyle expectations",
-      [FORM_STEPS.RISK_ASSESSMENT]: "Help us understand your investment preferences and risk tolerance",
-      [FORM_STEPS.REVIEW]: "Review all your information before submitting your retirement plan",
-    };
-    
-    const editDescriptions = {
-      [FORM_STEPS.PERSONAL_INFO]: "Update your personal and family information",
+    const descriptions = {
+      [FORM_STEPS.PERSONAL_INFO]: "Manage your personal and family information",
       [FORM_STEPS.INCOME_INFO]: "Manage your current and expected future income",
       [FORM_STEPS.CURRENT_EXPENSES]: "Review and update your monthly spending categories",
       [FORM_STEPS.CURRENT_ASSETS]: "Update your savings, investments, and asset information",
@@ -420,24 +406,12 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       [FORM_STEPS.REVIEW]: "Review and verify all your retirement planning information",
     };
     
-    const descriptions = isWizardMode ? wizardDescriptions : editDescriptions;
     return descriptions[step];
   };
 
   const canGoToStep = (step: FormStepType): boolean => {
-    // In edit mode (not wizard mode), can go to any step
-    if (!isWizardMode) return true;
-    
-    // In wizard mode, follow the original logic
-    // Can always go to step 1
-    if (step === FORM_STEPS.PERSONAL_INFO) return true;
-    
-    // Can go to any previously completed step
-    if (completedSteps.includes(step)) return true;
-    
-    // Can go to the next step if all previous steps are completed
-    const previousStep = step - 1;
-    return completedSteps.includes(previousStep as FormStepType);
+    // Users can navigate to any step
+    return true;
   };
 
   const isStepCompleted = (step: FormStepType): boolean => {
@@ -479,17 +453,6 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
 
   const goToStep = async (step: FormStepType): Promise<void> => {
     if (!canGoToStep(step)) return;
-
-    // For edit mode, save current step data before navigating
-    if (!isWizardMode) {
-      try {
-        await saveCurrentStep();
-      } catch (error) {
-        console.error('Error saving current step:', error);
-        // Still allow navigation even if save fails in edit mode
-      }
-    }
-
     setCurrentStep(step);
   };
 
@@ -541,13 +504,16 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         setCurrentStep(nextStepNumber as FormStepType);
       }
 
+      // Check if wizard is complete (all steps done)
+      const isWizardComplete = newCompletedSteps.length >= totalSteps;
+      
       // Save progress
       await saveProgressMutation.mutateAsync({
         userId,
         currentStep: nextStepNumber <= totalSteps ? (nextStepNumber as FormStepType) : currentStep,
         completedSteps: newCompletedSteps,
         formData,
-        isCompleted: false,
+        isCompleted: isWizardComplete,
       });
     } catch (error) {
       console.error('Error saving step data:', error);
@@ -564,60 +530,6 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     }
   };
 
-  const saveCurrentStep = async (): Promise<void> => {
-    const isValid = await validateCurrentStep();
-    if (!isValid) return;
-
-    const formData = form.getValues();
-    
-    // Convert form data to user update format
-    const userUpdateData = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      currentAge: Number(formData.currentAge) || 0,
-      targetRetirementAge: Number(formData.targetRetirementAge) || 0,
-      currentLocation: formData.currentLocation,
-      maritalStatus: formData.maritalStatus,
-      dependents: Number(formData.dependents) || 0,
-      currentIncome: formData.currentIncome,
-      expectedFutureIncome: formData.expectedFutureIncome,
-      desiredLifestyle: formData.desiredLifestyle,
-      hasSpouse: formData.hasSpouse,
-      spouseFirstName: formData.spouseFirstName,
-      spouseLastName: formData.spouseLastName,
-      spouseCurrentAge: formData.spouseCurrentAge ? Number(formData.spouseCurrentAge) : undefined,
-      spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
-      spouseCurrentIncome: formData.spouseCurrentIncome,
-      spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
-      expenses: formData.expenses || [],
-      totalMonthlyExpenses: formData.totalMonthlyExpenses,
-    };
-
-    // Update user data
-    await updateUserMutation.mutateAsync(userUpdateData);
-    
-    // Mark current step as completed
-    const newCompletedSteps = Array.from(new Set([...completedSteps, currentStep]));
-    setCompletedSteps(newCompletedSteps);
-
-    // Navigate to review screen after saving (only in edit mode)
-    const finalStep = !isWizardMode ? FORM_STEPS.REVIEW : currentStep;
-    
-    // Save progress
-    await saveProgressMutation.mutateAsync({
-      userId,
-      currentStep: finalStep,
-      completedSteps: newCompletedSteps,
-      formData,
-      isCompleted: false,
-    });
-
-    // Set current step to review in edit mode
-    if (!isWizardMode) {
-      setCurrentStep(FORM_STEPS.REVIEW);
-    }
-  };
 
 
   const contextValue: MultiStepFormContextType = {
@@ -627,7 +539,6 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     form,
     isLoading: isLoadingProgress || saveProgressMutation.isPending || updateUserMutation.isPending,
     progress: progress ?? null,
-    isWizardMode,
     goToStep,
     navigateToStep,
     nextStep,
@@ -636,7 +547,6 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     isStepCompleted,
     validateCurrentStep,
     saveProgress,
-    saveCurrentStep,
     getStepTitle,
     getStepDescription,
   };
