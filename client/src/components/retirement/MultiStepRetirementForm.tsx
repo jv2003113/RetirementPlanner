@@ -19,20 +19,20 @@ const StepIndicator: React.FC = () => {
   const { currentStep, completedSteps, totalSteps, navigateToStep, canGoToStep, getStepTitle } = useMultiStepForm();
   
   const steps = [
-    { number: FORM_STEPS.PERSONAL_INFO, title: 'Personal', icon: User, colors: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-600', ring: 'ring-blue-200' } },
-    { number: FORM_STEPS.INCOME_INFO, title: 'Income', icon: DollarSign, colors: { bg: 'bg-green-600', hover: 'hover:bg-green-700', text: 'text-green-600', ring: 'ring-green-200' } },
-    { number: FORM_STEPS.CURRENT_EXPENSES, title: 'Expenses', icon: Receipt, colors: { bg: 'bg-amber-600', hover: 'hover:bg-amber-700', text: 'text-amber-600', ring: 'ring-amber-200' } },
-    { number: FORM_STEPS.CURRENT_ASSETS, title: 'Assets', icon: PiggyBank, colors: { bg: 'bg-purple-600', hover: 'hover:bg-purple-700', text: 'text-purple-600', ring: 'ring-purple-200' } },
-    { number: FORM_STEPS.LIABILITIES, title: 'Liabilities', icon: CreditCard, colors: { bg: 'bg-red-600', hover: 'hover:bg-red-700', text: 'text-red-600', ring: 'ring-red-200' } },
-    { number: FORM_STEPS.RETIREMENT_GOALS, title: 'Goals', icon: Target, colors: { bg: 'bg-orange-600', hover: 'hover:bg-orange-700', text: 'text-orange-600', ring: 'ring-orange-200' } },
-    { number: FORM_STEPS.RISK_ASSESSMENT, title: 'Risk', icon: TrendingUp, colors: { bg: 'bg-indigo-600', hover: 'hover:bg-indigo-700', text: 'text-indigo-600', ring: 'ring-indigo-200' } },
-    { number: FORM_STEPS.REVIEW, title: 'Summary', icon: FileText, colors: { bg: 'bg-gray-600', hover: 'hover:bg-gray-700', text: 'text-gray-600', ring: 'ring-gray-200' } },
+    { number: FORM_STEPS.PERSONAL_INFO, title: 'Personal', icon: User, colors: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-600', ring: 'ring-blue-200', border: 'border-blue-600' } },
+    { number: FORM_STEPS.INCOME_INFO, title: 'Income', icon: DollarSign, colors: { bg: 'bg-green-600', hover: 'hover:bg-green-700', text: 'text-green-600', ring: 'ring-green-200', border: 'border-green-600' } },
+    { number: FORM_STEPS.CURRENT_EXPENSES, title: 'Expenses', icon: Receipt, colors: { bg: 'bg-amber-600', hover: 'hover:bg-amber-700', text: 'text-amber-600', ring: 'ring-amber-200', border: 'border-amber-600' } },
+    { number: FORM_STEPS.CURRENT_ASSETS, title: 'Assets', icon: PiggyBank, colors: { bg: 'bg-purple-600', hover: 'hover:bg-purple-700', text: 'text-purple-600', ring: 'ring-purple-200', border: 'border-purple-600' } },
+    { number: FORM_STEPS.LIABILITIES, title: 'Liabilities', icon: CreditCard, colors: { bg: 'bg-red-600', hover: 'hover:bg-red-700', text: 'text-red-600', ring: 'ring-red-200', border: 'border-red-600' } },
+    { number: FORM_STEPS.RETIREMENT_GOALS, title: 'Goals', icon: Target, colors: { bg: 'bg-orange-600', hover: 'hover:bg-orange-700', text: 'text-orange-600', ring: 'ring-orange-200', border: 'border-orange-600' } },
+    { number: FORM_STEPS.RISK_ASSESSMENT, title: 'Risk', icon: TrendingUp, colors: { bg: 'bg-indigo-600', hover: 'hover:bg-indigo-700', text: 'text-indigo-600', ring: 'ring-indigo-200', border: 'border-indigo-600' } },
+    { number: FORM_STEPS.REVIEW, title: 'Summary', icon: FileText, colors: { bg: 'bg-gray-600', hover: 'hover:bg-gray-700', text: 'text-gray-600', ring: 'ring-gray-200', border: 'border-gray-600' } },
   ];
 
   const progressPercentage = (completedSteps.length / totalSteps) * 100;
 
   return (
-    <div className="mb-8">
+    <div className="mb-0">
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -43,7 +43,7 @@ const StepIndicator: React.FC = () => {
       </div>
 
       {/* Step indicators */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-end">
         {steps.map((step, index) => {
           const isCompleted = completedSteps.includes(step.number);
           const isCurrent = currentStep === step.number;
@@ -51,39 +51,52 @@ const StepIndicator: React.FC = () => {
           const StepIcon = step.icon;
 
           return (
-            <div key={step.number} className="flex flex-col items-center">
-              {/* Step circle */}
-              <button
-                type="button"
-                onClick={() => canClick && navigateToStep(step.number)}
-                disabled={!canClick}
-                className={`
-                  w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium mb-2 transition-all duration-200
-                  ${isCurrent 
-                    ? `${step.colors.bg} text-white ring-4 ${step.colors.ring} shadow-lg scale-110 transform` 
-                    : isCompleted 
-                      ? `${step.colors.bg} text-white ${step.colors.hover} scale-100 opacity-40` 
-                      : canClick
-                        ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 scale-100 opacity-35'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed scale-100 opacity-30'
-                  }
-                `}
-              >
-                <StepIcon className="w-5 h-5" />
-              </button>
-
-              {/* Step title */}
+            <div key={step.number} className="flex flex-col items-center relative">
+              {/* Step title - moved to top */}
               <span className={`
-                text-xs text-center font-medium transition-all duration-200
+                text-xs text-center font-medium transition-all duration-200 mb-2
                 ${isCurrent 
                   ? `${step.colors.text} font-bold text-sm transform scale-105`
                   : isCompleted 
-                    ? `${step.colors.text} font-medium opacity-40`
-                    : 'text-gray-500 font-normal opacity-35'
+                    ? `${step.colors.text} font-medium`
+                    : `${step.colors.text} font-normal`
                 }
               `}>
                 {step.title}
               </span>
+
+              {/* Modern tab-style container */}
+              <div className={`
+                relative px-6 py-4 transition-all duration-300
+                ${isCurrent 
+                  ? `bg-white rounded-t-xl shadow-lg border-t-2 border-l-2 border-r-2 ${step.colors.border} mb-0 z-10 pb-8`
+                  : 'bg-transparent mb-4'
+                }
+              `}>
+                {/* Connection extension for active tab */}
+                {isCurrent && (
+                  <div className={`absolute bottom-0 left-0 right-0 h-4 bg-white border-l-2 border-r-2 ${step.colors.border} z-20`} />
+                )}
+                {/* Step circle */}
+                <button
+                  type="button"
+                  onClick={() => canClick && navigateToStep(step.number)}
+                  disabled={!canClick}
+                  className={`
+                    w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
+                    ${isCurrent 
+                      ? `${step.colors.bg} text-white shadow-md scale-110 transform` 
+                      : isCompleted 
+                        ? `${step.colors.bg} text-white ${step.colors.hover} scale-100` 
+                        : canClick
+                          ? `${step.colors.bg} text-white ${step.colors.hover} scale-100`
+                          : 'bg-gray-200 text-gray-500 cursor-not-allowed scale-100'
+                    }
+                  `}
+                >
+                  <StepIcon className="w-5 h-5" />
+                </button>
+              </div>
 
               {/* Connector line */}
               {index < steps.length - 1 && (
@@ -155,6 +168,19 @@ const NavigationButtons: React.FC = () => {
 // Step content renderer
 const StepContent: React.FC = () => {
   const { currentStep, getStepTitle, getStepDescription } = useMultiStepForm();
+  
+  const steps = [
+    { number: FORM_STEPS.PERSONAL_INFO, title: 'Personal', icon: User, colors: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-600', ring: 'ring-blue-200', border: 'border-blue-600' } },
+    { number: FORM_STEPS.INCOME_INFO, title: 'Income', icon: DollarSign, colors: { bg: 'bg-green-600', hover: 'hover:bg-green-700', text: 'text-green-600', ring: 'ring-green-200', border: 'border-green-600' } },
+    { number: FORM_STEPS.CURRENT_EXPENSES, title: 'Expenses', icon: Receipt, colors: { bg: 'bg-amber-600', hover: 'hover:bg-amber-700', text: 'text-amber-600', ring: 'ring-amber-200', border: 'border-amber-600' } },
+    { number: FORM_STEPS.CURRENT_ASSETS, title: 'Assets', icon: PiggyBank, colors: { bg: 'bg-purple-600', hover: 'hover:bg-purple-700', text: 'text-purple-600', ring: 'ring-purple-200', border: 'border-purple-600' } },
+    { number: FORM_STEPS.LIABILITIES, title: 'Liabilities', icon: CreditCard, colors: { bg: 'bg-red-600', hover: 'hover:bg-red-700', text: 'text-red-600', ring: 'ring-red-200', border: 'border-red-600' } },
+    { number: FORM_STEPS.RETIREMENT_GOALS, title: 'Goals', icon: Target, colors: { bg: 'bg-orange-600', hover: 'hover:bg-orange-700', text: 'text-orange-600', ring: 'ring-orange-200', border: 'border-orange-600' } },
+    { number: FORM_STEPS.RISK_ASSESSMENT, title: 'Risk', icon: TrendingUp, colors: { bg: 'bg-indigo-600', hover: 'hover:bg-indigo-700', text: 'text-indigo-600', ring: 'ring-indigo-200', border: 'border-indigo-600' } },
+    { number: FORM_STEPS.REVIEW, title: 'Summary', icon: FileText, colors: { bg: 'bg-gray-600', hover: 'hover:bg-gray-700', text: 'text-gray-600', ring: 'ring-gray-200', border: 'border-gray-600' } },
+  ];
+
+  const currentStepData = steps.find(step => step.number === currentStep);
 
   const renderStep = () => {
     switch (currentStep) {
@@ -180,20 +206,20 @@ const StepContent: React.FC = () => {
   };
 
   return (
-    <Card className="min-h-[600px]">
-      <CardHeader className="pb-6">
-        <CardTitle className="text-2xl font-semibold text-gray-900">
+    <div className={`min-h-[600px] bg-white rounded-b-lg shadow-lg border-l-2 border-r-2 border-b-2 ${currentStepData?.colors.border || 'border-gray-300'} relative`}>
+      <div className="px-6 pt-6 pb-6">
+        <h2 className="text-2xl font-semibold text-gray-900">
           {getStepTitle(currentStep)}
-        </CardTitle>
+        </h2>
         <p className="text-gray-600 mt-1">
           {getStepDescription(currentStep)}
         </p>
-      </CardHeader>
-      <CardContent className="pb-8">
+      </div>
+      <div className="px-6 pb-8">
         {renderStep()}
         <NavigationButtons />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
