@@ -1182,7 +1182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const plan = await storage.createRetirementPlan(planData);
       
-      // Generate financial projections for the new plan
+      // Generate financial projections for the new plan - MUST complete before responding
       try {
         console.log(`🚀 Generating projections for new plan ${plan.id} (${plan.planName})`);
         await generateRetirementPlan(plan);
@@ -1191,9 +1191,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Verify data was created
         const snapshots = await storage.getAnnualSnapshots(plan.id);
         console.log(`📊 Plan ${plan.id} now has ${snapshots.length} snapshots`);
+        
+        if (snapshots.length === 0) {
+          throw new Error("Plan generation completed but no data was created");
+        }
       } catch (genError) {
         console.error(`❌ Failed to generate projections for plan ${plan.id}:`, genError);
-        // Continue even if generation fails - user can regenerate later
+        // Delete the plan if generation failed
+        await storage.deleteRetirementPlan(plan.id);
+        return res.status(500).json({ 
+          message: "Failed to generate retirement plan data",
+          error: genError instanceof Error ? genError.message : 'Unknown error'
+        });
       }
       
       // Create an activity for this plan creation
@@ -1232,12 +1241,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Retirement plan not found" });
       }
       
-      // Regenerate financial projections for the updated plan
+      // Regenerate financial projections for the updated plan - MUST complete before responding
       try {
+        console.log(`🚀 Regenerating projections for updated plan ${updatedPlan.id}...`);
         await generateRetirementPlan(updatedPlan);
+        console.log(`✅ Successfully regenerated projections for plan ${updatedPlan.id}`);
+        
+        // Verify data was created
+        const snapshots = await storage.getAnnualSnapshots(updatedPlan.id);
+        console.log(`📊 Plan ${updatedPlan.id} updated with ${snapshots.length} snapshots`);
+        
+        if (snapshots.length === 0) {
+          throw new Error("Plan regeneration completed but no data was created");
+        }
       } catch (genError) {
         console.error(`❌ Failed to regenerate projections for plan ${updatedPlan.id}:`, genError);
-        // Continue even if generation fails - user can regenerate later
+        return res.status(500).json({ 
+          message: "Failed to regenerate retirement plan data",
+          error: genError instanceof Error ? genError.message : 'Unknown error'
+        });
       }
       
       // Create an activity for this plan update
@@ -1387,12 +1409,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const plan = await storage.createRetirementPlan(validatedPlanData);
       
-      // Generate financial projections for the new plan
+      // Generate financial projections for the new plan - MUST complete before responding
       try {
+        console.log(`🚀 Starting generation for plan ${plan.id}...`);
         await generateRetirementPlan(plan);
+        console.log(`✅ Successfully completed generation for plan ${plan.id}`);
+        
+        // Verify data was created
+        const snapshots = await storage.getAnnualSnapshots(plan.id);
+        console.log(`📊 Plan ${plan.id} generated with ${snapshots.length} snapshots`);
+        
+        if (snapshots.length === 0) {
+          throw new Error("Plan generation completed but no data was created");
+        }
       } catch (genError) {
         console.error(`❌ Failed to generate projections for plan ${plan.id}:`, genError);
-        // Continue even if generation fails - user can regenerate later
+        // Delete the plan if generation failed
+        await storage.deleteRetirementPlan(plan.id);
+        return res.status(500).json({ 
+          message: "Failed to generate retirement plan data",
+          error: genError instanceof Error ? genError.message : 'Unknown error'
+        });
       }
       
       // Create an activity for this plan generation
