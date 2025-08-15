@@ -43,75 +43,148 @@ const StepIndicator: React.FC = () => {
       </div>
 
       {/* Step indicators */}
-      <div className="flex justify-between items-end">
-        {steps.map((step, index) => {
-          const isCompleted = completedSteps.includes(step.number);
-          const isCurrent = currentStep === step.number;
-          const canClick = canGoToStep(step.number);
-          const StepIcon = step.icon;
+      <div className="relative">
+        {/* Desktop view */}
+        <div className="hidden md:flex justify-between items-end relative">
+          {/* Top border line connecting tabs to page border */}
+          <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+            steps.find(step => step.number === currentStep)?.colors.bg || 'bg-gray-300'
+          } z-0`} />
+          {steps.map((step, index) => {
+            const isCompleted = completedSteps.includes(step.number);
+            const isCurrent = currentStep === step.number;
+            const canClick = canGoToStep(step.number);
+            const StepIcon = step.icon;
 
-          return (
-            <div key={step.number} className="flex flex-col items-center relative">
-              {/* Step title - moved to top */}
-              <span className={`
-                text-xs text-center font-medium transition-all duration-200 mb-2
-                ${isCurrent 
-                  ? `${step.colors.text} font-bold text-sm transform scale-105`
-                  : isCompleted 
-                    ? `${step.colors.text} font-medium`
-                    : `${step.colors.text} font-normal`
-                }
-              `}>
-                {step.title}
-              </span>
+            return (
+              <div key={step.number} className="flex flex-col items-center relative">
+                {/* Step title - moved to top */}
+                <span className={`
+                  text-xs text-center font-medium transition-all duration-200 mb-2
+                  ${isCurrent 
+                    ? `${step.colors.text} font-bold text-sm transform scale-105`
+                    : isCompleted 
+                      ? `${step.colors.text} font-medium`
+                      : `${step.colors.text} font-normal`
+                  }
+                `}>
+                  {step.title}
+                </span>
 
-              {/* Modern tab-style container */}
-              <div className={`
-                relative px-6 py-4 transition-all duration-300
-                ${isCurrent 
-                  ? `bg-white rounded-t-xl shadow-lg border-t-2 border-l-2 border-r-2 ${step.colors.border} mb-0 z-10 pb-8`
-                  : 'bg-transparent mb-4'
-                }
-              `}>
-                {/* Connection extension for active tab */}
-                {isCurrent && (
-                  <div className={`absolute bottom-0 left-0 right-0 h-4 bg-white border-l-2 border-r-2 ${step.colors.border} z-20`} />
-                )}
-                {/* Step circle */}
-                <button
-                  type="button"
-                  onClick={() => canClick && navigateToStep(step.number)}
-                  disabled={!canClick}
-                  className={`
-                    w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
-                    ${isCurrent 
-                      ? `${step.colors.bg} text-white shadow-md scale-110 transform` 
-                      : isCompleted 
-                        ? `${step.colors.bg} text-white ${step.colors.hover} scale-100` 
-                        : canClick
-                          ? `${step.colors.bg} text-white ${step.colors.hover} scale-100`
-                          : 'bg-gray-200 text-gray-500 cursor-not-allowed scale-100'
-                    }
-                  `}
-                >
-                  <StepIcon className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Connector line */}
-              {index < steps.length - 1 && (
+                {/* Modern tab-style container */}
                 <div className={`
-                  absolute h-0.5 w-full mt-5 -z-10
-                  ${isCompleted ? step.colors.bg.replace('bg-', 'bg-') : 'bg-gray-200'}
-                `} style={{ 
-                  left: '50%', 
-                  width: `calc(100% / ${steps.length - 1})`,
-                  transform: 'translateX(-50%)'
-                }} />
-              )}
-            </div>
-          );
-        })}
+                  relative px-6 py-4 transition-all duration-300
+                  ${isCurrent 
+                    ? `bg-white rounded-t-xl shadow-lg border-t-2 border-l-2 border-r-2 ${step.colors.border} mb-0 z-10 pb-8`
+                    : 'bg-transparent mb-4'
+                  }
+                `}>
+                  {/* Connection extension for active tab */}
+                  {isCurrent && (
+                    <div className={`absolute bottom-0 left-0 right-0 h-4 bg-white border-l-2 border-r-2 ${step.colors.border} z-20`} />
+                  )}
+                  {/* Step circle */}
+                  <button
+                    type="button"
+                    onClick={() => canClick && navigateToStep(step.number)}
+                    disabled={!canClick}
+                    className={`
+                      w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
+                      ${isCurrent 
+                        ? `${step.colors.bg} text-white shadow-md scale-110 transform` 
+                        : isCompleted 
+                          ? `${step.colors.bg} text-white ${step.colors.hover} scale-100` 
+                          : canClick
+                            ? `${step.colors.bg} text-white ${step.colors.hover} scale-100`
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed scale-100'
+                      }
+                    `}
+                  >
+                    <StepIcon className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Connector line */}
+                {index < steps.length - 1 && (
+                  <div className={`
+                    absolute h-0.5 w-full mt-5 -z-10
+                    ${isCompleted ? step.colors.bg.replace('bg-', 'bg-') : 'bg-gray-200'}
+                  `} style={{ 
+                    left: '50%', 
+                    width: `calc(100% / ${steps.length - 1})`,
+                    transform: 'translateX(-50%)'
+                  }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Mobile view - horizontal scroll */}
+        <div className="md:hidden relative">
+          {/* Top border line for mobile */}
+          <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+            steps.find(step => step.number === currentStep)?.colors.bg || 'bg-gray-300'
+          } z-0`} />
+          <div className="flex items-end gap-2 overflow-x-auto pb-0 scrollbar-hide">
+            {steps.map((step, index) => {
+              const isCompleted = completedSteps.includes(step.number);
+              const isCurrent = currentStep === step.number;
+              const canClick = canGoToStep(step.number);
+              const StepIcon = step.icon;
+
+              return (
+                <div key={step.number} className="flex flex-col items-center relative flex-shrink-0">
+                  {/* Step title - mobile compact */}
+                  <span className={`
+                    text-xs text-center font-medium transition-all duration-200 mb-1 whitespace-nowrap
+                    ${isCurrent 
+                      ? `${step.colors.text} font-bold`
+                      : isCompleted 
+                        ? `${step.colors.text} font-medium`
+                        : `${step.colors.text} font-normal`
+                    }
+                  `}>
+                    {step.title}
+                  </span>
+
+                  {/* Mobile tab container */}
+                  <div className={`
+                    relative px-3 py-2 transition-all duration-300
+                    ${isCurrent 
+                      ? `bg-white rounded-t-lg shadow-lg border-t-2 border-l-2 border-r-2 ${step.colors.border} mb-0 z-10 pb-4`
+                      : 'bg-transparent mb-2'
+                    }
+                  `}>
+                    {/* Connection extension for mobile */}
+                    {isCurrent && (
+                      <div className={`absolute bottom-0 left-0 right-0 h-2 bg-white border-l-2 border-r-2 ${step.colors.border} z-20`} />
+                    )}
+                    {/* Step circle - mobile size */}
+                    <button
+                      type="button"
+                      onClick={() => canClick && navigateToStep(step.number)}
+                      disabled={!canClick}
+                      className={`
+                        w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
+                        ${isCurrent 
+                          ? `${step.colors.bg} text-white shadow-md scale-105 transform` 
+                          : isCompleted 
+                            ? `${step.colors.bg} text-white ${step.colors.hover}` 
+                            : canClick
+                              ? `${step.colors.bg} text-white ${step.colors.hover}`
+                              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      <StepIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );

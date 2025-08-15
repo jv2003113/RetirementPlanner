@@ -366,11 +366,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
-      toast({
-        title: "Success",
-        description: "Your retirement plan has been saved successfully!",
-        duration: 1000,
-      });
+      // Removed toast notification for smoother UX
     },
     onError: () => {
       toast({
@@ -461,6 +457,12 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
 
   const navigateToStep = async (step: FormStepType): Promise<void> => {
     await goToStep(step);
+    // Scroll to top of page when navigating to a specific step (wait for DOM update)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
   };
 
   const nextStep = async (): Promise<void> => {
@@ -505,6 +507,12 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       const nextStepNumber = currentStep + 1;
       if (nextStepNumber <= totalSteps) {
         setCurrentStep(nextStepNumber as FormStepType);
+        // Scroll to top of page when navigating to next step (wait for DOM update)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+        });
       }
 
       // Check if wizard is complete (all steps done)
