@@ -1343,6 +1343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Generate retirement plan endpoint - creates or updates primary plan
   app.post("/api/retirement-plans/generate", requireAuth, async (req: Request, res: Response) => {
+    console.log(`🎯 ENDPOINT: /api/retirement-plans/generate called at ${new Date().toISOString()}`);
     try {
       const user = getCurrentUser(req);
       
@@ -1411,8 +1412,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate financial projections for the new plan - MUST complete before responding
       try {
-        console.log(`🚀 Starting generation for plan ${plan.id}...`);
+        console.log(`🚀 ROUTE: About to call generateRetirementPlan for plan ${plan.id}...`);
         await generateRetirementPlan(plan);
+        console.log(`🚀 ROUTE: generateRetirementPlan call completed for plan ${plan.id}...`);
         console.log(`✅ Successfully completed generation for plan ${plan.id}`);
         
         // Verify data was created
@@ -1446,6 +1448,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           replacedPlanId: existingPrimaryPlan?.id
         }
       });
+      
+      console.log(`🎯 CRITICAL: About to respond for plan ${plan.id} after generation completed`);
       
       return res.status(201).json({
         plan,

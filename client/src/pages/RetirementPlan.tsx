@@ -25,6 +25,10 @@ interface RetirementPlanWithDetails extends RetirementPlan {
 export default function RetirementPlanPage() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+  
+  // Get planId from URL params if provided
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlPlanId = urlParams.get('planId');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   
@@ -106,12 +110,27 @@ export default function RetirementPlanPage() {
     enabled: !!selectedPlanId && !!selectedYear,
   });
 
-  // Auto-select first plan if available
+  // Auto-select plan based on URL or first available plan
   useEffect(() => {
-    if (plans && plans.length > 0 && !selectedPlanId) {
-      setSelectedPlanId(plans[0].id);
+    if (plans && plans.length > 0) {
+      // If URL has planId, use that
+      if (urlPlanId) {
+        const planIdFromUrl = parseInt(urlPlanId);
+        const planExists = plans.find(p => p.id === planIdFromUrl);
+        if (planExists && selectedPlanId !== planIdFromUrl) {
+          console.log(`🎯 Selecting plan from URL: ${planIdFromUrl}`);
+          setSelectedPlanId(planIdFromUrl);
+          return;
+        }
+      }
+      
+      // Otherwise, auto-select first plan if none selected
+      if (!selectedPlanId) {
+        console.log(`📋 Auto-selecting first plan: ${plans[0].id}`);
+        setSelectedPlanId(plans[0].id);
+      }
     }
-  }, [plans, selectedPlanId]);
+  }, [plans, selectedPlanId, urlPlanId]);
 
   // Auto-select current year when plan details and user data are available
   useEffect(() => {

@@ -761,7 +761,7 @@ export const ReviewStep: React.FC = () => {
         body: stringifiedBody,
       });
       
-      console.log('API Response status:', response.status);
+      console.log(`🔄 Frontend: API call to /api/retirement-plans/generate completed with status ${response.status}`);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -771,6 +771,11 @@ export const ReviewStep: React.FC = () => {
       }
 
       const result = await response.json();
+      console.log('📦 Frontend: API response data:', result);
+      
+      // Wait a moment for backend generation to complete
+      console.log('⏳ Frontend: Waiting 2 seconds for data to be ready...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['retirement-plans'] });
@@ -782,8 +787,15 @@ export const ReviewStep: React.FC = () => {
           : "Your comprehensive retirement plan has been created successfully."),
       });
 
-      // Navigate to the retirement plan page
-      setLocation('/retirement-plan');
+      // Navigate to the retirement plan page with the new plan ID
+      const newPlanId = result.plan?.id;
+      console.log(`🚀 Frontend: Navigating to retirement plan page with plan ID ${newPlanId} at ${new Date().toISOString()}`);
+      
+      if (newPlanId) {
+        setLocation(`/retirement-plan?planId=${newPlanId}`);
+      } else {
+        setLocation('/retirement-plan');
+      }
       
     } catch (error) {
       console.error('Error generating retirement plan:', error);
