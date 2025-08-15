@@ -354,6 +354,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         title: "Error",
         description: "Failed to save progress. Please try again.",
         variant: "destructive",
+        duration: 1000,
       });
     },
   });
@@ -368,6 +369,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       toast({
         title: "Success",
         description: "Your retirement plan has been saved successfully!",
+        duration: 1000,
       });
     },
     onError: () => {
@@ -375,6 +377,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         title: "Error",
         description: "Failed to save your retirement plan. Please try again.",
         variant: "destructive",
+        duration: 1000,
       });
     },
   });
