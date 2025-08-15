@@ -1184,7 +1184,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate financial projections for the new plan
       try {
+        console.log(`🚀 Generating projections for new plan ${plan.id} (${plan.planName})`);
         await generateRetirementPlan(plan);
+        console.log(`✅ Successfully generated projections for new plan ${plan.id}`);
+        
+        // Verify data was created
+        const snapshots = await storage.getAnnualSnapshots(plan.id);
+        console.log(`📊 Plan ${plan.id} now has ${snapshots.length} snapshots`);
       } catch (genError) {
         console.error(`❌ Failed to generate projections for plan ${plan.id}:`, genError);
         // Continue even if generation fails - user can regenerate later
@@ -1269,6 +1275,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     return res.status(204).end();
+  });
+
+  // Regenerate retirement plan endpoint - for fixing plans with data gaps
+  app.post("/api/retirement-plans/:id/regenerate", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const planId = parseInt(req.params.id);
+      
+      if (isNaN(planId)) {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+      
+      // Get the existing plan
+      const plan = await storage.getRetirementPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+      
+      // Clear existing snapshots and account balances for this plan
+      await storage.clearPlanData(planId);
+      
+      // Regenerate using the unified generator
+      try {
+        await generateRetirementPlan(plan);
+      } catch (genError) {
+        console.error(`❌ Failed to regenerate projections for plan ${plan.id}:`, genError);
+        return res.status(500).json({ 
+          message: "Failed to regenerate plan data",
+          error: genError instanceof Error ? genError.message : 'Unknown error'
+        });
+      }
+      
+      return res.json({
+        plan,
+        message: "Plan data regenerated successfully with complete yearly data"
+      });
+    } catch (error) {
+      console.error('Error regenerating retirement plan:', error);
+      return res.status(500).json({ 
+        message: "Failed to regenerate retirement plan",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
 
   // Generate retirement plan endpoint - creates or updates primary plan
@@ -1464,7 +1512,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true
       });
 
-      // Create a few sample snapshots
+      // Use the unified plan generator to create complete yearly data
+      try {
+        await generateRetirementPlan(plan);
+      } catch (genError) {
+        console.error(`❌ Failed to generate demo plan projections:`, genError);
+        // Continue even if generation fails
+      }
+      
+      /* Legacy manual snapshot creation - replaced by unified generator
       const currentYear = new Date().getFullYear();
       const snapshots = [];
       
@@ -1530,6 +1586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           growth: (netWorth * 0.01).toString()
         });
       }
+      */ // End legacy manual snapshot creation
 
       // Create sample milestones
       await storage.createMilestone({

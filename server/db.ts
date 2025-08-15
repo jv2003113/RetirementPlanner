@@ -443,6 +443,25 @@ export class PostgresStorage implements IStorage {
     return results.length > 0;
   }
 
+  async clearPlanData(planId: number): Promise<void> {
+    // First delete all account balances for snapshots of this plan
+    const planSnapshots = await db
+      .select({ id: annualSnapshots.id })
+      .from(annualSnapshots)
+      .where(eq(annualSnapshots.planId, planId));
+    
+    for (const snapshot of planSnapshots) {
+      await db
+        .delete(accountBalances)
+        .where(eq(accountBalances.snapshotId, snapshot.id));
+    }
+    
+    // Then delete all annual snapshots for this plan
+    await db
+      .delete(annualSnapshots)
+      .where(eq(annualSnapshots.planId, planId));
+  }
+
   // Annual snapshots operations
   async getAnnualSnapshots(planId: number): Promise<AnnualSnapshot[]> {
     return await db

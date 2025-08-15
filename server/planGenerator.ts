@@ -73,6 +73,7 @@ export class RetirementPlanGenerator {
     let cumulativeTax = 0;
     
     // Calculate for each year from start to end age
+    console.log(`🧮 Calculating projections from age ${this.plan.startAge} to ${this.plan.endAge} for plan ${this.plan.id}`);
     for (let age = this.plan.startAge; age <= this.plan.endAge; age++) {
       const year = currentYear + (age - this.plan.startAge);
       const isRetired = age >= this.plan.retirementAge;
@@ -195,8 +196,9 @@ export class RetirementPlanGenerator {
   }
 
   private async createAnnualSnapshots(projections: FinancialProjection[]): Promise<void> {
-    // Create snapshots every 5 years to match existing pattern
-    for (let i = 0; i < projections.length; i += 5) {
+    // Create snapshots for every year to ensure complete timeline data
+    console.log(`🔄 Creating ${projections.length} annual snapshots for plan ${this.plan.id}`);
+    for (let i = 0; i < projections.length; i++) {
       const projection = projections[i];
       
       const snapshot = await storage.createAnnualSnapshot({

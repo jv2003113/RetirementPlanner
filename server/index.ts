@@ -8,6 +8,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
 import { storage as dbStorage } from "./db";
+import { applyCacheHeaders } from "./cache-middleware";
 
 const app = express();
 app.use(express.json());
@@ -71,6 +72,9 @@ passport.deserializeUser(async (id: number, done) => {
     done(error);
   }
 });
+
+// Apply cache headers before other middleware
+app.use(applyCacheHeaders);
 
 app.use((req, res, next) => {
   const start = Date.now();

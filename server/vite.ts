@@ -62,7 +62,12 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      
+      // Set no-cache headers for HTML in development
+      res.status(200).set({ 
+        "Content-Type": "text/html",
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
@@ -79,10 +84,41 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Serve static assets with appropriate cache headers
+  app.use(express.static(distPath, {
+    maxAge: 0, // Default to no cache, we'll set specific headers below
+    setHeaders: (res, filePath) => {
+      const ext = path.extname(filePath).toLowerCase();
+      
+      // Check if file has version hash (Vite typically adds hashes to built files)
+      const hasVersionHash = /\.[a-f0-9]{8,}\.(js|css|woff2?|ttf|eot)$/i.test(filePath);
+      
+      if (hasVersionHash) {
+        // Versioned files can be cached for a long time
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } else if (['.js', '.css', '.mjs'].includes(ext)) {
+        // Non-versioned JS/CSS files (like main chunks) - cache briefly
+        res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+      } else if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp'].includes(ext)) {
+        // Images - cache for 1 week
+        res.setHeader('Cache-Control', 'public, max-age=604800');
+      } else if (['.woff', '.woff2', '.ttf', '.eot', '.otf'].includes(ext)) {
+        // Fonts - cache for 1 month
+        res.setHeader('Cache-Control', 'public, max-age=2592000');
+      } else if (['.html', '.htm'].includes(ext)) {
+        // HTML files - no cache for SPA routing
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      } else {
+        // Other files - short cache
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+      }
+    }
+  }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
+    // Don't cache the main HTML file for SPA routing
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
