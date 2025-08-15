@@ -31,17 +31,19 @@ const MobileNav = () => {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-10">
       {navItems.map((item) => (
-        <Link href={item.path} key={item.path}>
-          <a className="flex flex-col items-center px-2 py-1">
-            <span
-              className={cn(
-                location === item.path ? "text-primary" : "text-gray-500"
-              )}
-            >
-              {item.icon}
-            </span>
-            <span className="text-xs mt-1">{item.label}</span>
-          </a>
+        <Link 
+          href={item.path} 
+          key={item.path}
+          className="flex flex-col items-center px-2 py-1"
+        >
+          <span
+            className={cn(
+              location === item.path ? "text-primary" : "text-gray-500"
+            )}
+          >
+            {item.icon}
+          </span>
+          <span className="text-xs mt-1">{item.label}</span>
         </Link>
       ))}
       <button 
