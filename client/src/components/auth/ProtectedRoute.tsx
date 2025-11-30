@@ -15,19 +15,20 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const userId = authUser?.id || 1;
 
   // Fetch user data to check if profile is complete
-  const { data: userData, isLoading: isLoadingUser } = useQuery<User>({
+  const { data: userData, isLoading: isLoadingUser, error } = useQuery<User>({
     queryKey: [`/api/users/${userId}`],
     enabled: !!authUser && isAuthenticated,
+    retry: false,
   });
 
   // Check if user is new (has minimal profile information)
   const isNewUser = (user: User | undefined) => {
     if (!user) return true;
-    
+
     // Consider user "new" if they haven't filled out essential retirement planning info
     const hasRetirementInfo = user.currentAge && user.targetRetirementAge;
     const hasFinancialInfo = user.currentIncome && parseFloat(user.currentIncome) > 0;
-    
+
     // User is "new" if they lack retirement planning data
     return !(hasRetirementInfo && hasFinancialInfo);
   };
@@ -48,6 +49,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    return null;
   }
 
   if (!isAuthenticated) {

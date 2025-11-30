@@ -166,16 +166,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", (req: Request, res: Response, next) => {
     passport.authenticate('local', (err: any, user: any, info: any) => {
       if (err) {
+        console.error('Auth error:', err);
         return res.status(500).json({ message: "Authentication error" });
       }
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
+
       req.login(user, (err) => {
         if (err) {
+          console.error('Login error:', err);
           return res.status(500).json({ message: "Login failed" });
         }
-        return res.json({ message: "Login successful", user });
+
+        // Explicitly save the session before sending response
+        req.session.save((err) => {
+          if (err) {
+            console.error('Session save error:', err);
+            return res.status(500).json({ message: "Session save failed" });
+          }
+          console.log('✓ User', user.id, 'logged in successfully with session', req.sessionID);
+          return res.json({ message: "Login successful", user });
+        });
       });
     })(req, res, next);
   });

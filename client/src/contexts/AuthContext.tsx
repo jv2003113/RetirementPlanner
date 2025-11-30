@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       return data.user;
     },
-    retry: false,
+    retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -93,7 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     onSuccess: (data) => {
       setUser(data.user);
       queryClient.setQueryData(['auth', 'me'], data.user);
-      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      // Don't invalidate immediately - let the cookie be processed first
+      // The query will be refetched naturally when needed
     },
   });
 
@@ -119,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     onSuccess: (data) => {
       setUser(data.user);
       queryClient.setQueryData(['auth', 'me'], data.user);
-      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      // Don't invalidate immediately - let the cookie be processed first
     },
   });
 

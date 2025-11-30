@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import NotFound from "@/pages/not-found";
 import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
@@ -73,8 +74,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <ErrorBoundary>
+          <Router />
+          <Toaster />
+        </ErrorBoundary>
       </AuthProvider>
     </QueryClientProvider>
   );

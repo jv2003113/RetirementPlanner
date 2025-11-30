@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import createMemoryStore from "memorystore";
+const MemoryStore = createMemoryStore(session);
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcrypt";
@@ -11,24 +13,70 @@ import { storage as dbStorage } from "./db";
 import { applyCacheHeaders } from "./cache-middleware";
 
 const app = express();
+
+// Disable trust proxy to prevent express-session from auto-setting secure: true
+app.set('trust proxy', false);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Configure session middleware
-app.use(session({
+const sessionConfig: any = {
+  store: new MemoryStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
   secret: process.env.SESSION_SECRET || 'retirement-planner-secret',
+  name: 'retirement.sid', // Explicit cookie name
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: app.get('env') === 'production', // true in production, false in dev
     httpOnly: true,
+    sameSite: 'lax' as const,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/',
   },
-}));
+};
+
+// However, since we are running on localhost even in "production" mode (npm start),
+// we must ensure secure is false if we are not behind a proxy that handles https.
+// The user is accessing via http://localhost:5000, so secure MUST be false.
+if (process.env.NODE_ENV === 'production') {
+  // Check if we are actually on HTTPS. If not, force secure to false.
+  // For this local setup, we assume HTTP.
+  sessionConfig.cookie.secure = false;
+}
+
+// Force cookie.secure to false in development
+if (app.get('env') !== 'production') {
+  sessionConfig.cookie.secure = false;
+}
+
+app.use(session(sessionConfig));
 
 // Configure Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Debug middleware to log cookies
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/auth')) {
+    console.log(`[Cookie Debug] ${req.method} ${req.path}`);
+    console.log('  Incoming cookies:', req.headers.cookie || 'none');
+    console.log('  Session ID:', req.sessionID);
+    console.log('  Is authenticated:', req.isAuthenticated?.());
+
+    // Intercept res.setHeader to log Set-Cookie
+    const originalSetHeader = res.setHeader.bind(res);
+    res.setHeader = function (name: string, value: any) {
+      if (name.toLowerCase() === 'set-cookie') {
+        console.log('  Outgoing Set-Cookie:', value);
+      }
+      return originalSetHeader(name, value);
+    };
+  }
+  next();
+});
 
 // Configure Passport Local Strategy
 passport.use(new LocalStrategy({

@@ -28,23 +28,28 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
+    async ({ queryKey }) => {
+      const res = await fetch(queryKey[0] as string, {
+        credentials: "include",
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
+      if (res.status === 401) {
+        if (unauthorizedBehavior === "returnNull") {
+          return null;
+        }
+        // For "throw" behavior, we still want to be careful not to crash the app
+        // but we'll throw so the error boundary or query error handler can catch it
+        throw new Error("Unauthorized");
+      }
 
-    // Handle 304 Not Modified - return null to trigger a fresh fetch
-    if (res.status === 304) {
-      return null;
-    }
+      // Handle 304 Not Modified - return null to trigger a fresh fetch
+      if (res.status === 304) {
+        return null;
+      }
 
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
+      await throwIfResNotOk(res);
+      return await res.json();
+    };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
