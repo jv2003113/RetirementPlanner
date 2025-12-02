@@ -218,8 +218,8 @@ export default function FinancialDashboard({
                         <CardTitle className="text-lg">Asset Allocation</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px] w-full flex flex-col md:flex-row items-center">
-                            <div className="h-full w-full md:w-1/2">
+                        <div className="w-full flex flex-col md:flex-row items-center md:h-[300px]">
+                            <div className="h-[300px] md:h-full w-full md:w-1/2">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie

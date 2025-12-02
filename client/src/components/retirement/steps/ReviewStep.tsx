@@ -8,21 +8,21 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RetirementPlan } from '@shared/schema';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
+import {
+  PieChart,
+  Pie,
+  Cell,
   ResponsiveContainer,
   Legend,
   Tooltip
 } from "recharts";
-import { 
-  User, 
-  DollarSign, 
+import {
+  User,
+  DollarSign,
   Receipt,
-  PiggyBank, 
-  CreditCard, 
-  Target, 
+  PiggyBank,
+  CreditCard,
+  Target,
   TrendingUp,
   CheckCircle,
   Edit,
@@ -35,7 +35,7 @@ import { useLocation } from 'wouter';
 export const ReviewStep: React.FC = () => {
   const { form, navigateToStep, canGoToStep, isStepCompleted } = useMultiStepForm();
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
-  
+
   // Get form data only when needed to avoid validation errors
   const getFormData = React.useCallback(() => {
     try {
@@ -49,7 +49,7 @@ export const ReviewStep: React.FC = () => {
   // For display purposes, get the current form values (not defaultValues)
   // Using watch() to make it reactive to form changes
   const formData = form.watch();
-  
+
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -153,23 +153,23 @@ export const ReviewStep: React.FC = () => {
   const prepareExpensesChartData = () => {
     const expenses = formData.expenses || [];
     const categoryTotals: Record<string, number> = {};
-    
+
     expenses.forEach((expense: any) => {
       if (expense.category && expense.amount && parseFloat(expense.amount) > 0) {
         const categoryLabel = expense.category.charAt(0).toUpperCase() + expense.category.slice(1).replace('_', ' ');
         categoryTotals[categoryLabel] = (categoryTotals[categoryLabel] || 0) + parseFloat(expense.amount);
       }
     });
-    
+
     return Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
   };
 
-  const SectionHeader = ({ 
-    title, 
-    stepNumber, 
-    icon: Icon, 
-    isComplete, 
-    onEdit 
+  const SectionHeader = ({
+    title,
+    stepNumber,
+    icon: Icon,
+    isComplete,
+    onEdit
   }: {
     title: string;
     stepNumber: number;
@@ -303,7 +303,7 @@ export const ReviewStep: React.FC = () => {
               </>
             )}
             <div className="md:col-span-2">
-              <strong>Total Annual Income:</strong> 
+              <strong>Total Annual Income:</strong>
               <span className="text-lg font-semibold ml-2 text-green-600">
                 {formatCurrency(calculateTotalIncome())}
               </span>
@@ -338,30 +338,35 @@ export const ReviewStep: React.FC = () => {
                           outerRadius={100}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         >
                           {expensesChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
+
                         <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                        <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="space-y-2">
-                    {expensesChartData.map((item, index) => (
-                      <div key={item.name} className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <div 
-                            className="w-4 h-4 rounded"
-                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                          />
-                          <span className="text-sm font-medium">{item.name}</span>
+                    {expensesChartData.map((item, index) => {
+                      const total = calculateTotalExpenses();
+                      const percent = total > 0 ? (item.value / total) * 100 : 0;
+                      return (
+                        <div key={item.name} className="flex justify-between items-center">
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className="w-4 h-4 rounded"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            />
+                            <span className="text-sm font-medium">{item.name}</span>
+                          </div>
+                          <span className="text-sm font-semibold">
+                            {formatCurrency(item.value)} <span className="text-gray-500 font-normal">({percent.toFixed(0)}%)</span>
+                          </span>
                         </div>
-                        <span className="text-sm font-semibold">{formatCurrency(item.value)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
@@ -406,30 +411,34 @@ export const ReviewStep: React.FC = () => {
                           outerRadius={100}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         >
                           {assetsChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                        <Legend />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="space-y-2">
-                    {assetsChartData.map((item, index) => (
-                      <div key={item.name} className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <div 
-                            className="w-4 h-4 rounded"
-                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                          />
-                          <span className="text-sm font-medium">{item.name}</span>
+                    {assetsChartData.map((item, index) => {
+                      const total = calculateTotalAssets();
+                      const percent = total > 0 ? (item.value / total) * 100 : 0;
+                      return (
+                        <div key={item.name} className="flex justify-between items-center">
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className="w-4 h-4 rounded"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            />
+                            <span className="text-sm font-medium">{item.name}</span>
+                          </div>
+                          <span className="text-sm font-semibold">
+                            {formatCurrency(item.value)} <span className="text-gray-500 font-normal">({percent.toFixed(0)}%)</span>
+                          </span>
                         </div>
-                        <span className="text-sm font-semibold">{formatCurrency(item.value)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
@@ -474,7 +483,6 @@ export const ReviewStep: React.FC = () => {
                           outerRadius={100}
                           fill="#8884d8"
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         >
                           {liabilitiesChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -486,18 +494,24 @@ export const ReviewStep: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                   <div className="space-y-2">
-                    {liabilitiesChartData.map((item, index) => (
-                      <div key={item.name} className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <div 
-                            className="w-4 h-4 rounded"
-                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                          />
-                          <span className="text-sm font-medium">{item.name}</span>
+                    {liabilitiesChartData.map((item, index) => {
+                      const total = calculateTotalDebt();
+                      const percent = total > 0 ? (item.value / total) * 100 : 0;
+                      return (
+                        <div key={item.name} className="flex justify-between items-center">
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className="w-4 h-4 rounded"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            />
+                            <span className="text-sm font-medium">{item.name}</span>
+                          </div>
+                          <span className="text-sm font-semibold">
+                            {formatCurrency(item.value)} <span className="text-gray-500 font-normal">({percent.toFixed(0)}%)</span>
+                          </span>
                         </div>
-                        <span className="text-sm font-semibold">{formatCurrency(item.value)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
@@ -533,7 +547,7 @@ export const ReviewStep: React.FC = () => {
           />
           <div className="space-y-3 text-sm">
             <div>
-              <strong>Desired Lifestyle:</strong> 
+              <strong>Desired Lifestyle:</strong>
               <Badge variant="secondary" className="ml-2 capitalize">
                 {formData.desiredLifestyle || 'Not specified'}
               </Badge>
@@ -542,7 +556,7 @@ export const ReviewStep: React.FC = () => {
               <strong>Expected Annual Expenses:</strong> {formatCurrency(formData.expectedAnnualExpenses)}
             </div>
             <div>
-              <strong>Healthcare Expectations:</strong> 
+              <strong>Healthcare Expectations:</strong>
               <span className="ml-2 capitalize">
                 {formData.healthcareExpectations?.replace('-', ' ') || 'Not specified'}
               </span>
@@ -640,7 +654,7 @@ export const ReviewStep: React.FC = () => {
               </div>
               <div>
                 <div className="text-xl font-bold text-green-900">
-                  {formData.targetRetirementAge ? 
+                  {formData.targetRetirementAge ?
                     Math.max(0, formData.targetRetirementAge - (formData.currentAge || 0)) : 0} years
                 </div>
                 <div className="text-sm text-green-700">Until Retirement</div>
@@ -652,49 +666,49 @@ export const ReviewStep: React.FC = () => {
                 <div className="text-sm text-green-700">Annual Retirement Goal</div>
               </div>
             </div>
-            
+
             <div className="text-center text-green-800 bg-green-100 p-4 rounded-lg">
               <div className="flex items-center justify-center space-x-2 mb-2">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <span className="font-semibold">Your retirement plan is complete!</span>
               </div>
               <p className="text-sm">
-                All your information has been saved automatically as you progressed through each step. 
+                All your information has been saved automatically as you progressed through each step.
                 You can edit any section by clicking on the step indicators above or navigating to specific pages.
               </p>
             </div>
-            
+
             {/* Generate Retirement Plan Button - Always visible */}
             <div className="mt-6 pt-4 border-t border-green-200">
-                <Button
-                  onClick={handleGenerateRetirementPlan}
-                  disabled={isGeneratingPlan || plansLoading}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold"
-                  size="lg"
-                >
-                  {isGeneratingPlan ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      {hasExistingPlans ? 'Updating Your Retirement Plan...' : 'Generating Your Retirement Plan...'}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      {hasExistingPlans ? 'Update Retirement Plan' : 'Generate Retirement Plan'}
-                    </>
-                  )}
-                </Button>
-                <p className="text-center text-sm text-green-700 mt-2">
-                  {hasExistingPlans 
-                    ? 'This will update your existing retirement plan with your latest information'
-                    : 'This will create a comprehensive retirement plan with financial projections and timeline'
-                  }
-                </p>
-              </div>
+              <Button
+                onClick={handleGenerateRetirementPlan}
+                disabled={isGeneratingPlan || plansLoading}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold"
+                size="lg"
+              >
+                {isGeneratingPlan ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    {hasExistingPlans ? 'Updating Your Retirement Plan...' : 'Generating Your Retirement Plan...'}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    {hasExistingPlans ? 'Update Retirement Plan' : 'Generate Retirement Plan'}
+                  </>
+                )}
+              </Button>
+              <p className="text-center text-sm text-green-700 mt-2">
+                {hasExistingPlans
+                  ? 'This will update your existing retirement plan with your latest information'
+                  : 'This will create a comprehensive retirement plan with financial projections and timeline'
+                }
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 
   // Function to generate or update retirement plan
@@ -709,7 +723,7 @@ export const ReviewStep: React.FC = () => {
       console.log('Target retirement age:', currentFormData.targetRetirementAge);
       console.log('Assets - Savings:', currentFormData.savingsBalance);
       console.log('Assets - 401k:', currentFormData.retirementAccount401k);
-      
+
       // Clean form data to ensure it's JSON serializable
       const cleanFormData = {};
       for (const [key, value] of Object.entries(currentFormData)) {
@@ -719,10 +733,10 @@ export const ReviewStep: React.FC = () => {
             cleanFormData[key] = value;
           } else if (Array.isArray(value)) {
             // Clean arrays to only include serializable items
-            cleanFormData[key] = value.filter(item => 
-              item !== null && item !== undefined && 
-              (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean' || 
-               (typeof item === 'object' && item.constructor === Object))
+            cleanFormData[key] = value.filter(item =>
+              item !== null && item !== undefined &&
+              (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean' ||
+                (typeof item === 'object' && item.constructor === Object))
             );
           } else if (typeof value === 'object' && value.constructor === Object) {
             // Include plain objects
@@ -730,16 +744,16 @@ export const ReviewStep: React.FC = () => {
           }
         }
       }
-      
+
       console.log('Cleaned form data:', cleanFormData);
-      
+
       // Call the new generate API endpoint
       const requestBody = {
         formData: cleanFormData // Send cleaned form data
       };
-      
+
       console.log('Request body:', requestBody);
-      
+
       let stringifiedBody;
       try {
         stringifiedBody = JSON.stringify(requestBody);
@@ -748,7 +762,7 @@ export const ReviewStep: React.FC = () => {
         console.error('JSON stringify error:', jsonError);
         throw new Error('Failed to serialize form data');
       }
-      
+
       const response = await fetch('/api/retirement-plans/generate', {
         method: 'POST',
         headers: {
@@ -756,7 +770,7 @@ export const ReviewStep: React.FC = () => {
         },
         body: stringifiedBody,
       });
-      
+
       console.log(`🔄 Frontend: API call to /api/retirement-plans/generate completed with status ${response.status}`);
 
       if (!response.ok) {
@@ -768,17 +782,17 @@ export const ReviewStep: React.FC = () => {
 
       const result = await response.json();
       console.log('📦 Frontend: API response data:', result);
-      
+
       // Wait a moment for backend generation to complete
       console.log('⏳ Frontend: Waiting 2 seconds for data to be ready...');
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['retirement-plans'] });
-      
+
       toast({
         title: hasExistingPlans ? "Retirement Plan Updated!" : "Retirement Plan Generated!",
-        description: result.message || (hasExistingPlans 
+        description: result.message || (hasExistingPlans
           ? "Your retirement plan has been updated with your latest information."
           : "Your comprehensive retirement plan has been created successfully."),
       });
@@ -786,18 +800,18 @@ export const ReviewStep: React.FC = () => {
       // Navigate to the retirement plan page with the new plan ID
       const newPlanId = result.plan?.id;
       console.log(`🚀 Frontend: Navigating to retirement plan page with plan ID ${newPlanId} at ${new Date().toISOString()}`);
-      
+
       if (newPlanId) {
         setLocation(`/retirement-plan?planId=${newPlanId}`);
       } else {
         setLocation('/retirement-plan');
       }
-      
+
     } catch (error) {
       console.error('Error generating retirement plan:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : (hasExistingPlans 
+        description: error instanceof Error ? error.message : (hasExistingPlans
           ? "Failed to update retirement plan. Please try again."
           : "Failed to generate retirement plan. Please try again."),
         variant: "destructive",
