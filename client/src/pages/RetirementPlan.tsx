@@ -41,6 +41,7 @@ export default function RetirementPlanPage() {
     mutationFn: async (planId: number) => {
       const response = await fetch(`/api/retirement-plans/${planId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to delete plan');
       return response.json();
@@ -76,7 +77,9 @@ export default function RetirementPlanPage() {
   const { data: plans, isLoading: plansLoading } = useQuery<RetirementPlan[]>({
     queryKey: ["retirement-plans"],
     queryFn: async () => {
-      const response = await fetch("/api/retirement-plans");
+      const response = await fetch("/api/retirement-plans", {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error("Failed to fetch retirement plans");
       return response.json();
     },
@@ -86,7 +89,9 @@ export default function RetirementPlanPage() {
     queryKey: ["retirement-plan-details", selectedPlanId],
     queryFn: async () => {
       if (!selectedPlanId) return null;
-      const response = await fetch(`/api/retirement-plans/${selectedPlanId}/details`);
+      const response = await fetch(`/api/retirement-plans/${selectedPlanId}/details`, {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error("Failed to fetch plan details");
       return response.json();
     },
@@ -97,7 +102,9 @@ export default function RetirementPlanPage() {
     queryKey: ["year-details", selectedPlanId, selectedYear],
     queryFn: async () => {
       if (!selectedPlanId || !selectedYear) return null;
-      const response = await fetch(`/api/retirement-plans/${selectedPlanId}/year/${selectedYear}`);
+      const response = await fetch(`/api/retirement-plans/${selectedPlanId}/year/${selectedYear}`, {
+        credentials: 'include',
+      });
       if (!response.ok) {
         if (response.status === 404) {
           // Year data doesn't exist, return null instead of throwing

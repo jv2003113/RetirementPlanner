@@ -701,10 +701,14 @@ export const ReviewStep: React.FC = () => {
   async function handleGenerateRetirementPlan() {
     try {
       setIsGeneratingPlan(true);
-      
+
       // Get current form data when button is clicked
       const currentFormData = getFormData();
       console.log('Starting plan generation with form data:', currentFormData);
+      console.log('Current age:', currentFormData.currentAge);
+      console.log('Target retirement age:', currentFormData.targetRetirementAge);
+      console.log('Assets - Savings:', currentFormData.savingsBalance);
+      console.log('Assets - 401k:', currentFormData.retirementAccount401k);
       
       // Clean form data to ensure it's JSON serializable
       const cleanFormData = {};

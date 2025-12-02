@@ -1112,39 +1112,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.json(plans);
   });
 
-  app.get("/api/retirement-plans/:id", requireAuth, async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
-    
-    if (isNaN(planId)) {
-      return res.status(400).json({ message: "Invalid plan ID" });
-    }
-    
-    const plan = await storage.getRetirementPlan(planId);
-    
-    if (!plan) {
-      return res.status(404).json({ message: "Retirement plan not found" });
-    }
-    
-    return res.json(plan);
-  });
+  // IMPORTANT: More specific routes must come BEFORE the generic /:id route
+  // Otherwise Express will match /:id first and treat "details" or "year" as the ID
 
   app.get("/api/retirement-plans/:id/details", requireAuth, async (req: Request, res: Response) => {
     const planId = parseInt(req.params.id);
-    
+
     if (isNaN(planId)) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
-    
+
     const plan = await storage.getRetirementPlan(planId);
-    
+
     if (!plan) {
       return res.status(404).json({ message: "Retirement plan not found" });
     }
-    
+
     // Get snapshots and milestones
     const snapshots = await storage.getAnnualSnapshots(planId);
     const milestones = await storage.getMilestones(planId);
-    
+
     return res.json({
       ...plan,
       snapshots,
@@ -1155,26 +1142,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/retirement-plans/:id/year/:year", requireAuth, async (req: Request, res: Response) => {
     const planId = parseInt(req.params.id);
     const year = parseInt(req.params.year);
-    
+
     if (isNaN(planId) || isNaN(year)) {
       return res.status(400).json({ message: "Invalid plan ID or year" });
     }
-    
+
     const snapshot = await storage.getAnnualSnapshot(planId, year);
-    
+
     if (!snapshot) {
       return res.status(404).json({ message: "Year data not found" });
     }
-    
+
     // Get account balances and liabilities for this snapshot
     const accountBalances = await storage.getAccountBalances(snapshot.id);
     const liabilities = await storage.getLiabilities(snapshot.id);
-    
+
     return res.json({
       snapshot,
       accountBalances,
       liabilities
     });
+  });
+
+  app.get("/api/retirement-plans/:id", requireAuth, async (req: Request, res: Response) => {
+    const planId = parseInt(req.params.id);
+
+    if (isNaN(planId)) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+
+    const plan = await storage.getRetirementPlan(planId);
+
+    if (!plan) {
+      return res.status(404).json({ message: "Retirement plan not found" });
+    }
+
+    return res.json(plan);
   });
 
   app.post("/api/retirement-plans", requireAuth, async (req: Request, res: Response) => {
