@@ -49,9 +49,46 @@ export const users = pgTable("users", {
   spouseTargetRetirementAge: integer("spouse_target_retirement_age"),
   spouseCurrentIncome: decimal("spouse_current_income", { precision: 10, scale: 2 }),
   spouseExpectedFutureIncome: decimal("spouse_expected_future_income", { precision: 10, scale: 2 }),
+  // Additional Income Sources
+  otherIncomeSource1: text("other_income_source_1"),
+  otherIncomeAmount1: decimal("other_income_amount_1", { precision: 10, scale: 2 }),
+  otherIncomeSource2: text("other_income_source_2"),
+  otherIncomeAmount2: decimal("other_income_amount_2", { precision: 10, scale: 2 }),
+  expectedIncomeGrowth: decimal("expected_income_growth", { precision: 5, scale: 2 }),
   // Current Expenses (stored as JSON array)
   expenses: jsonb("expenses"),
   totalMonthlyExpenses: decimal("total_monthly_expenses", { precision: 10, scale: 2 }),
+  // Current Assets
+  savingsBalance: decimal("savings_balance", { precision: 12, scale: 2 }),
+  checkingBalance: decimal("checking_balance", { precision: 12, scale: 2 }),
+  investmentBalance: decimal("investment_balance", { precision: 12, scale: 2 }),
+  retirementAccount401k: decimal("retirement_account_401k", { precision: 12, scale: 2 }),
+  retirementAccountIRA: decimal("retirement_account_ira", { precision: 12, scale: 2 }),
+  retirementAccountRoth: decimal("retirement_account_roth", { precision: 12, scale: 2 }),
+  realEstateValue: decimal("real_estate_value", { precision: 12, scale: 2 }),
+  otherAssetsValue: decimal("other_assets_value", { precision: 12, scale: 2 }),
+  // Liabilities
+  mortgageBalance: decimal("mortgage_balance", { precision: 12, scale: 2 }),
+  mortgagePayment: decimal("mortgage_payment", { precision: 10, scale: 2 }),
+  mortgageRate: decimal("mortgage_rate", { precision: 5, scale: 2 }),
+  mortgageYearsLeft: integer("mortgage_years_left"),
+  creditCardDebt: decimal("credit_card_debt", { precision: 12, scale: 2 }),
+  studentLoanDebt: decimal("student_loan_debt", { precision: 12, scale: 2 }),
+  otherDebt: decimal("other_debt", { precision: 12, scale: 2 }),
+  totalMonthlyDebtPayments: decimal("total_monthly_debt_payments", { precision: 10, scale: 2 }),
+  // Retirement Goals
+  expectedAnnualExpenses: decimal("expected_annual_expenses", { precision: 10, scale: 2 }),
+  healthcareExpectations: text("healthcare_expectations"),
+  travelPlans: text("travel_plans"),
+  legacyGoals: text("legacy_goals"),
+  retirementLocation: text("retirement_location"),
+  // Risk Assessment
+  investmentExperience: text("investment_experience"),
+  riskTolerance: text("risk_tolerance"),
+  investmentTimeline: text("investment_timeline"),
+  preferredInvestmentTypes: jsonb("preferred_investment_types"),
+  marketVolatilityComfort: text("market_volatility_comfort"),
+  investmentRebalancingPreference: text("investment_rebalancing_preference"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

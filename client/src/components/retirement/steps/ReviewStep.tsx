@@ -46,17 +46,9 @@ export const ReviewStep: React.FC = () => {
     }
   }, [form]);
 
-  // For display purposes, create a safe default data object
-  const formData = React.useMemo(() => {
-    try {
-      // Try to get form state without validation
-      const state = form.formState;
-      return state.defaultValues || {};
-    } catch (error) {
-      console.error('Error accessing form state:', error);
-      return {};
-    }
-  }, [form.formState]);
+  // For display purposes, get the current form values (not defaultValues)
+  // Using watch() to make it reactive to form changes
+  const formData = form.watch();
   
   const { toast } = useToast();
   const [, setLocation] = useLocation();

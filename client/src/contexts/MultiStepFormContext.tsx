@@ -254,9 +254,11 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     },
   });
 
-  // Load existing data into form
+  // Load existing data into form - ONLY on initial load, not on every userData change
+  const [hasLoadedInitialUserData, setHasLoadedInitialUserData] = useState(false);
+
   useEffect(() => {
-    if (userData) {
+    if (userData && !hasLoadedInitialUserData) {
       form.reset({
         firstName: userData.firstName || '',
         lastName: userData.lastName || '',
@@ -276,49 +278,55 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         spouseTargetRetirementAge: userData.spouseTargetRetirementAge || undefined,
         spouseCurrentIncome: String(userData.spouseCurrentIncome || '0'),
         spouseExpectedFutureIncome: String(userData.spouseExpectedFutureIncome || '0'),
-        // Initialize other fields with default values
-        otherIncomeSource1: '',
-        otherIncomeAmount1: '0',
-        otherIncomeSource2: '',
-        otherIncomeAmount2: '0',
-        expectedIncomeGrowth: 3,
-        savingsBalance: '0',
-        checkingBalance: '0',
-        investmentBalance: '0',
-        retirementAccount401k: '0',
-        retirementAccountIRA: '0',
-        retirementAccountRoth: '0',
-        realEstateValue: '0',
-        otherAssetsValue: '0',
-        mortgageBalance: '0',
-        mortgagePayment: '0',
-        mortgageRate: 4.5,
-        mortgageYearsLeft: 30,
-        creditCardDebt: '0',
-        studentLoanDebt: '0',
-        otherDebt: '0',
-        totalMonthlyDebtPayments: '0',
-        expenses: [{
+        // Income - Additional sources
+        otherIncomeSource1: userData.otherIncomeSource1 || '',
+        otherIncomeAmount1: String(userData.otherIncomeAmount1 || '0'),
+        otherIncomeSource2: userData.otherIncomeSource2 || '',
+        otherIncomeAmount2: String(userData.otherIncomeAmount2 || '0'),
+        expectedIncomeGrowth: userData.expectedIncomeGrowth || 3,
+        // Assets
+        savingsBalance: String(userData.savingsBalance || '0'),
+        checkingBalance: String(userData.checkingBalance || '0'),
+        investmentBalance: String(userData.investmentBalance || '0'),
+        retirementAccount401k: String(userData.retirementAccount401k || '0'),
+        retirementAccountIRA: String(userData.retirementAccountIRA || '0'),
+        retirementAccountRoth: String(userData.retirementAccountRoth || '0'),
+        realEstateValue: String(userData.realEstateValue || '0'),
+        otherAssetsValue: String(userData.otherAssetsValue || '0'),
+        // Liabilities
+        mortgageBalance: String(userData.mortgageBalance || '0'),
+        mortgagePayment: String(userData.mortgagePayment || '0'),
+        mortgageRate: userData.mortgageRate || 4.5,
+        mortgageYearsLeft: userData.mortgageYearsLeft || 30,
+        creditCardDebt: String(userData.creditCardDebt || '0'),
+        studentLoanDebt: String(userData.studentLoanDebt || '0'),
+        otherDebt: String(userData.otherDebt || '0'),
+        totalMonthlyDebtPayments: String(userData.totalMonthlyDebtPayments || '0'),
+        // Expenses
+        expenses: userData.expenses || [{
           id: '1',
           category: '',
           description: '',
           amount: '',
         }],
-        totalMonthlyExpenses: '0',
-        expectedAnnualExpenses: '0',
-        healthcareExpectations: '',
-        travelPlans: '',
-        legacyGoals: '',
-        retirementLocation: '',
-        investmentExperience: '',
-        riskTolerance: '',
-        investmentTimeline: '',
-        preferredInvestmentTypes: [],
-        marketVolatilityComfort: '',
-        investmentRebalancingPreference: '',
+        totalMonthlyExpenses: String(userData.totalMonthlyExpenses || '0'),
+        // Retirement Goals
+        expectedAnnualExpenses: String(userData.expectedAnnualExpenses || '0'),
+        healthcareExpectations: userData.healthcareExpectations || '',
+        travelPlans: userData.travelPlans || '',
+        legacyGoals: userData.legacyGoals || '',
+        retirementLocation: userData.retirementLocation || '',
+        // Risk Assessment
+        investmentExperience: userData.investmentExperience || '',
+        riskTolerance: userData.riskTolerance || '',
+        investmentTimeline: userData.investmentTimeline || '',
+        preferredInvestmentTypes: userData.preferredInvestmentTypes || [],
+        marketVolatilityComfort: userData.marketVolatilityComfort || '',
+        investmentRebalancingPreference: userData.investmentRebalancingPreference || '',
       });
+      setHasLoadedInitialUserData(true);
     }
-  }, [userData, form]);
+  }, [userData, form, hasLoadedInitialUserData]);
 
   // Load progress state - ONLY on initial load, not on every change
   const [hasLoadedInitialProgress, setHasLoadedInitialProgress] = useState(false);
@@ -456,6 +464,93 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
   };
 
   const navigateToStep = async (step: FormStepType): Promise<void> => {
+    // Don't save if we're already on this step
+    if (step === currentStep) {
+      return;
+    }
+
+    // Save current step's data before navigating to a different step
+    try {
+      const formData = form.getValues();
+
+      // Convert form data to user update format and save to database
+      const userUpdateData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        currentAge: Number(formData.currentAge) || 0,
+        targetRetirementAge: Number(formData.targetRetirementAge) || 0,
+        currentLocation: formData.currentLocation,
+        maritalStatus: formData.maritalStatus,
+        dependents: Number(formData.dependents) || 0,
+        currentIncome: formData.currentIncome,
+        expectedFutureIncome: formData.expectedFutureIncome,
+        desiredLifestyle: formData.desiredLifestyle,
+        hasSpouse: formData.hasSpouse,
+        spouseFirstName: formData.spouseFirstName,
+        spouseLastName: formData.spouseLastName,
+        spouseCurrentAge: formData.spouseCurrentAge ? Number(formData.spouseCurrentAge) : undefined,
+        spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
+        spouseCurrentIncome: formData.spouseCurrentIncome,
+        spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
+        // Income - Additional sources
+        otherIncomeSource1: formData.otherIncomeSource1,
+        otherIncomeAmount1: formData.otherIncomeAmount1,
+        otherIncomeSource2: formData.otherIncomeSource2,
+        otherIncomeAmount2: formData.otherIncomeAmount2,
+        expectedIncomeGrowth: formData.expectedIncomeGrowth,
+        // Expenses
+        expenses: formData.expenses || [],
+        totalMonthlyExpenses: formData.totalMonthlyExpenses,
+        // Assets
+        savingsBalance: formData.savingsBalance,
+        checkingBalance: formData.checkingBalance,
+        investmentBalance: formData.investmentBalance,
+        retirementAccount401k: formData.retirementAccount401k,
+        retirementAccountIRA: formData.retirementAccountIRA,
+        retirementAccountRoth: formData.retirementAccountRoth,
+        realEstateValue: formData.realEstateValue,
+        otherAssetsValue: formData.otherAssetsValue,
+        // Liabilities
+        mortgageBalance: formData.mortgageBalance,
+        mortgagePayment: formData.mortgagePayment,
+        mortgageRate: formData.mortgageRate,
+        mortgageYearsLeft: formData.mortgageYearsLeft,
+        creditCardDebt: formData.creditCardDebt,
+        studentLoanDebt: formData.studentLoanDebt,
+        otherDebt: formData.otherDebt,
+        totalMonthlyDebtPayments: formData.totalMonthlyDebtPayments,
+        // Retirement Goals
+        expectedAnnualExpenses: formData.expectedAnnualExpenses,
+        healthcareExpectations: formData.healthcareExpectations,
+        travelPlans: formData.travelPlans,
+        legacyGoals: formData.legacyGoals,
+        retirementLocation: formData.retirementLocation,
+        // Risk Assessment
+        investmentExperience: formData.investmentExperience,
+        riskTolerance: formData.riskTolerance,
+        investmentTimeline: formData.investmentTimeline,
+        preferredInvestmentTypes: formData.preferredInvestmentTypes,
+        marketVolatilityComfort: formData.marketVolatilityComfort,
+        investmentRebalancingPreference: formData.investmentRebalancingPreference,
+      };
+
+      // Save user data to database (don't wait for completion)
+      await updateUserMutation.mutateAsync(userUpdateData);
+
+      // Also save progress
+      await saveProgressMutation.mutateAsync({
+        userId,
+        currentStep: step,
+        completedSteps,
+        formData,
+        isCompleted: false,
+      });
+    } catch (error) {
+      console.error('Error saving data during navigation:', error);
+      // Continue with navigation even if save fails
+    }
+
     await goToStep(step);
     // Scroll to top of page when navigating to a specific step (wait for DOM update)
     requestAnimationFrame(() => {
@@ -491,8 +586,46 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
       spouseCurrentIncome: formData.spouseCurrentIncome,
       spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
+      // Income - Additional sources
+      otherIncomeSource1: formData.otherIncomeSource1,
+      otherIncomeAmount1: formData.otherIncomeAmount1,
+      otherIncomeSource2: formData.otherIncomeSource2,
+      otherIncomeAmount2: formData.otherIncomeAmount2,
+      expectedIncomeGrowth: formData.expectedIncomeGrowth,
+      // Expenses
       expenses: formData.expenses || [],
       totalMonthlyExpenses: formData.totalMonthlyExpenses,
+      // Assets
+      savingsBalance: formData.savingsBalance,
+      checkingBalance: formData.checkingBalance,
+      investmentBalance: formData.investmentBalance,
+      retirementAccount401k: formData.retirementAccount401k,
+      retirementAccountIRA: formData.retirementAccountIRA,
+      retirementAccountRoth: formData.retirementAccountRoth,
+      realEstateValue: formData.realEstateValue,
+      otherAssetsValue: formData.otherAssetsValue,
+      // Liabilities
+      mortgageBalance: formData.mortgageBalance,
+      mortgagePayment: formData.mortgagePayment,
+      mortgageRate: formData.mortgageRate,
+      mortgageYearsLeft: formData.mortgageYearsLeft,
+      creditCardDebt: formData.creditCardDebt,
+      studentLoanDebt: formData.studentLoanDebt,
+      otherDebt: formData.otherDebt,
+      totalMonthlyDebtPayments: formData.totalMonthlyDebtPayments,
+      // Retirement Goals
+      expectedAnnualExpenses: formData.expectedAnnualExpenses,
+      healthcareExpectations: formData.healthcareExpectations,
+      travelPlans: formData.travelPlans,
+      legacyGoals: formData.legacyGoals,
+      retirementLocation: formData.retirementLocation,
+      // Risk Assessment
+      investmentExperience: formData.investmentExperience,
+      riskTolerance: formData.riskTolerance,
+      investmentTimeline: formData.investmentTimeline,
+      preferredInvestmentTypes: formData.preferredInvestmentTypes,
+      marketVolatilityComfort: formData.marketVolatilityComfort,
+      investmentRebalancingPreference: formData.investmentRebalancingPreference,
     };
 
     try {
@@ -533,9 +666,82 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     }
   };
 
-  const prevStep = (): void => {
+  const prevStep = async (): Promise<void> => {
     const prevStepNumber = currentStep - 1;
     if (prevStepNumber >= 1) {
+      // Save current step's data before going back
+      try {
+        const formData = form.getValues();
+
+        // Convert form data to user update format and save to database
+        const userUpdateData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          currentAge: Number(formData.currentAge) || 0,
+          targetRetirementAge: Number(formData.targetRetirementAge) || 0,
+          currentLocation: formData.currentLocation,
+          maritalStatus: formData.maritalStatus,
+          dependents: Number(formData.dependents) || 0,
+          currentIncome: formData.currentIncome,
+          expectedFutureIncome: formData.expectedFutureIncome,
+          desiredLifestyle: formData.desiredLifestyle,
+          hasSpouse: formData.hasSpouse,
+          spouseFirstName: formData.spouseFirstName,
+          spouseLastName: formData.spouseLastName,
+          spouseCurrentAge: formData.spouseCurrentAge ? Number(formData.spouseCurrentAge) : undefined,
+          spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
+          spouseCurrentIncome: formData.spouseCurrentIncome,
+          spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
+          // Income - Additional sources
+          otherIncomeSource1: formData.otherIncomeSource1,
+          otherIncomeAmount1: formData.otherIncomeAmount1,
+          otherIncomeSource2: formData.otherIncomeSource2,
+          otherIncomeAmount2: formData.otherIncomeAmount2,
+          expectedIncomeGrowth: formData.expectedIncomeGrowth,
+          // Expenses
+          expenses: formData.expenses || [],
+          totalMonthlyExpenses: formData.totalMonthlyExpenses,
+          // Assets
+          savingsBalance: formData.savingsBalance,
+          checkingBalance: formData.checkingBalance,
+          investmentBalance: formData.investmentBalance,
+          retirementAccount401k: formData.retirementAccount401k,
+          retirementAccountIRA: formData.retirementAccountIRA,
+          retirementAccountRoth: formData.retirementAccountRoth,
+          realEstateValue: formData.realEstateValue,
+          otherAssetsValue: formData.otherAssetsValue,
+          // Liabilities
+          mortgageBalance: formData.mortgageBalance,
+          mortgagePayment: formData.mortgagePayment,
+          mortgageRate: formData.mortgageRate,
+          mortgageYearsLeft: formData.mortgageYearsLeft,
+          creditCardDebt: formData.creditCardDebt,
+          studentLoanDebt: formData.studentLoanDebt,
+          otherDebt: formData.otherDebt,
+          totalMonthlyDebtPayments: formData.totalMonthlyDebtPayments,
+          // Retirement Goals
+          expectedAnnualExpenses: formData.expectedAnnualExpenses,
+          healthcareExpectations: formData.healthcareExpectations,
+          travelPlans: formData.travelPlans,
+          legacyGoals: formData.legacyGoals,
+          retirementLocation: formData.retirementLocation,
+          // Risk Assessment
+          investmentExperience: formData.investmentExperience,
+          riskTolerance: formData.riskTolerance,
+          investmentTimeline: formData.investmentTimeline,
+          preferredInvestmentTypes: formData.preferredInvestmentTypes,
+          marketVolatilityComfort: formData.marketVolatilityComfort,
+          investmentRebalancingPreference: formData.investmentRebalancingPreference,
+        };
+
+        // Save user data to database
+        await updateUserMutation.mutateAsync(userUpdateData);
+      } catch (error) {
+        console.error('Error saving data when going back:', error);
+        // Continue with navigation even if save fails
+      }
+
       setCurrentStep(prevStepNumber as FormStepType);
       saveProgress();
     }
