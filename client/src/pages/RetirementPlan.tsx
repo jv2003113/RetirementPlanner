@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, DollarSign, TrendingUp, AlertCircle, Eye, Plus, Edit3, X } from "lucide-react";
 import TimelineComponent from "@/components/retirement-plan/TimelineComponent";
 import InteractiveTimeline from "@/components/retirement-plan/InteractiveTimeline";
-import FinancialMindMap from "@/components/retirement-plan/FinancialMindMap";
+import FinancialDashboard from "@/components/retirement-plan/FinancialDashboard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AccountBucketsDisplay from "@/components/retirement-plan/AccountBucketsDisplay";
 import YearDetailView from "@/components/retirement-plan/YearDetailView";
 import LifetimeTaxDisplay from "@/components/retirement-plan/LifetimeTaxDisplay";
@@ -25,13 +26,13 @@ interface RetirementPlanWithDetails extends RetirementPlan {
 export default function RetirementPlanPage() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
-  
+
   // Get planId from URL params if provided
   const urlParams = new URLSearchParams(window.location.search);
   const urlPlanId = urlParams.get('planId');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-  
+
   const { user: authUser } = useAuth();
   const userId = authUser?.id || 1;
   const queryClient = useQueryClient();
@@ -62,7 +63,7 @@ export default function RetirementPlanPage() {
 
   const handleDeletePlan = (planId: number, planType: string | null) => {
     if (planType === 'P') return; // Cannot delete primary plan
-    
+
     if (confirm('Are you sure you want to delete this plan? This action cannot be undone.')) {
       deletePlanMutation.mutate(planId);
     }
@@ -130,7 +131,7 @@ export default function RetirementPlanPage() {
           return;
         }
       }
-      
+
       // Otherwise, auto-select first plan if none selected
       if (!selectedPlanId) {
         console.log(`📋 Auto-selecting first plan: ${plans[0].id}`);
@@ -169,7 +170,7 @@ export default function RetirementPlanPage() {
     return (
       <div className="container mx-auto p-6">
         {showCreateForm ? (
-          <CreatePlanForm 
+          <CreatePlanForm
             onCancel={() => setShowCreateForm(false)}
             onSuccess={(planId) => {
               setShowCreateForm(false);
@@ -205,7 +206,7 @@ export default function RetirementPlanPage() {
   if (showCreateForm) {
     return (
       <div className="container mx-auto p-6">
-        <CreatePlanForm 
+        <CreatePlanForm
           onCancel={() => setShowCreateForm(false)}
           onSuccess={(planId) => {
             setShowCreateForm(false);
@@ -220,7 +221,7 @@ export default function RetirementPlanPage() {
   if (showEditForm && activePlan) {
     return (
       <div className="container mx-auto p-6">
-        <EditPlanForm 
+        <EditPlanForm
           plan={activePlan}
           onCancel={() => setShowEditForm(false)}
           onSuccess={() => {
@@ -238,7 +239,7 @@ export default function RetirementPlanPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Retirement Plans</h1>
         </div>
-        
+
         {/* Plan Tabs */}
         <div className="flex items-center gap-3 mb-4 overflow-x-auto scrollbar-hide">
           <div className="flex bg-gray-100 rounded-lg p-1 min-w-fit">
@@ -260,16 +261,15 @@ export default function RetirementPlanPage() {
                     default: return planType || 'Primary';
                   }
                 };
-                
+
                 return (
                   <button
                     key={plan.id}
                     onClick={() => setSelectedPlanId(plan.id)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
-                      selectedPlanId === plan.id
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${selectedPlanId === plan.id
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
                   >
                     <div className="flex flex-col items-center gap-0.5">
                       <span className="text-sm font-medium">{plan.planName}</span>
@@ -278,7 +278,7 @@ export default function RetirementPlanPage() {
                 );
               })}
           </div>
-          <Button 
+          <Button
             onClick={() => setShowCreateForm(true)}
             disabled={plans.length >= 4}
             variant="outline"
@@ -299,30 +299,54 @@ export default function RetirementPlanPage() {
         <div className="space-y-6">
           {/* Plan Parameters Panel */}
           {activePlan && (
-            <PlanParametersPanel 
-              plan={activePlan} 
-              onEdit={() => setShowEditForm(true)} 
+            <PlanParametersPanel
+              plan={activePlan}
+              onEdit={() => setShowEditForm(true)}
               onDelete={activePlan.planType !== 'P' ? () => handleDeletePlan(activePlan.id, activePlan.planType) : undefined}
             />
           )}
 
-          {/* Interactive Timeline */}
+          {/* Mobile Year Selector */}
           {activePlan && planDetails && (
-            <InteractiveTimeline
-              snapshots={planDetails.snapshots}
-              milestones={planDetails.milestones}
-              onYearSelect={handleYearSelect}
-              selectedYear={selectedYear}
-              retirementAge={activePlan.retirementAge}
-              startAge={activePlan.startAge}
-              endAge={activePlan.endAge || 95}
-              currentAge={userData?.currentAge || activePlan.startAge}
-            />
+            <div className="md:hidden mb-6">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Select Year to View</label>
+              <Select
+                value={selectedYear?.toString()}
+                onValueChange={(val) => handleYearSelect(parseInt(val))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {planDetails.snapshots.map(s => (
+                    <SelectItem key={s.year} value={s.year.toString()}>
+                      {s.year} (Age {s.age})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
 
-          {/* Financial Mind Map View */}
+          {/* Interactive Timeline - Hidden on mobile */}
+          {activePlan && planDetails && (
+            <div className="hidden md:block">
+              <InteractiveTimeline
+                snapshots={planDetails.snapshots}
+                milestones={planDetails.milestones}
+                onYearSelect={handleYearSelect}
+                selectedYear={selectedYear}
+                retirementAge={activePlan.retirementAge}
+                startAge={activePlan.startAge}
+                endAge={activePlan.endAge || 95}
+                currentAge={userData?.currentAge || activePlan.startAge}
+              />
+            </div>
+          )}
+
+          {/* Financial Dashboard View */}
           {selectedYear && planDetails && (
-            <FinancialMindMap
+            <FinancialDashboard
               year={selectedYear}
               age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : (activePlan?.startAge || 30) + (selectedYear - new Date().getFullYear())}
               snapshot={yearData?.snapshot || null}
