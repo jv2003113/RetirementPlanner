@@ -211,12 +211,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // User routes
   app.get("/api/users/:id", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.id);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.id;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     const user = await storage.getUser(userId);
     
     if (!user) {
@@ -245,9 +245,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/users/:id", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.id);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.id;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -272,9 +272,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Retirement goals routes
   app.get("/api/users/:userId/retirement-goals", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -310,9 +310,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/retirement-goals/:id", async (req: Request, res: Response) => {
-    const goalId = parseInt(req.params.id);
-    
-    if (isNaN(goalId)) {
+    const goalId = req.params.id;
+
+    if (!goalId) {
       return res.status(400).json({ message: "Invalid goal ID" });
     }
     
@@ -347,9 +347,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/retirement-goals/:id", async (req: Request, res: Response) => {
-    const goalId = parseInt(req.params.id);
-    
-    if (isNaN(goalId)) {
+    const goalId = req.params.id;
+
+    if (!goalId) {
       return res.status(400).json({ message: "Invalid goal ID" });
     }
     
@@ -383,9 +383,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Investment accounts routes
   app.get("/api/users/:userId/investment-accounts", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -407,9 +407,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/investment-accounts/:id", async (req: Request, res: Response) => {
-    const accountId = parseInt(req.params.id);
-    
-    if (isNaN(accountId)) {
+    const accountId = req.params.id;
+
+    if (!accountId) {
       return res.status(400).json({ message: "Invalid account ID" });
     }
     
@@ -431,9 +431,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/investment-accounts/:id", async (req: Request, res: Response) => {
-    const accountId = parseInt(req.params.id);
-    
-    if (isNaN(accountId)) {
+    const accountId = req.params.id;
+
+    if (!accountId) {
       return res.status(400).json({ message: "Invalid account ID" });
     }
     
@@ -448,9 +448,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Asset allocations routes
   app.get("/api/investment-accounts/:accountId/asset-allocations", async (req: Request, res: Response) => {
-    const accountId = parseInt(req.params.accountId);
-    
-    if (isNaN(accountId)) {
+    const accountId = req.params.accountId;
+
+    if (!accountId) {
       return res.status(400).json({ message: "Invalid account ID" });
     }
     
@@ -472,9 +472,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/asset-allocations/:id", async (req: Request, res: Response) => {
-    const allocationId = parseInt(req.params.id);
-    
-    if (isNaN(allocationId)) {
+    const allocationId = req.params.id;
+
+    if (!allocationId) {
       return res.status(400).json({ message: "Invalid allocation ID" });
     }
     
@@ -496,9 +496,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/asset-allocations/:id", async (req: Request, res: Response) => {
-    const allocationId = parseInt(req.params.id);
-    
-    if (isNaN(allocationId)) {
+    const allocationId = req.params.id;
+
+    if (!allocationId) {
       return res.status(400).json({ message: "Invalid allocation ID" });
     }
     
@@ -513,9 +513,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Security holdings routes
   app.get("/api/investment-accounts/:accountId/security-holdings", async (req: Request, res: Response) => {
-    const accountId = parseInt(req.params.accountId);
-    
-    if (isNaN(accountId)) {
+    const accountId = req.params.accountId;
+
+    if (!accountId) {
       return res.status(400).json({ message: "Invalid account ID" });
     }
     
@@ -548,9 +548,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/security-holdings/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
-      
-      if (isNaN(id)) {
+      const id = req.params.id;
+
+      if (!id) {
         return res.status(400).json({ message: "Invalid security holding ID" });
       }
       
@@ -587,9 +587,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/security-holdings/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
-      
-      if (isNaN(id)) {
+      const id = req.params.id;
+
+      if (!id) {
         return res.status(400).json({ message: "Invalid security holding ID" });
       }
       
@@ -618,9 +618,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Retirement expenses routes
   app.get("/api/users/:userId/retirement-expenses", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -642,9 +642,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/retirement-expenses/:id", async (req: Request, res: Response) => {
-    const expenseId = parseInt(req.params.id);
-    
-    if (isNaN(expenseId)) {
+    const expenseId = req.params.id;
+
+    if (!expenseId) {
       return res.status(400).json({ message: "Invalid expense ID" });
     }
     
@@ -666,9 +666,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/retirement-expenses/:id", async (req: Request, res: Response) => {
-    const expenseId = parseInt(req.params.id);
-    
-    if (isNaN(expenseId)) {
+    const expenseId = req.params.id;
+
+    if (!expenseId) {
       return res.status(400).json({ message: "Invalid expense ID" });
     }
     
@@ -683,9 +683,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Activities routes
   app.get("/api/users/:userId/activities", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -716,9 +716,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Roth conversion plans routes
   app.get("/api/users/:userId/roth-conversion-plans", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -727,9 +727,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/roth-conversion-plans/:id", async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
-    
-    if (isNaN(planId)) {
+    const planId = req.params.id;
+
+    if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
     
@@ -783,9 +783,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/roth-conversion-plans/:id/scenarios", async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
-    
-    if (isNaN(planId)) {
+    const planId = req.params.id;
+
+    if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
     
@@ -819,9 +819,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/roth-conversion-plans/:id", async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
-    
-    if (isNaN(planId)) {
+    const planId = req.params.id;
+
+    if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
     
@@ -856,9 +856,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/roth-conversion-plans/:id", async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
-    
-    if (isNaN(planId)) {
+    const planId = req.params.id;
+
+    if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
     
@@ -892,9 +892,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Dashboard summary route
   app.get("/api/users/:userId/dashboard", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -1022,20 +1022,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Multi-step form progress routes
   app.get("/api/users/:userId/multi-step-form-progress", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     const progress = await storage.getMultiStepFormProgress(userId);
     return res.json(progress || null);
   });
 
   app.post("/api/users/:userId/multi-step-form-progress", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -1066,9 +1066,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/users/:userId/multi-step-form-progress", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -1090,9 +1090,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/users/:userId/multi-step-form-progress", async (req: Request, res: Response) => {
-    const userId = parseInt(req.params.userId);
-    
-    if (isNaN(userId)) {
+    const userId = req.params.userId;
+
+    if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     
@@ -1116,9 +1116,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Otherwise Express will match /:id first and treat "details" or "year" as the ID
 
   app.get("/api/retirement-plans/:id/details", requireAuth, async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
+    const planId = req.params.id;
 
-    if (isNaN(planId)) {
+    if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
 
@@ -1140,10 +1140,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/retirement-plans/:id/year/:year", requireAuth, async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
+    const planId = req.params.id;
     const year = parseInt(req.params.year);
 
-    if (isNaN(planId) || isNaN(year)) {
+    if (!planId || isNaN(year)) {
       return res.status(400).json({ message: "Invalid plan ID or year" });
     }
 
@@ -1165,9 +1165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/retirement-plans/:id", requireAuth, async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
+    const planId = req.params.id;
 
-    if (isNaN(planId)) {
+    if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
 
@@ -1242,9 +1242,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/retirement-plans/:id", requireAuth, async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
-    
-    if (isNaN(planId)) {
+    const planId = req.params.id;
+
+    if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
     
@@ -1299,9 +1299,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.delete("/api/retirement-plans/:id", requireAuth, async (req: Request, res: Response) => {
-    const planId = parseInt(req.params.id);
-    
-    if (isNaN(planId)) {
+    const planId = req.params.id;
+
+    if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
     
@@ -1317,9 +1317,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Regenerate retirement plan endpoint - for fixing plans with data gaps
   app.post("/api/retirement-plans/:id/regenerate", requireAuth, async (req: Request, res: Response) => {
     try {
-      const planId = parseInt(req.params.id);
-      
-      if (isNaN(planId)) {
+      const planId = req.params.id;
+
+      if (!planId) {
         return res.status(400).json({ message: "Invalid plan ID" });
       }
       

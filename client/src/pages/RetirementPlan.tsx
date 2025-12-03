@@ -25,7 +25,7 @@ interface RetirementPlanWithDetails extends RetirementPlan {
 
 export default function RetirementPlanPage() {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
   // Get planId from URL params if provided
   const urlParams = new URLSearchParams(window.location.search);
@@ -34,12 +34,12 @@ export default function RetirementPlanPage() {
   const [showEditForm, setShowEditForm] = useState(false);
 
   const { user: authUser } = useAuth();
-  const userId = authUser?.id || 1;
+  const userId = authUser?.id;
   const queryClient = useQueryClient();
 
   // Delete plan mutation
   const deletePlanMutation = useMutation({
-    mutationFn: async (planId: number) => {
+    mutationFn: async (planId: string) => {
       const response = await fetch(`/api/retirement-plans/${planId}`, {
         method: 'DELETE',
         credentials: 'include',
@@ -61,7 +61,7 @@ export default function RetirementPlanPage() {
     },
   });
 
-  const handleDeletePlan = (planId: number, planType: string | null) => {
+  const handleDeletePlan = (planId: string, planType: string | null) => {
     if (planType === 'P') return; // Cannot delete primary plan
 
     if (confirm('Are you sure you want to delete this plan? This action cannot be undone.')) {
@@ -123,11 +123,10 @@ export default function RetirementPlanPage() {
     if (plans && plans.length > 0) {
       // If URL has planId, use that
       if (urlPlanId) {
-        const planIdFromUrl = parseInt(urlPlanId);
-        const planExists = plans.find(p => p.id === planIdFromUrl);
-        if (planExists && selectedPlanId !== planIdFromUrl) {
-          console.log(`🎯 Selecting plan from URL: ${planIdFromUrl}`);
-          setSelectedPlanId(planIdFromUrl);
+        const planExists = plans.find(p => p.id === urlPlanId);
+        if (planExists && selectedPlanId !== urlPlanId) {
+          console.log(`🎯 Selecting plan from URL: ${urlPlanId}`);
+          setSelectedPlanId(urlPlanId);
           return;
         }
       }

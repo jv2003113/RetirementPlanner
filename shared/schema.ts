@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, jsonb, timestamp, decimal, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, timestamp, decimal, varchar, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { uuidv7 } from "uuidv7";
 
 // Define additional schemas for non-persistent data structures
 export const recommendationSchema = z.object({
@@ -27,7 +28,7 @@ export type Resource = z.infer<typeof resourceSchema>;
 
 // User profile schema
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   firstName: text("first_name"),
@@ -94,8 +95,8 @@ export const users = pgTable("users", {
 
 // Retirement goals schema
 export const retirementGoals = pgTable("retirement_goals", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  userId: uuid("user_id").references(() => users.id).notNull(),
   targetMonthlyIncome: decimal("target_monthly_income", { precision: 10, scale: 2 }),
   description: text("description"),
   category: text("category"), // travel, hobbies, healthcare, etc.
@@ -106,8 +107,8 @@ export const retirementGoals = pgTable("retirement_goals", {
 
 // Investment accounts schema
 export const investmentAccounts = pgTable("investment_accounts", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  userId: uuid("user_id").references(() => users.id).notNull(),
   accountName: text("account_name").notNull(),
   accountType: text("account_type").notNull(), // 401k, IRA, brokerage, etc.
   balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
@@ -123,8 +124,8 @@ export const investmentAccounts = pgTable("investment_accounts", {
 
 // Asset allocations schema
 export const assetAllocations = pgTable("asset_allocations", {
-  id: serial("id").primaryKey(),
-  accountId: integer("account_id").references(() => investmentAccounts.id).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  accountId: uuid("account_id").references(() => investmentAccounts.id).notNull(),
   assetCategory: text("asset_category").notNull(), // stocks, bonds, real estate, cash
   percentage: decimal("percentage", { precision: 5, scale: 2 }).notNull(),
   value: decimal("value", { precision: 12, scale: 2 }).notNull(),
@@ -134,23 +135,23 @@ export const assetAllocations = pgTable("asset_allocations", {
 
 // Retirement expenses schema
 export const retirementExpenses = pgTable("retirement_expenses", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  userId: uuid("user_id").references(() => users.id).notNull(),
   category: text("category").notNull(), // housing, healthcare, travel, etc.
   estimatedMonthlyAmount: decimal("estimated_monthly_amount", { precision: 10, scale: 2 }).notNull(),
   isEssential: boolean("is_essential").default(false),
   notes: text("notes"),
-  createdAt: timestamp("created_at",{ mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
 // Activities schema
 export const activities = pgTable("activities", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  userId: uuid("user_id").references(() => users.id).notNull(),
   activityType: text("activity_type").notNull(),
   title: text("title"),
   description: text("description").notNull(),
-  date: timestamp("date",{ mode: "date" }).defaultNow(),
+  date: timestamp("date", { mode: "date" }).defaultNow(),
   metadata: jsonb("metadata"),
 });
 
@@ -160,6 +161,39 @@ export const activities = pgTable("activities", {
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+}).extend({
+  // Coerce decimal fields to strings to handle both number and string inputs
+  expectedIncomeGrowth: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  mortgageRate: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  currentIncome: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  expectedFutureIncome: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  spouseCurrentIncome: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  spouseExpectedFutureIncome: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  otherIncomeAmount1: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  otherIncomeAmount2: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  totalMonthlyExpenses: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  savingsBalance: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  checkingBalance: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  investmentBalance: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  retirementAccount401k: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  retirementAccountIRA: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  retirementAccountRoth: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  realEstateValue: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  otherAssetsValue: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  mortgageBalance: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  mortgagePayment: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  creditCardDebt: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  studentLoanDebt: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  otherDebt: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  totalMonthlyDebtPayments: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  expectedAnnualExpenses: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  // Coerce integer fields to numbers to handle string inputs
+  currentAge: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
+  targetRetirementAge: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
+  dependents: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
+  spouseCurrentAge: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
+  spouseTargetRetirementAge: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
+  mortgageYearsLeft: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
 });
 
 export const insertRetirementGoalSchema = createInsertSchema(retirementGoals).omit({
@@ -204,8 +238,8 @@ export type InsertAssetAllocation = z.infer<typeof insertAssetAllocationSchema>;
 
 // Add new schema for security holdings
 export const securityHoldings = pgTable("security_holdings", {
-  id: serial("id").primaryKey(),
-  accountId: integer("account_id").references(() => investmentAccounts.id, { onDelete: "cascade" }).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  accountId: uuid("account_id").references(() => investmentAccounts.id, { onDelete: "cascade" }).notNull(),
   ticker: text("ticker").notNull(),
   name: text("name"),
   percentage: text("percentage").notNull(), // Stored as string for precision
@@ -232,8 +266,8 @@ export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
 // Roth conversion plans schema
 export const rothConversionPlans = pgTable("roth_conversion_plans", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  userId: uuid("user_id").references(() => users.id).notNull(),
   planName: text("plan_name").notNull(),
   currentAge: integer("current_age").notNull(),
   retirementAge: integer("retirement_age").notNull(),
@@ -252,8 +286,8 @@ export const rothConversionPlans = pgTable("roth_conversion_plans", {
 
 // Roth conversion scenarios schema (for storing calculated scenarios)
 export const rothConversionScenarios = pgTable("roth_conversion_scenarios", {
-  id: serial("id").primaryKey(),
-  planId: integer("plan_id").references(() => rothConversionPlans.id, { onDelete: "cascade" }).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  planId: uuid("plan_id").references(() => rothConversionPlans.id, { onDelete: "cascade" }).notNull(),
   year: integer("year").notNull(),
   age: integer("age").notNull(),
   conversionAmount: decimal("conversion_amount", { precision: 12, scale: 2 }).notNull(),
@@ -286,8 +320,8 @@ export type InsertRothConversionScenario = z.infer<typeof insertRothConversionSc
 
 // Multi-step form progress tracking schema
 export const multiStepFormProgress = pgTable("multi_step_form_progress", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  userId: uuid("user_id").references(() => users.id).notNull(),
   currentStep: integer("current_step").default(1).notNull(),
   completedSteps: jsonb("completed_steps").default([]).notNull(), // Array of completed step numbers
   formData: jsonb("form_data").default({}).notNull(), // Temporary storage for incomplete form data
@@ -305,11 +339,11 @@ export type InsertMultiStepFormProgress = z.infer<typeof insertMultiStepFormProg
 
 // Retirement plan schema
 export const retirementPlans = pgTable("retirement_plans", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  userId: uuid("user_id").references(() => users.id).notNull(),
   planName: text("plan_name").notNull(),
   planType: text("plan_type").default("comprehensive"), // comprehensive, roth_conversion, etc.
-  
+
   // Age & Timeline Parameters
   startAge: integer("start_age").notNull(),
   retirementAge: integer("retirement_age").notNull(),
@@ -317,32 +351,32 @@ export const retirementPlans = pgTable("retirement_plans", {
   spouseStartAge: integer("spouse_start_age"), // For married couples
   spouseRetirementAge: integer("spouse_retirement_age"),
   spouseEndAge: integer("spouse_end_age"), // Spouse life expectancy
-  
+
   // Social Security Parameters
   socialSecurityStartAge: integer("social_security_start_age").default(67), // When to start SS
   spouseSocialSecurityStartAge: integer("spouse_social_security_start_age"), // Spouse SS start age
   estimatedSocialSecurityBenefit: decimal("estimated_social_security_benefit", { precision: 10, scale: 2 }).default("0"), // Annual SS benefit
   spouseEstimatedSocialSecurityBenefit: decimal("spouse_estimated_social_security_benefit", { precision: 10, scale: 2 }).default("0"), // Spouse annual SS benefit
-  
+
   // Economic Assumptions
   portfolioGrowthRate: decimal("portfolio_growth_rate", { precision: 5, scale: 2 }).default("7.0"), // Expected annual portfolio growth %
   inflationRate: decimal("inflation_rate", { precision: 5, scale: 2 }).default("3.0"), // Annual inflation rate %
-  
+
   // Retirement Income Sources
   pensionIncome: decimal("pension_income", { precision: 10, scale: 2 }).default("0"), // Annual pension income
   spousePensionIncome: decimal("spouse_pension_income", { precision: 10, scale: 2 }).default("0"), // Spouse annual pension
   otherRetirementIncome: decimal("other_retirement_income", { precision: 10, scale: 2 }).default("0"), // Other annual income (rental, part-time, etc.)
-  
+
   // Retirement Spending
   desiredAnnualRetirementSpending: decimal("desired_annual_retirement_spending", { precision: 10, scale: 2 }).default("80000").notNull(), // Target annual spending
   majorOneTimeExpenses: decimal("major_one_time_expenses", { precision: 12, scale: 2 }).default("0"), // One-time expenses (home, trips, etc.)
   majorExpensesDescription: text("major_expenses_description"), // Description of major expenses
-  
+
   // Legacy fields (for backwards compatibility)
   bondGrowthRate: decimal("bond_growth_rate", { precision: 5, scale: 2 }).default("4.0"), // Keep for existing data
   initialNetWorth: decimal("initial_net_worth", { precision: 12, scale: 2 }).default("0"), // Keep for existing data
   totalLifetimeTax: decimal("total_lifetime_tax", { precision: 12, scale: 2 }).default("0"), // Keep for existing data
-  
+
   // Plan metadata
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -351,8 +385,8 @@ export const retirementPlans = pgTable("retirement_plans", {
 
 // Annual financial snapshot schema - stores the financial picture for each year of the plan
 export const annualSnapshots = pgTable("annual_snapshots", {
-  id: serial("id").primaryKey(),
-  planId: integer("plan_id").references(() => retirementPlans.id, { onDelete: "cascade" }).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  planId: uuid("plan_id").references(() => retirementPlans.id, { onDelete: "cascade" }).notNull(),
   year: integer("year").notNull(),
   age: integer("age").notNull(),
   grossIncome: decimal("gross_income", { precision: 12, scale: 2 }).default("0"),
@@ -368,8 +402,8 @@ export const annualSnapshots = pgTable("annual_snapshots", {
 
 // Account balances by year - tracks each account type balance over time
 export const accountBalances = pgTable("account_balances", {
-  id: serial("id").primaryKey(),
-  snapshotId: integer("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  snapshotId: uuid("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
   accountType: text("account_type").notNull(), // 401k, traditional_ira, roth_ira, brokerage, savings, checking, etc.
   accountName: text("account_name"), // Optional display name
   balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
@@ -380,9 +414,9 @@ export const accountBalances = pgTable("account_balances", {
 
 // Milestones schema - both personal and standard milestones
 export const milestones = pgTable("milestones", {
-  id: serial("id").primaryKey(),
-  planId: integer("plan_id").references(() => retirementPlans.id, { onDelete: "cascade" }),
-  userId: integer("user_id").references(() => users.id), // null for standard milestones
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  planId: uuid("plan_id").references(() => retirementPlans.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id), // null for standard milestones
   milestoneType: text("milestone_type").notNull(), // personal, standard
   title: text("title").notNull(),
   description: text("description"),
@@ -397,8 +431,8 @@ export const milestones = pgTable("milestones", {
 
 // Liabilities schema - tracks debts over time
 export const liabilities = pgTable("liabilities", {
-  id: serial("id").primaryKey(),
-  snapshotId: integer("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  snapshotId: uuid("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
   liabilityType: text("liability_type").notNull(), // mortgage, car_loan, credit_card, student_loan, etc.
   liabilityName: text("liability_name"),
   balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
@@ -408,7 +442,7 @@ export const liabilities = pgTable("liabilities", {
 
 // Standard milestones schema - general milestones that apply to all users
 export const standardMilestones = pgTable("standard_milestones", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
   title: text("title").notNull(),
   description: text("description").notNull(),
   targetAge: integer("target_age").notNull(),
