@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface InvestmentAccount {
-  id: number;
+  id: string;
   accountName: string;
   balance: number;
 }
@@ -26,7 +26,7 @@ const AssetAllocationPieChart = ({ accounts }: AssetAllocationPieChartProps) => 
 
     try {
       // Storing promises for all allocation queries
-      const allocationPromises = accounts.map(account => 
+      const allocationPromises = accounts.map(account =>
         fetch(`/api/investment-accounts/${account.id}/asset-allocations`)
           .then(res => res.json())
           .then(allocations => ({ accountId: account.id, allocations }))
@@ -46,18 +46,18 @@ const AssetAllocationPieChart = ({ accounts }: AssetAllocationPieChartProps) => 
 
       // Process and aggregate the allocations
       let totalValue = 0;
-      
+
       results.forEach(result => {
         result.allocations.forEach((allocation: any) => {
           const category = allocation.assetCategory;
           const value = Number(allocation.value);
-          
+
           if (aggregated[category]) {
             aggregated[category].value += value;
           } else {
             aggregated[category] = { value, percentage: 0 };
           }
-          
+
           totalValue += value;
         });
       });
@@ -75,14 +75,14 @@ const AssetAllocationPieChart = ({ accounts }: AssetAllocationPieChartProps) => 
       );
 
       setAggregatedData(filteredAggregated);
-      
+
       // Prepare chart data
       const chartDataArray = Object.entries(filteredAggregated).map(([category, data]) => ({
         name: category.replace('_', ' '),
         value: data.value,
         percentage: data.percentage
       }));
-      
+
       setChartData(chartDataArray);
     } catch (error) {
       console.error("Error fetching asset allocations:", error);
@@ -123,11 +123,11 @@ const AssetAllocationPieChart = ({ accounts }: AssetAllocationPieChartProps) => 
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
     return percent > 0.05 ? (
-      <text 
-        x={x} 
-        y={y} 
-        fill="white" 
-        textAnchor="middle" 
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor="middle"
         dominantBaseline="central"
         fontSize={14}
         fontWeight="bold"
@@ -156,18 +156,18 @@ const AssetAllocationPieChart = ({ accounts }: AssetAllocationPieChartProps) => 
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip 
+          <Tooltip
             formatter={(value: number) => formatCurrency(value)}
             labelFormatter={(label: string) => `${label.charAt(0).toUpperCase() + label.slice(1)}`}
           />
         </PieChart>
       </ResponsiveContainer>
-      
+
       <div className="grid grid-cols-2 gap-2 mt-4">
         {chartData.map((item, index) => (
           <div key={`legend-${index}`} className="flex items-center">
-            <div 
-              className="w-3 h-3 rounded-full mr-2" 
+            <div
+              className="w-3 h-3 rounded-full mr-2"
               style={{ backgroundColor: COLORS[index % COLORS.length] }}
             ></div>
             <span className="text-sm capitalize">{item.name}</span>

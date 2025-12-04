@@ -1,3 +1,4 @@
+import 'express-async-errors';
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
@@ -168,8 +169,10 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    // Log the error so we can see it in the console
+    console.error("Global error handler caught:", err);
+
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after

@@ -3,22 +3,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -39,7 +39,7 @@ const accountFormSchema = z.object({
 });
 
 interface AddAccountFormProps {
-  userId: number;
+  userId: string;
   onSuccess: () => void;
 }
 
@@ -117,7 +117,7 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="accountType"
@@ -144,7 +144,7 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="balance"
@@ -158,7 +158,7 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -173,7 +173,7 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="contributionFrequency"
@@ -200,7 +200,7 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -218,7 +218,7 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="fees"
@@ -236,7 +236,7 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="accountOwner"
@@ -262,7 +262,7 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="isRetirementAccount"
@@ -283,17 +283,17 @@ const AddAccountForm = ({ userId, onSuccess }: AddAccountFormProps) => {
                 </FormItem>
               )}
             />
-            
+
             <div className="flex justify-end space-x-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => form.reset()}
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createAccountMutation.isPending}
               >
                 {createAccountMutation.isPending ? "Adding..." : "Add Account"}

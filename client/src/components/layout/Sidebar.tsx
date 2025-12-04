@@ -2,12 +2,12 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { 
-  HomeIcon, 
-  UserIcon, 
-  BanknoteIcon, 
-  BarChart3Icon, 
-  CreditCardIcon, 
+import {
+  HomeIcon,
+  UserIcon,
+  BanknoteIcon,
+  BarChart3Icon,
+  CreditCardIcon,
   FileTextIcon,
   BookOpenIcon,
   LayoutPanelLeftIcon,
@@ -50,7 +50,7 @@ const Sidebar = () => {
           <div className="flex items-center space-x-2">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-2">
               <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
               </svg>
             </div>
             <span className="text-xl font-bold text-gray-800">EasyRetire</span>
@@ -59,8 +59,8 @@ const Sidebar = () => {
         <div className="mt-5 flex-grow flex flex-col">
           <nav className="flex-1 space-y-1 px-2">
             {navItems.map((item) => (
-              <Link 
-                href={item.path} 
+              <Link
+                href={item.path}
                 key={item.path}
                 className={cn(
                   "group flex items-center px-2 py-2 text-sm font-medium rounded-md",
@@ -76,36 +76,23 @@ const Sidebar = () => {
           </nav>
         </div>
         <div className="p-4 border-t">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
+          <Link href="/account">
+            <div className="flex items-center p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group">
               <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                  <UserIcon className="h-4 w-4 text-gray-600" />
+                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <UserIcon className="h-5 w-5 text-gray-600 group-hover:text-blue-600" />
                 </div>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
                   {user ? `${user.firstName || user.username}` : 'Loading...'}
                 </p>
-                <Link 
-                  href="/profile"
-                  className="text-xs font-medium text-gray-500 hover:text-gray-700"
-                >
-                  Settings
-                </Link>
+                <p className="text-xs text-gray-500 group-hover:text-blue-600">
+                  Account Settings
+                </p>
               </div>
             </div>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleLogout}
-            disabled={isLoading}
-            className="w-full"
-          >
-            <LogOutIcon className="h-4 w-4 mr-2" />
-            {isLoading ? 'Signing out...' : 'Sign out'}
-          </Button>
+          </Link>
         </div>
       </div>
     </aside>

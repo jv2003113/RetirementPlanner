@@ -42,25 +42,25 @@ async function generateSampleScenarios(plan: any) {
   const scenarios = [];
   const annualConversion = parseFloat(plan.conversionAmount) / plan.yearsToConvert;
   const currentTaxRate = parseFloat(plan.currentTaxRate) / 100;
-  
+
   let traditionalBalance = parseFloat(plan.traditionalIraBalance);
   let rothBalance = 0;
   let totalTaxPaid = 0;
-  
+
   // Generate scenarios for conversion years
   for (let year = 1; year <= plan.yearsToConvert; year++) {
     const age = plan.currentAge + year - 1;
     const taxCost = annualConversion * currentTaxRate;
     totalTaxPaid += taxCost;
-    
+
     // Apply conversion
     traditionalBalance -= annualConversion;
     rothBalance += annualConversion - taxCost;
-    
+
     // Apply growth to both accounts
     traditionalBalance *= (1 + parseFloat(plan.expectedReturn) / 100);
     rothBalance *= (1 + parseFloat(plan.expectedReturn) / 100);
-    
+
     scenarios.push({
       planId: plan.id,
       year,
@@ -73,16 +73,16 @@ async function generateSampleScenarios(plan: any) {
       netWorth: (traditionalBalance + rothBalance).toString(),
     });
   }
-  
+
   // Generate scenarios for years after conversion
   const yearsAfterConversion = plan.retirementAge - plan.currentAge - plan.yearsToConvert;
   for (let year = plan.yearsToConvert + 1; year <= plan.yearsToConvert + yearsAfterConversion; year++) {
     const age = plan.currentAge + year - 1;
-    
+
     // Apply growth to both accounts
     traditionalBalance *= (1 + parseFloat(plan.expectedReturn) / 100);
     rothBalance *= (1 + parseFloat(plan.expectedReturn) / 100);
-    
+
     scenarios.push({
       planId: plan.id,
       year,
@@ -95,7 +95,7 @@ async function generateSampleScenarios(plan: any) {
       netWorth: (traditionalBalance + rothBalance).toString(),
     });
   }
-  
+
   // Save the generated scenarios to the database
   const createdScenarios = [];
   for (const scenario of scenarios) {
@@ -106,32 +106,32 @@ async function generateSampleScenarios(plan: any) {
       console.error('Error creating scenario:', error);
     }
   }
-  
+
   return createdScenarios;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
+
   // Authentication routes
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
       const { username, password, email, firstName, lastName } = req.body;
-      
+
       // Validate required fields
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
-      
+
       // Check if user already exists
       const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
-      
+
       // Hash password
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
-      
+
       // Create user
       const userData = {
         username,
@@ -140,21 +140,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName,
         lastName,
       };
-      
+
       const user = await storage.createUser(userData);
-      
+
       // Log the user in automatically after signup
       req.login(user, (err) => {
         if (err) {
           console.error('Login error after signup:', err);
           return res.status(500).json({ message: "Account created but login failed" });
         }
-        
+
         // Don't return password in response
         const { password: _, ...userWithoutPassword } = user;
-        return res.status(201).json({ 
-          message: "Account created successfully", 
-          user: userWithoutPassword 
+        return res.status(201).json({
+          message: "Account created successfully",
+          user: userWithoutPassword
         });
       });
     } catch (error) {
@@ -208,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(401).json({ message: "Not authenticated" });
     }
   });
-  
+
   // User routes
   app.get("/api/users/:id", async (req: Request, res: Response) => {
     const userId = req.params.id;
@@ -218,11 +218,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const user = await storage.getUser(userId);
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     // Don't return password in response
     const { password, ...userWithoutPassword } = user;
     return res.json(userWithoutPassword);
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(userData);
-      
+
       // Don't return password in response
       const { password, ...userWithoutPassword } = user;
       return res.status(201).json(userWithoutPassword);
@@ -250,15 +250,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     try {
       const userData = insertUserSchema.partial().parse(req.body);
       const updatedUser = await storage.updateUser(userId, userData);
-      
+
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Don't return password in response
       const { password, ...userWithoutPassword } = updatedUser;
       return res.json(userWithoutPassword);
@@ -277,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     const goals = await storage.getRetirementGoals(userId);
     return res.json(goals);
   });
@@ -286,9 +286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const goalData = insertRetirementGoalSchema.parse(req.body);
       const goal = await storage.createRetirementGoal(goalData);
-      
+
       // Create an activity for this goal creation
-      await ({
+      await storage.createActivity({
         userId: goalData.userId,
         activityType: "goal_created",
         title: "New Retirement Goal",
@@ -299,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           priority: goalData.priority
         }
       });
-      
+
       return res.status(201).json(goal);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -315,15 +315,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!goalId) {
       return res.status(400).json({ message: "Invalid goal ID" });
     }
-    
+
     try {
       const goalData = insertRetirementGoalSchema.partial().parse(req.body);
       const updatedGoal = await storage.updateRetirementGoal(goalId, goalData);
-      
+
       if (!updatedGoal) {
         return res.status(404).json({ message: "Retirement goal not found" });
       }
-      
+
       // Create an activity for this goal update
       await storage.createActivity({
         userId: updatedGoal.userId,
@@ -336,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           priority: updatedGoal.priority
         }
       });
-      
+
       return res.json(updatedGoal);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -352,19 +352,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!goalId) {
       return res.status(400).json({ message: "Invalid goal ID" });
     }
-    
+
     // Get the goal before deleting it to capture user info and goal details
     const goal = await storage.getRetirementGoal(goalId);
     if (!goal) {
       return res.status(404).json({ message: "Retirement goal not found" });
     }
-    
+
     const success = await storage.deleteRetirementGoal(goalId);
-    
+
     if (!success) {
       return res.status(404).json({ message: "Retirement goal not found" });
     }
-    
+
     // Create an activity for this goal deletion
     await storage.createActivity({
       userId: goal.userId,
@@ -377,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         priority: goal.priority
       }
     });
-    
+
     return res.status(204).end();
   });
 
@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     const accounts = await storage.getInvestmentAccounts(userId);
     return res.json(accounts);
   });
@@ -412,15 +412,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!accountId) {
       return res.status(400).json({ message: "Invalid account ID" });
     }
-    
+
     try {
       const accountData = insertInvestmentAccountSchema.partial().parse(req.body);
       const updatedAccount = await storage.updateInvestmentAccount(accountId, accountData);
-      
+
       if (!updatedAccount) {
         return res.status(404).json({ message: "Investment account not found" });
       }
-      
+
       return res.json(updatedAccount);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -436,13 +436,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!accountId) {
       return res.status(400).json({ message: "Invalid account ID" });
     }
-    
+
     const success = await storage.deleteInvestmentAccount(accountId);
-    
+
     if (!success) {
       return res.status(404).json({ message: "Investment account not found" });
     }
-    
+
     return res.status(204).end();
   });
 
@@ -453,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!accountId) {
       return res.status(400).json({ message: "Invalid account ID" });
     }
-    
+
     const allocations = await storage.getAssetAllocations(accountId);
     return res.json(allocations);
   });
@@ -477,15 +477,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!allocationId) {
       return res.status(400).json({ message: "Invalid allocation ID" });
     }
-    
+
     try {
       const allocationData = insertAssetAllocationSchema.partial().parse(req.body);
       const updatedAllocation = await storage.updateAssetAllocation(allocationId, allocationData);
-      
+
       if (!updatedAllocation) {
         return res.status(404).json({ message: "Asset allocation not found" });
       }
-      
+
       return res.json(updatedAllocation);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -501,13 +501,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!allocationId) {
       return res.status(400).json({ message: "Invalid allocation ID" });
     }
-    
+
     const success = await storage.deleteAssetAllocation(allocationId);
-    
+
     if (!success) {
       return res.status(404).json({ message: "Asset allocation not found" });
     }
-    
+
     return res.status(204).end();
   });
 
@@ -518,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!accountId) {
       return res.status(400).json({ message: "Invalid account ID" });
     }
-    
+
     const holdings = await storage.getSecurityHoldings(accountId);
     return res.json(holdings);
   });
@@ -527,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const holdingData = insertSecurityHoldingSchema.parse(req.body);
       const newHolding = await storage.createSecurityHolding(holdingData);
-      
+
       // Create activity for adding a new security holding
       await storage.createActivity({
         userId: (await storage.getInvestmentAccount(holdingData.accountId))?.userId || 1,
@@ -536,7 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: new Date(),
         metadata: { ticker: holdingData.ticker, percentage: holdingData.percentage }
       });
-      
+
       res.status(201).json(newHolding);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -553,29 +553,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!id) {
         return res.status(400).json({ message: "Invalid security holding ID" });
       }
-      
+
       const existingHolding = await storage.getSecurityHolding(id);
-      
+
       if (!existingHolding) {
         return res.status(404).json({ message: "Security holding not found" });
       }
-      
+
       const updateData = insertSecurityHoldingSchema.partial().parse(req.body);
       const updatedHolding = await storage.updateSecurityHolding(id, updateData);
-      
+
       // Create activity for updating security holding
       await storage.createActivity({
         userId: (await storage.getInvestmentAccount(existingHolding.accountId))?.userId || 1,
         activityType: "portfolio_update",
         description: `Updated ${existingHolding.ticker} allocation`,
         date: new Date(),
-        metadata: { 
-          ticker: existingHolding.ticker, 
+        metadata: {
+          ticker: existingHolding.ticker,
           oldPercentage: existingHolding.percentage,
           newPercentage: updateData.percentage || existingHolding.percentage
         }
       });
-      
+
       res.json(updatedHolding);
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
@@ -592,15 +592,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!id) {
         return res.status(400).json({ message: "Invalid security holding ID" });
       }
-      
+
       const existingHolding = await storage.getSecurityHolding(id);
-      
+
       if (!existingHolding) {
         return res.status(404).json({ message: "Security holding not found" });
       }
-      
+
       const deleted = await storage.deleteSecurityHolding(id);
-      
+
       // Create activity for deleting security holding
       await storage.createActivity({
         userId: (await storage.getInvestmentAccount(existingHolding.accountId))?.userId || 1,
@@ -609,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: new Date(),
         metadata: { ticker: existingHolding.ticker }
       });
-      
+
       res.json({ success: deleted });
     } catch (error: unknown) {
       return res.status(400).json({ message: error instanceof Error ? error.message : "Unknown error" });
@@ -623,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     const expenses = await storage.getRetirementExpenses(userId);
     return res.json(expenses);
   });
@@ -647,15 +647,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!expenseId) {
       return res.status(400).json({ message: "Invalid expense ID" });
     }
-    
+
     try {
       const expenseData = insertRetirementExpenseSchema.partial().parse(req.body);
       const updatedExpense = await storage.updateRetirementExpense(expenseId, expenseData);
-      
+
       if (!updatedExpense) {
         return res.status(404).json({ message: "Retirement expense not found" });
       }
-      
+
       return res.json(updatedExpense);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -671,13 +671,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!expenseId) {
       return res.status(400).json({ message: "Invalid expense ID" });
     }
-    
+
     const success = await storage.deleteRetirementExpense(expenseId);
-    
+
     if (!success) {
       return res.status(404).json({ message: "Retirement expense not found" });
     }
-    
+
     return res.status(204).end();
   });
 
@@ -688,7 +688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     let limit: number | undefined = undefined;
     if (req.query.limit && typeof req.query.limit === 'string') {
       limit = parseInt(req.query.limit);
@@ -696,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid limit parameter" });
       }
     }
-    
+
     const activities = await storage.getActivities(userId, limit);
     return res.json(activities);
   });
@@ -721,7 +721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     const plans = await storage.getRothConversionPlans(userId);
     return res.json(plans);
   });
@@ -732,21 +732,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
-    
+
     const plan = await storage.getRothConversionPlan(planId);
-    
+
     if (!plan) {
       return res.status(404).json({ message: "Roth conversion plan not found" });
     }
-    
+
     // Get scenarios for this plan
     let scenarios = await storage.getRothConversionScenarios(planId);
-    
+
     // If no scenarios exist, generate sample scenarios
     if (scenarios.length === 0) {
       scenarios = await generateSampleScenarios(plan);
     }
-    
+
     return res.json({ plan, scenarios });
   });
 
@@ -754,10 +754,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const planData = insertRothConversionPlanSchema.parse(req.body);
       const plan = await storage.createRothConversionPlan(planData);
-      
+
       // Generate scenarios for the new plan
       const scenarios = await generateSampleScenarios(plan);
-      
+
       // Create an activity for this plan creation
       await storage.createActivity({
         userId: planData.userId,
@@ -770,7 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           yearsToConvert: planData.yearsToConvert
         }
       });
-      
+
       return res.status(201).json(plan);
     } catch (error: unknown) {
       console.error('Error creating Roth conversion plan:', error);
@@ -788,17 +788,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
-    
+
     try {
       // Delete existing scenarios for this plan
       await storage.deleteRothConversionScenarios(planId);
-      
+
       // Insert new scenarios
       const scenarios = req.body.scenarios;
       if (!Array.isArray(scenarios)) {
         return res.status(400).json({ message: "Scenarios must be an array" });
       }
-      
+
       const createdScenarios = [];
       for (const scenario of scenarios) {
         const scenarioData = {
@@ -808,7 +808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const createdScenario = await storage.createRothConversionScenario(scenarioData);
         createdScenarios.push(createdScenario);
       }
-      
+
       return res.status(201).json(createdScenarios);
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
@@ -824,15 +824,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
-    
+
     try {
       const planData = insertRothConversionPlanSchema.partial().parse(req.body);
       const updatedPlan = await storage.updateRothConversionPlan(planId, planData);
-      
+
       if (!updatedPlan) {
         return res.status(404).json({ message: "Roth conversion plan not found" });
       }
-      
+
       // Create an activity for this plan update
       await storage.createActivity({
         userId: updatedPlan.userId,
@@ -845,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           yearsToConvert: updatedPlan.yearsToConvert
         }
       });
-      
+
       return res.json(updatedPlan);
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
@@ -861,19 +861,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
-    
+
     // Get the plan before deleting it to capture user info and plan details
     const plan = await storage.getRothConversionPlan(planId);
     if (!plan) {
       return res.status(404).json({ message: "Roth conversion plan not found" });
     }
-    
+
     const success = await storage.deleteRothConversionPlan(planId);
-    
+
     if (!success) {
       return res.status(404).json({ message: "Roth conversion plan not found" });
     }
-    
+
     // Create an activity for this plan deletion
     await storage.createActivity({
       userId: plan.userId,
@@ -886,7 +886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         yearsToConvert: plan.yearsToConvert
       }
     });
-    
+
     return res.status(204).end();
   });
 
@@ -897,55 +897,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     const user = await storage.getUser(userId);
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     // Get retirement goals
     const goals = await storage.getRetirementGoals(userId);
-    
+
     // Get investment accounts
     const accounts = await storage.getInvestmentAccounts(userId);
-    
+
     // Get asset allocations for all accounts
     const assetAllocations = [];
     for (const account of accounts) {
       const allocations = await storage.getAssetAllocations(account.id);
       assetAllocations.push(...allocations);
     }
-    
+
     // Get security holdings for all accounts
     const securityHoldings = [];
     for (const account of accounts) {
       const holdings = await storage.getSecurityHoldings(account.id);
       securityHoldings.push(...holdings);
     }
-    
+
     // Get retirement expenses
     const expenses = await storage.getRetirementExpenses(userId);
-    
+
     // Get recent activities
     const activities = await storage.getActivities(userId, 3);
-    
+
     // Get personalized recommendations
     const recommendations = await storage.getRecommendations(userId);
-    
+
     // Get resources
     const resources = await storage.getResources();
-    
+
     // Calculate total portfolio value
     const totalPortfolioValue = accounts.reduce((sum, account) => sum + Number(account.balance), 0);
-    
+
     // Calculate retirement readiness score (simplified)
     const retirementReadinessScore = 78;
-    
-    
+
+
     // Find the primary income goal if exists
     const primaryIncomeGoal = goals.find(goal => goal.category === "income") || null;
-    
+
     // Calculate aggregate asset allocation
     const aggregateAssetAllocation = {
       stocks: 0,
@@ -953,7 +953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       realEstate: 0,
       cash: 0
     };
-    
+
     // Sum the values for each asset category
     assetAllocations.forEach(allocation => {
       const value = Number(allocation.value);
@@ -967,16 +967,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aggregateAssetAllocation.cash += value;
       }
     });
-    
+
     // Calculate total expenses
     const totalMonthlyExpenses = expenses.reduce(
-      (sum, expense) => sum + Number(expense.estimatedMonthlyAmount), 
+      (sum, expense) => sum + Number(expense.estimatedMonthlyAmount),
       0
     );
-    
+
     // Calculate current savings rate (simplified)
     const currentSavingsRate = 15;
-    
+
     // Return dashboard data
     return res.json({
       retirementReadiness: {
@@ -1038,16 +1038,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     try {
       const progressData = insertMultiStepFormProgressSchema.parse({
         ...req.body,
         userId
       });
-      
+
       // Check if progress already exists for this user
       const existingProgress = await storage.getMultiStepFormProgress(userId);
-      
+
       if (existingProgress) {
         // Update existing progress
         const updatedProgress = await storage.updateMultiStepFormProgress(userId, req.body);
@@ -1071,15 +1071,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     try {
       const progressData = insertMultiStepFormProgressSchema.partial().parse(req.body);
       const updatedProgress = await storage.updateMultiStepFormProgress(userId, progressData);
-      
+
       if (!updatedProgress) {
         return res.status(404).json({ message: "Form progress not found" });
       }
-      
+
       return res.json(updatedProgress);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1095,13 +1095,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!userId) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    
+
     const success = await storage.deleteMultiStepFormProgress(userId);
-    
+
     if (!success) {
       return res.status(404).json({ message: "Form progress not found" });
     }
-    
+
     return res.status(204).end();
   });
 
@@ -1183,30 +1183,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/retirement-plans", requireAuth, async (req: Request, res: Response) => {
     try {
       const user = getCurrentUser(req);
-      
+
       // Check 4 plan limit
       const existingPlans = await storage.getRetirementPlans(user.id);
       if (existingPlans.length >= 4) {
         return res.status(400).json({ message: "Maximum of 4 plans allowed per user" });
       }
-      
+
       const planData = insertRetirementPlanSchema.parse({
         ...req.body,
         userId: user.id
       });
-      
+
       const plan = await storage.createRetirementPlan(planData);
-      
+
       // Generate financial projections for the new plan - MUST complete before responding
       try {
         console.log(`🚀 Generating projections for new plan ${plan.id} (${plan.planName})`);
         await generateRetirementPlan(plan);
         console.log(`✅ Successfully generated projections for new plan ${plan.id}`);
-        
+
         // Verify data was created
         const snapshots = await storage.getAnnualSnapshots(plan.id);
         console.log(`📊 Plan ${plan.id} now has ${snapshots.length} snapshots`);
-        
+
         if (snapshots.length === 0) {
           throw new Error("Plan generation completed but no data was created");
         }
@@ -1214,12 +1214,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`❌ Failed to generate projections for plan ${plan.id}:`, genError);
         // Delete the plan if generation failed
         await storage.deleteRetirementPlan(plan.id);
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Failed to generate retirement plan data",
           error: genError instanceof Error ? genError.message : 'Unknown error'
         });
       }
-      
+
       // Create an activity for this plan creation
       await storage.createActivity({
         userId: user.id,
@@ -1231,7 +1231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           planType: planData.planType
         }
       });
-      
+
       return res.status(201).json(plan);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1247,36 +1247,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
-    
+
     try {
       const planData = insertRetirementPlanSchema.partial().parse(req.body);
       const updatedPlan = await storage.updateRetirementPlan(planId, planData);
-      
+
       if (!updatedPlan) {
         return res.status(404).json({ message: "Retirement plan not found" });
       }
-      
+
       // Regenerate financial projections for the updated plan - MUST complete before responding
       try {
         console.log(`🚀 Regenerating projections for updated plan ${updatedPlan.id}...`);
         await generateRetirementPlan(updatedPlan);
         console.log(`✅ Successfully regenerated projections for plan ${updatedPlan.id}`);
-        
+
         // Verify data was created
         const snapshots = await storage.getAnnualSnapshots(updatedPlan.id);
         console.log(`📊 Plan ${updatedPlan.id} updated with ${snapshots.length} snapshots`);
-        
+
         if (snapshots.length === 0) {
           throw new Error("Plan regeneration completed but no data was created");
         }
       } catch (genError) {
         console.error(`❌ Failed to regenerate projections for plan ${updatedPlan.id}:`, genError);
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Failed to regenerate retirement plan data",
           error: genError instanceof Error ? genError.message : 'Unknown error'
         });
       }
-      
+
       // Create an activity for this plan update
       await storage.createActivity({
         userId: updatedPlan.userId,
@@ -1288,7 +1288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           planType: updatedPlan.planType
         }
       });
-      
+
       return res.json(updatedPlan);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1304,13 +1304,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!planId) {
       return res.status(400).json({ message: "Invalid plan ID" });
     }
-    
+
     const success = await storage.deleteRetirementPlan(planId);
-    
+
     if (!success) {
       return res.status(404).json({ message: "Retirement plan not found" });
     }
-    
+
     return res.status(204).end();
   });
 
@@ -1322,34 +1322,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!planId) {
         return res.status(400).json({ message: "Invalid plan ID" });
       }
-      
+
       // Get the existing plan
       const plan = await storage.getRetirementPlan(planId);
       if (!plan) {
         return res.status(404).json({ message: "Plan not found" });
       }
-      
+
       // Clear existing snapshots and account balances for this plan
       await storage.clearPlanData(planId);
-      
+
       // Regenerate using the unified generator
       try {
         await generateRetirementPlan(plan);
       } catch (genError) {
         console.error(`❌ Failed to regenerate projections for plan ${plan.id}:`, genError);
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Failed to regenerate plan data",
           error: genError instanceof Error ? genError.message : 'Unknown error'
         });
       }
-      
+
       return res.json({
         plan,
         message: "Plan data regenerated successfully with complete yearly data"
       });
     } catch (error) {
       console.error('Error regenerating retirement plan:', error);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: "Failed to regenerate retirement plan",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -1361,7 +1361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`🎯 ENDPOINT: /api/retirement-plans/generate called at ${new Date().toISOString()}`);
     try {
       const user = getCurrentUser(req);
-      
+
       // Get user's current data to build the plan
       const userData = await storage.getUser(user.id);
       if (!userData) {
@@ -1371,7 +1371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for existing primary plan and delete it
       const existingPlans = await storage.getRetirementPlans(user.id);
       const existingPrimaryPlan = existingPlans.find(plan => plan.planType === 'P');
-      
+
       if (existingPrimaryPlan) {
         await storage.deleteRetirementPlan(existingPrimaryPlan.id);
       }
@@ -1424,18 +1424,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedPlanData = insertRetirementPlanSchema.parse(planData);
 
       const plan = await storage.createRetirementPlan(validatedPlanData);
-      
+
       // Generate financial projections for the new plan - MUST complete before responding
       try {
         console.log(`🚀 ROUTE: About to call generateRetirementPlan for plan ${plan.id}...`);
         await generateRetirementPlan(plan);
         console.log(`🚀 ROUTE: generateRetirementPlan call completed for plan ${plan.id}...`);
         console.log(`✅ Successfully completed generation for plan ${plan.id}`);
-        
+
         // Verify data was created
         const snapshots = await storage.getAnnualSnapshots(plan.id);
         console.log(`📊 Plan ${plan.id} generated with ${snapshots.length} snapshots`);
-        
+
         if (snapshots.length === 0) {
           throw new Error("Plan generation completed but no data was created");
         }
@@ -1443,18 +1443,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`❌ Failed to generate projections for plan ${plan.id}:`, genError);
         // Delete the plan if generation failed
         await storage.deleteRetirementPlan(plan.id);
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Failed to generate retirement plan data",
           error: genError instanceof Error ? genError.message : 'Unknown error'
         });
       }
-      
+
       // Create an activity for this plan generation
       await storage.createActivity({
         userId: user.id,
         activityType: existingPrimaryPlan ? "retirement_plan_updated" : "retirement_plan_created",
         title: existingPrimaryPlan ? "Retirement Plan Updated" : "Retirement Plan Generated",
-        description: existingPrimaryPlan 
+        description: existingPrimaryPlan
           ? "Updated primary retirement plan with latest information"
           : "Generated new primary retirement plan",
         metadata: {
@@ -1463,25 +1463,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           replacedPlanId: existingPrimaryPlan?.id
         }
       });
-      
+
       console.log(`🎯 CRITICAL: About to respond for plan ${plan.id} after generation completed`);
-      
+
       return res.status(201).json({
         plan,
         message: existingPrimaryPlan ? "Retirement plan updated successfully" : "Retirement plan generated successfully"
       });
     } catch (error) {
       console.error('Error generating retirement plan:', error);
-      
+
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid plan data", 
+        return res.status(400).json({
+          message: "Invalid plan data",
           errors: error.errors,
           details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
         });
       }
-      
-      return res.status(500).json({ 
+
+      return res.status(500).json({
         message: "Failed to generate retirement plan",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -1501,7 +1501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         userId: req.body.milestoneType === 'personal' ? user.id : undefined
       });
-      
+
       const milestone = await storage.createMilestone(milestoneData);
       return res.status(201).json(milestone);
     } catch (error) {
@@ -1525,7 +1525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!demoUser) {
         const hashedPassword = await bcrypt.hash("demo123", 10);
-        
+
         demoUser = await storage.createUser({
           username: "demo_user",
           password: hashedPassword,
@@ -1538,7 +1538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           maritalStatus: "single",
           dependents: 0,
           currentIncome: "85000",
-          expectedFutureIncome: "120000",  
+          expectedFutureIncome: "120000",
           desiredLifestyle: "comfortable",
           hasSpouse: false,
           totalMonthlyExpenses: "4500"
@@ -1548,10 +1548,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if plan exists
       const existingPlans = await storage.getRetirementPlans(demoUser.id);
       if (existingPlans.length > 0) {
-        return res.json({ 
-          message: "Demo data already exists", 
+        return res.json({
+          message: "Demo data already exists",
           user: demoUser.username,
-          plans: existingPlans.length 
+          plans: existingPlans.length
         });
       }
 
@@ -1575,7 +1575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`❌ Failed to generate demo plan projections:`, genError);
         // Continue even if generation fails
       }
-      
+
       /* Legacy manual snapshot creation - replaced by unified generator
       const currentYear = new Date().getFullYear();
       const snapshots = [];
@@ -1661,13 +1661,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createMilestone({
         planId: null,
         userId: null,
-        milestoneType: "standard", 
+        milestoneType: "standard",
         title: "Medicare Eligibility",
         description: "Eligible for Medicare benefits",
         targetYear: null,
         targetAge: 65,
         category: "healthcare",
-        color: "#ef4444", 
+        color: "#ef4444",
         icon: "shield"
       });
 
@@ -1680,9 +1680,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("Seeding error:", error);
-      return res.status(500).json({ 
-        message: "Failed to seed demo data", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+      return res.status(500).json({
+        message: "Failed to seed demo data",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });

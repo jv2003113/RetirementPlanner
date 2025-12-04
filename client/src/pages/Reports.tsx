@@ -1,69 +1,77 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell
 } from "recharts";
-import { 
-  FileText, 
-  Download, 
-  Printer, 
-  Mail, 
-  Calendar, 
-  BarChart3, 
-  PieChart as PieChartIcon, 
-  LineChart, 
+import {
+  FileText,
+  Download,
+  Printer,
+  Mail,
+  Calendar,
+  BarChart3,
+  PieChart as PieChartIcon,
+  LineChart,
   ArrowRight
 } from "lucide-react";
 import { format } from "date-fns";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 const Reports = () => {
   const [activeTab, setActiveTab] = useState("summary");
-  const userId = 1; // For demo purposes
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // Fetch user data
-  const { data: userData, isLoading: isLoadingUser } = useQuery({
+  const { data: userData, isLoading: isLoadingUser } = useQuery<any>({
     queryKey: [`/api/users/${userId}`],
+    enabled: !!userId,
   });
 
   // Fetch investment accounts
-  const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
+  const { data: accountsData, isLoading: isLoadingAccounts } = useQuery<any>({
     queryKey: [`/api/users/${userId}/investment-accounts`],
+    enabled: !!userId,
   });
 
   // Fetch retirement goals
-  const { data: goalsData, isLoading: isLoadingGoals } = useQuery({
+  const { data: goalsData, isLoading: isLoadingGoals } = useQuery<any>({
     queryKey: [`/api/users/${userId}/retirement-goals`],
+    enabled: !!userId,
   });
 
   // Fetch retirement expenses
-  const { data: expensesData, isLoading: isLoadingExpenses } = useQuery({
+  const { data: expensesData, isLoading: isLoadingExpenses } = useQuery<any>({
     queryKey: [`/api/users/${userId}/retirement-expenses`],
+    enabled: !!userId,
   });
 
   // Fetch dashboard data
-  const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery({
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery<any>({
     queryKey: [`/api/users/${userId}/dashboard`],
+    enabled: !!userId,
   });
 
   if (isLoadingUser || isLoadingAccounts || isLoadingGoals || isLoadingExpenses || isLoadingDashboard) {
@@ -72,6 +80,15 @@ const Reports = () => {
         <Skeleton className="h-8 w-64 mb-1" />
         <Skeleton className="h-4 w-96 mb-8" />
         <Skeleton className="h-[600px] mb-8" />
+      </div>
+    );
+  }
+
+  if (!userData || !userId) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center p-6 text-center">
+        <h1 className="text-2xl font-bold mb-4">User Not Found</h1>
+        <p className="text-muted-foreground">Please log in to access reports.</p>
       </div>
     );
   }
@@ -93,7 +110,7 @@ const Reports = () => {
   // Calculate portfolio allocation data
   const calculatePortfolioData = () => {
     if (!dashboardData) return [];
-    
+
     return [
       { name: "Stocks", value: dashboardData.portfolioAllocation.categories.stocks.value },
       { name: "Bonds", value: dashboardData.portfolioAllocation.categories.bonds.value },
@@ -101,26 +118,26 @@ const Reports = () => {
       { name: "Cash", value: dashboardData.portfolioAllocation.categories.cash.value }
     ];
   };
-  
+
   const COLORS = ['#1E88E5', '#43A047', '#FFA000', '#9C27B0'];
 
   // Calculate total expenses by category
   const calculateExpensesByCategory = () => {
     if (!expensesData) return [];
-    
+
     const categories: Record<string, number> = {};
-    
+
     expensesData.forEach((expense: any) => {
       const category = expense.category;
       const amount = Number(expense.estimatedMonthlyAmount);
-      
+
       if (categories[category]) {
         categories[category] += amount;
       } else {
         categories[category] = amount;
       }
     });
-    
+
     return Object.entries(categories).map(([name, value]) => ({
       name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
       value
@@ -130,12 +147,12 @@ const Reports = () => {
   // Calculate income vs expenses data
   const calculateIncomeVsExpenses = () => {
     if (!dashboardData || !expensesData) return [];
-    
+
     const totalMonthlyExpenses = expensesData.reduce(
-      (sum: number, expense: any) => sum + Number(expense.estimatedMonthlyAmount), 
+      (sum: number, expense: any) => sum + Number(expense.estimatedMonthlyAmount),
       0
     );
-    
+
     return [
       {
         name: "Current",
@@ -153,7 +170,7 @@ const Reports = () => {
   // Generate retirement readiness data
   const generateRetirementReadinessData = () => {
     if (!dashboardData) return [];
-    
+
     return [
       {
         name: "Retirement Readiness",
@@ -214,7 +231,7 @@ const Reports = () => {
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Monthly Income in Retirement</CardTitle>
@@ -228,7 +245,7 @@ const Reports = () => {
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Portfolio Value</CardTitle>
@@ -243,7 +260,7 @@ const Reports = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="summary" className="flex items-center">
@@ -256,7 +273,7 @@ const Reports = () => {
                 <LineChart className="h-4 w-4 mr-2" /> Retirement Projection
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="summary" className="mt-4 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
@@ -299,7 +316,7 @@ const Reports = () => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Income vs. Expenses</CardTitle>
@@ -337,7 +354,7 @@ const Reports = () => {
                   </CardContent>
                 </Card>
               </div>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Retirement Goals Summary</CardTitle>
@@ -380,7 +397,7 @@ const Reports = () => {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <div className="flex flex-col space-y-2">
                 <h3 className="text-lg font-medium">Recommendations</h3>
                 <Card>
@@ -401,7 +418,7 @@ const Reports = () => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-start space-x-3">
@@ -422,7 +439,7 @@ const Reports = () => {
                 </Card>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="portfolio" className="mt-4 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
@@ -458,8 +475,8 @@ const Reports = () => {
                       {portfolioData.map((item, index) => (
                         <div key={`item-${index}`} className="flex justify-between items-center">
                           <div className="flex items-center">
-                            <span 
-                              className="w-3 h-3 rounded-full mr-2" 
+                            <span
+                              className="w-3 h-3 rounded-full mr-2"
                               style={{ backgroundColor: COLORS[index % COLORS.length] }}
                             ></span>
                             <span className="text-sm">{item.name}</span>
@@ -470,7 +487,7 @@ const Reports = () => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Expense Distribution</CardTitle>
@@ -504,8 +521,8 @@ const Reports = () => {
                       {expenseData.slice(0, 6).map((item, index) => (
                         <div key={`expense-${index}`} className="flex justify-between items-center">
                           <div className="flex items-center">
-                            <span 
-                              className="w-3 h-3 rounded-full mr-2" 
+                            <span
+                              className="w-3 h-3 rounded-full mr-2"
                               style={{ backgroundColor: COLORS[index % COLORS.length] }}
                             ></span>
                             <span className="text-sm">{item.name}</span>
@@ -517,7 +534,7 @@ const Reports = () => {
                   </CardContent>
                 </Card>
               </div>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Investment Accounts Summary</CardTitle>
@@ -548,8 +565,8 @@ const Reports = () => {
                               {formatCurrency(account.balance)}
                             </td>
                             <td className="px-4 py-3 text-sm text-right">
-                              {account.contributionFrequency !== "none" 
-                                ? formatCurrency(account.contributionAmount) 
+                              {account.contributionFrequency !== "none"
+                                ? formatCurrency(account.contributionAmount)
                                 : "—"}
                             </td>
                             <td className="px-4 py-3 text-sm text-right">{account.annualReturn}%</td>
@@ -561,7 +578,7 @@ const Reports = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="projection" className="mt-4 space-y-6">
               <Card>
                 <CardHeader>
@@ -622,35 +639,35 @@ const Reports = () => {
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="age" label={{ value: 'Age', position: 'insideBottomRight', offset: -10 }} />
-                        <YAxis 
+                        <YAxis
                           tickFormatter={(value) => `$${value / 1000}k`}
-                          label={{ value: 'Monthly Amount', angle: -90, position: 'insideLeft', offset: 10 }} 
+                          label={{ value: 'Monthly Amount', angle: -90, position: 'insideLeft', offset: 10 }}
                         />
                         <Tooltip formatter={(value) => [formatCurrency(value as number), ""]} />
                         <Legend />
-                        <Bar 
-                          dataKey="portfolioIncome" 
-                          name="Portfolio Income" 
-                          stackId="a" 
-                          fill="#1E88E5" 
+                        <Bar
+                          dataKey="portfolioIncome"
+                          name="Portfolio Income"
+                          stackId="a"
+                          fill="#1E88E5"
                         />
-                        <Bar 
-                          dataKey="socialSecurity" 
-                          name="Social Security" 
-                          stackId="a" 
-                          fill="#43A047" 
+                        <Bar
+                          dataKey="socialSecurity"
+                          name="Social Security"
+                          stackId="a"
+                          fill="#43A047"
                         />
-                        <Bar 
-                          dataKey="expenses" 
-                          name="Expenses" 
-                          fill="#F44336" 
+                        <Bar
+                          dataKey="expenses"
+                          name="Expenses"
+                          fill="#F44336"
                         />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
@@ -693,7 +710,7 @@ const Reports = () => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Scenario Analysis</CardTitle>
@@ -714,7 +731,7 @@ const Reports = () => {
                           <span>30+ years</span>
                         </div>
                       </div>
-                      
+
                       <div>
                         <h3 className="font-medium mb-2">Optimistic Scenario</h3>
                         <div className="flex justify-between items-center text-sm">
@@ -730,7 +747,7 @@ const Reports = () => {
                           <span>9% annual returns</span>
                         </div>
                       </div>
-                      
+
                       <div>
                         <h3 className="font-medium mb-2">Pessimistic Scenario</h3>
                         <div className="flex justify-between items-center text-sm">
@@ -764,7 +781,7 @@ const Reports = () => {
           <Button>Generate Full Report</Button>
         </CardFooter>
       </Card>
-      
+
       <div className="mb-12">
         <h2 className="text-lg font-medium mb-4">Available Reports</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -787,7 +804,7 @@ const Reports = () => {
               <Button className="w-full">Generate Report</Button>
             </CardFooter>
           </Card>
-          
+
           <Card className="flex flex-col">
             <CardHeader>
               <CardTitle className="text-lg">Social Security Analysis</CardTitle>
@@ -808,7 +825,7 @@ const Reports = () => {
               <Button className="w-full">Generate Report</Button>
             </CardFooter>
           </Card>
-          
+
           <Card className="flex flex-col">
             <CardHeader>
               <CardTitle className="text-lg">Tax Efficiency Report</CardTitle>

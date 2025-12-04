@@ -23,8 +23,8 @@ import { Security } from "@/lib/securities-api";
 import { Edit, Trash2, Plus } from "lucide-react";
 
 interface SecurityHolding {
-  id: number;
-  accountId: number;
+  id: string;
+  accountId: string;
   ticker: string;
   name: string | null;
   percentage: string;
@@ -35,11 +35,11 @@ interface SecurityHolding {
 }
 
 interface SecurityHoldingsProps {
-  accountId: number;
+  accountId: string;
   accountName: string;
-  onAddHolding: (accountId: number) => void;
+  onAddHolding: (accountId: string) => void;
   onEditHolding: (holding: SecurityHolding) => void;
-  onDeleteHolding: (holdingId: number) => void;
+  onDeleteHolding: (holdingId: string) => void;
 }
 
 const SecurityHoldings = ({
@@ -70,7 +70,7 @@ const SecurityHoldings = ({
 
   const getRegionBadge = (region: string | null) => {
     if (!region) return null;
-    
+
     let color;
     switch (region) {
       case "domestic":
@@ -88,7 +88,7 @@ const SecurityHoldings = ({
       default:
         color = "bg-gray-100 text-gray-800";
     }
-    
+
     return (
       <Badge variant="outline" className={`${color} font-normal capitalize`}>
         {region.replace("_", " ")}
@@ -140,9 +140,9 @@ const SecurityHoldings = ({
               Individual securities in this investment account
             </CardDescription>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => onAddHolding(accountId)}
           >
             <Plus className="mr-1 h-4 w-4" /> Add Security
@@ -222,7 +222,7 @@ const SecurityHoldings = ({
                   </TableBody>
                 </Table>
               </div>
-              
+
               <div className="h-[300px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>

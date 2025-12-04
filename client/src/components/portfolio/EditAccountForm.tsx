@@ -3,22 +3,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -39,8 +39,8 @@ const accountFormSchema = z.object({
 });
 
 interface InvestmentAccount {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   accountName: string;
   accountType: string;
   balance: number;
@@ -129,7 +129,7 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="accountType"
@@ -156,7 +156,7 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="balance"
@@ -170,7 +170,7 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -185,7 +185,7 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="contributionFrequency"
@@ -212,7 +212,7 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -230,7 +230,7 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="fees"
@@ -248,7 +248,7 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="accountOwner"
@@ -274,7 +274,7 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="isRetirementAccount"
@@ -295,17 +295,17 @@ const EditAccountForm = ({ account, onSuccess, onCancel }: EditAccountFormProps)
                 </FormItem>
               )}
             />
-            
+
             <div className="flex justify-end space-x-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={onCancel}
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={updateAccountMutation.isPending}
               >
                 {updateAccountMutation.isPending ? "Updating..." : "Update Account"}

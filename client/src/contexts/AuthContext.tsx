@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   email?: string;
   firstName?: string;

@@ -17,6 +17,7 @@ import EstatePlanning from "@/pages/EstatePlanning";
 import Reports from "@/pages/Reports";
 import Simulation from "@/pages/Simulation";
 import RetirementPlan from "@/pages/RetirementPlan";
+import AccountSetup from "@/pages/AccountSetup";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileNav from "@/components/layout/MobileNav";
 import RothConversionCalculator from "@/components/tax/RothConversionCalculator";
@@ -60,6 +61,7 @@ function Router() {
               <Route path="/estate-planning" component={EstatePlanning} />
               <Route path="/reports" component={Reports} />
               <Route path="/simulation" component={Simulation} />
+              <Route path="/account" component={AccountSetup} />
               <Route component={NotFound} />
             </Switch>
           </div>

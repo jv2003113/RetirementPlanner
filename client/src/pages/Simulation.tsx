@@ -3,15 +3,18 @@ import { Loader2 } from "lucide-react";
 import MonteCarloSimulation from "@/components/simulations/MonteCarloSimulation";
 import { getQueryFn } from "@/lib/queryClient";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 export default function Simulation() {
-  // Fetch current user (we'll assume user ID 1 for this demo)
-  const userId = 1;
-  
+  const { user } = useAuth();
+  const userId = user?.id;
+
   const { data: userData, isLoading: isUserLoading } = useQuery({
     queryKey: [`/api/users/${userId}`],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!userId,
   });
-  
+
   if (isUserLoading) {
     return (
       <div className="w-full h-[50vh] flex items-center justify-center">
@@ -19,8 +22,8 @@ export default function Simulation() {
       </div>
     );
   }
-  
-  if (!userData) {
+
+  if (!userData || !userId) {
     return (
       <div className="w-full flex flex-col items-center justify-center p-6 text-center">
         <h1 className="text-2xl font-bold mb-4">User Not Found</h1>
@@ -28,7 +31,7 @@ export default function Simulation() {
       </div>
     );
   }
-  
+
   return (
     <div className="container py-8">
       <div className="flex flex-col space-y-2 mb-6">
@@ -37,7 +40,7 @@ export default function Simulation() {
           Use advanced Monte Carlo simulations to project your retirement portfolio under different market conditions.
         </p>
       </div>
-      
+
       <MonteCarloSimulation userId={userId} />
     </div>
   );

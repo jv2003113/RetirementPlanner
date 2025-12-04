@@ -52,7 +52,7 @@ const simulationFormSchema = z.object({
 type SimulationFormValues = z.infer<typeof simulationFormSchema>;
 
 interface MonteCarloSimulationProps {
-  userId: number;
+  userId: string;
 }
 
 const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
@@ -60,38 +60,38 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
   const [simulationResult, setSimulationResult] = useState<MonteCarloResult | null>(null);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("chart");
-  
+
   // Fetch user data and investment accounts
   const { data: userData, isLoading: isUserLoading } = useQuery({
     queryKey: [`/api/users/${userId}`],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
-  
+
   const { data: accountsData, isLoading: isAccountsLoading } = useQuery({
     queryKey: [`/api/users/${userId}/investment-accounts`],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
-  
+
   // Type declaration for user data
   interface UserData {
-    id: number;
+    id: string;
     firstName?: string;
     lastName?: string;
     email?: string;
     age?: number;
     retirementAge?: number;
   }
-  
+
   // Calculate total portfolio value
   const calculateTotalPortfolio = () => {
     if (!accountsData || !Array.isArray(accountsData)) return 0;
     return accountsData.reduce((total, account) => total + Number(account.balance), 0);
   };
-  
+
   // Calculate total annual contributions
   const calculateAnnualContributions = () => {
     if (!accountsData || !Array.isArray(accountsData)) return 0;
-    
+
     // Convert contribution frequencies to annual multipliers
     const frequencyMultipliers: Record<string, number> = {
       monthly: 12,
@@ -101,14 +101,14 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       annually: 1,
       none: 0
     };
-    
+
     return accountsData.reduce((total, account) => {
       const frequency = account.contributionFrequency || 'none';
       const multiplier = frequencyMultipliers[frequency] || 0;
       return total + (Number(account.contributionAmount) * multiplier);
     }, 0);
   };
-  
+
   // Create form
   const form = useForm<SimulationFormValues>({
     resolver: zodResolver(simulationFormSchema),
@@ -129,7 +129,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       otherIncome: 0,
     },
   });
-  
+
   // Update form values when user data and accounts data are loaded
   useEffect(() => {
     if (!isUserLoading && !isAccountsLoading && userData && accountsData) {
@@ -141,11 +141,11 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       }
     }
   }, [userData, accountsData, isUserLoading, isAccountsLoading, form]);
-  
+
   // Run simulation
   const runSimulation = (values: SimulationFormValues) => {
     setIsRunning(true);
-    
+
     // Convert form values to simulation parameters
     const params: MonteCarloParams = {
       currentAge: values.currentAge,
@@ -165,7 +165,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       socialSecurityIncome: values.socialSecurityIncome,
       otherIncome: values.otherIncome,
     };
-    
+
     // Use setTimeout to prevent UI from freezing during computation
     setTimeout(() => {
       try {
@@ -187,7 +187,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       }
     }, 100);
   };
-  
+
   // Format currency for display
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -196,38 +196,38 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       maximumFractionDigits: 0,
     }).format(value);
   };
-  
+
   // Format percentage for display
   const formatPercentage = (value: number) => {
     return `${(value * 100).toFixed(1)}%`;
   };
-  
+
   // Format number for display
   const formatNumber = (value: number) => {
     return new Intl.NumberFormat('en-US').format(value);
   };
-  
+
   // Get success rate color based on the rate
   const getSuccessRateColor = (rate: number) => {
     if (rate >= 0.85) return "bg-green-100 text-green-800";
     if (rate >= 0.7) return "bg-yellow-100 text-yellow-800";
     return "bg-red-100 text-red-800";
   };
-  
+
   // Prepare data for charts
   const prepareChartData = () => {
     if (!simulationResult) return [];
-    
+
     const { confidenceIntervals } = simulationResult;
     const { optimistic, median, pessimistic } = confidenceIntervals;
-    
+
     // Find the maximum length among the three arrays
     const maxLength = Math.max(
       optimistic.length,
       median.length,
       pessimistic.length
     );
-    
+
     // Create an array of chart data points
     return Array.from({ length: maxLength }).map((_, i) => ({
       year: i,
@@ -237,9 +237,9 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       pessimistic: pessimistic[i]?.portfolioValue || 0,
     }));
   };
-  
+
   const chartData = prepareChartData();
-  
+
   // Submit handler
   const onSubmit = (values: SimulationFormValues) => {
     // Validate retirement age is greater than current age
@@ -250,7 +250,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       });
       return;
     }
-    
+
     // Validate life expectancy is greater than retirement age
     if (values.lifeExpectancy <= values.retirementAge) {
       form.setError("lifeExpectancy", {
@@ -259,10 +259,10 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
       });
       return;
     }
-    
+
     runSimulation(values);
   };
-  
+
   return (
     <div className="grid gap-6">
       <Card>
@@ -297,7 +297,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="retirementAge"
@@ -311,7 +311,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="lifeExpectancy"
@@ -328,7 +328,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Simulation Settings</CardTitle>
@@ -366,7 +366,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="flex items-center space-x-2">
                       <FormField
                         control={form.control}
@@ -384,7 +384,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                         )}
                       />
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <FormField
                         control={form.control}
@@ -405,7 +405,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                   </CardContent>
                 </Card>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
@@ -428,7 +428,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="annualContribution"
@@ -445,7 +445,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="desiredAnnualIncome"
@@ -464,7 +464,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                     />
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Market Parameters</CardTitle>
@@ -492,7 +492,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="standardDeviation"
@@ -515,7 +515,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="inflationRate"
@@ -541,7 +541,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                   </CardContent>
                 </Card>
               </div>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Additional Income</CardTitle>
@@ -564,7 +564,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="otherIncome"
@@ -584,10 +584,10 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <div className="flex justify-end">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isRunning}
                   size="lg"
                 >
@@ -598,7 +598,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
           </Form>
         </CardContent>
       </Card>
-      
+
       {simulationResult && (
         <Card>
           <CardHeader>
@@ -623,7 +623,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                   Scenarios where funds lasted through retirement
                 </div>
               </div>
-              
+
               <div className="bg-slate-50 p-4 rounded-lg">
                 <div className="text-sm text-slate-500 mb-1">Median Final Balance</div>
                 <div className="text-xl font-semibold">
@@ -633,7 +633,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                   At the end of retirement (50th percentile)
                 </div>
               </div>
-              
+
               <div className="bg-slate-50 p-4 rounded-lg">
                 <div className="text-sm text-slate-500 mb-1">Balance Range</div>
                 <div className="text-xl font-semibold">
@@ -644,13 +644,13 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                 </div>
               </div>
             </div>
-            
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="mb-4">
                 <TabsTrigger value="chart">Portfolio Projection</TabsTrigger>
                 <TabsTrigger value="details">Simulation Details</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="chart" className="pt-4">
                 <div style={{ width: '100%', height: 400 }}>
                   <ResponsiveContainer>
@@ -672,49 +672,49 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                           <stop offset="95%" stopColor="#f87171" stopOpacity={0.1} />
                         </linearGradient>
                       </defs>
-                      <XAxis 
-                        dataKey="age" 
+                      <XAxis
+                        dataKey="age"
                         label={{ value: 'Age', position: 'insideBottomRight', offset: 0 }}
                       />
-                      <YAxis 
+                      <YAxis
                         tickFormatter={(value) => `$${value.toLocaleString('en-US', { notation: 'compact', compactDisplay: 'short' })}`}
                         label={{ value: 'Portfolio Value', angle: -90, position: 'insideLeft' }}
                       />
                       <CartesianGrid strokeDasharray="3 3" />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value) => formatCurrency(Number(value))}
                         labelFormatter={(value) => `Age: ${value}`}
                       />
                       <Legend />
-                      <Area 
-                        type="monotone" 
-                        dataKey="optimistic" 
-                        name="Optimistic (90%)" 
-                        stroke="#22c55e" 
-                        fillOpacity={1} 
-                        fill="url(#colorOptimistic)" 
+                      <Area
+                        type="monotone"
+                        dataKey="optimistic"
+                        name="Optimistic (90%)"
+                        stroke="#22c55e"
+                        fillOpacity={1}
+                        fill="url(#colorOptimistic)"
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="median" 
-                        name="Median (50%)" 
-                        stroke="#3b82f6" 
-                        fillOpacity={1} 
-                        fill="url(#colorMedian)" 
+                      <Area
+                        type="monotone"
+                        dataKey="median"
+                        name="Median (50%)"
+                        stroke="#3b82f6"
+                        fillOpacity={1}
+                        fill="url(#colorMedian)"
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="pessimistic" 
-                        name="Pessimistic (10%)" 
-                        stroke="#ef4444" 
-                        fillOpacity={1} 
-                        fill="url(#colorPessimistic)" 
+                      <Area
+                        type="monotone"
+                        dataKey="pessimistic"
+                        name="Pessimistic (10%)"
+                        stroke="#ef4444"
+                        fillOpacity={1}
+                        fill="url(#colorPessimistic)"
                       />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="details" className="pt-4">
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -723,55 +723,55 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                       <div className="grid grid-cols-2 gap-2">
                         <div className="text-sm text-slate-500">Current Age:</div>
                         <div className="text-sm font-medium">{form.getValues().currentAge}</div>
-                        
+
                         <div className="text-sm text-slate-500">Retirement Age:</div>
                         <div className="text-sm font-medium">{form.getValues().retirementAge}</div>
-                        
+
                         <div className="text-sm text-slate-500">Life Expectancy:</div>
                         <div className="text-sm font-medium">{form.getValues().lifeExpectancy}</div>
-                        
+
                         <div className="text-sm text-slate-500">Initial Portfolio:</div>
                         <div className="text-sm font-medium">{formatCurrency(form.getValues().initialBalance)}</div>
-                        
+
                         <div className="text-sm text-slate-500">Annual Contribution:</div>
                         <div className="text-sm font-medium">{formatCurrency(form.getValues().annualContribution)}</div>
-                        
+
                         <div className="text-sm text-slate-500">Desired Income:</div>
                         <div className="text-sm font-medium">{formatCurrency(form.getValues().desiredAnnualIncome)}</div>
-                        
+
                         <div className="text-sm text-slate-500">Expected Return:</div>
                         <div className="text-sm font-medium">{formatPercentage(form.getValues().meanReturn)}</div>
-                        
+
                         <div className="text-sm text-slate-500">Market Volatility:</div>
                         <div className="text-sm font-medium">{formatPercentage(form.getValues().standardDeviation)}</div>
-                        
+
                         <div className="text-sm text-slate-500">Inflation Rate:</div>
                         <div className="text-sm font-medium">{formatPercentage(form.getValues().inflationRate)}</div>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <h3 className="text-lg font-medium">Success Analysis</h3>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="text-sm text-slate-500">Minimum Balance:</div>
                         <div className="text-sm font-medium">{formatCurrency(simulationResult.minimumBalance)}</div>
-                        
+
                         <div className="text-sm text-slate-500">Maximum Balance:</div>
                         <div className="text-sm font-medium">{formatCurrency(simulationResult.maximumBalance)}</div>
-                        
+
                         <div className="text-sm text-slate-500">Median Balance:</div>
                         <div className="text-sm font-medium">{formatCurrency(simulationResult.medianEndBalance)}</div>
-                        
+
                         <div className="text-sm text-slate-500">Retirement Length:</div>
                         <div className="text-sm font-medium">
                           {form.getValues().lifeExpectancy - form.getValues().retirementAge} years
                         </div>
-                        
+
                         <div className="text-sm text-slate-500">Social Security:</div>
                         <div className="text-sm font-medium">
                           {formatCurrency(form.getValues().socialSecurityIncome)}/year
                         </div>
-                        
+
                         <div className="text-sm text-slate-500">Other Income:</div>
                         <div className="text-sm font-medium">
                           {formatCurrency(form.getValues().otherIncome)}/year
@@ -779,12 +779,12 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium">Interpretation</h3>
-                    
+
                     {simulationResult.successRate >= 0.85 ? (
                       <Alert className="bg-green-50 border-green-200">
                         <AlertTitle className="text-green-800">High Success Rate: {formatPercentage(simulationResult.successRate)}</AlertTitle>
@@ -807,7 +807,7 @@ const MonteCarloSimulation = ({ userId }: MonteCarloSimulationProps) => {
                         </AlertDescription>
                       </Alert>
                     )}
-                    
+
                     <div className="text-sm mt-4">
                       <p><strong>What this means:</strong> Monte Carlo simulation uses randomization to model the uncertainty in market returns. The simulation was run {formatNumber(simulationResult.simulationRuns.length)} times with different potential market conditions.</p>
                       <p className="mt-2"><strong>Success rate</strong> represents the percentage of scenarios where your money lasts through your expected retirement duration.</p>

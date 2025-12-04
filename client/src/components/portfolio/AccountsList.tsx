@@ -9,8 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SecurityHoldings from "./SecurityHoldings";
 
 interface InvestmentAccount {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   accountName: string;
   accountType: string;
   balance: number;
@@ -23,8 +23,8 @@ interface InvestmentAccount {
 }
 
 interface SecurityHolding {
-  id: number;
-  accountId: number;
+  id: string;
+  accountId: string;
   ticker: string;
   name: string | null;
   percentage: string;
@@ -34,25 +34,25 @@ interface SecurityHolding {
 
 interface AccountsListProps {
   accounts: InvestmentAccount[];
-  onDeleteAccount: (id: number) => void;
+  onDeleteAccount: (id: string) => void;
   onEditAccount: (account: InvestmentAccount) => void;
-  onAddHolding?: (accountId: number) => void;
+  onAddHolding?: (accountId: string) => void;
   onEditHolding?: (holding: SecurityHolding) => void;
-  onDeleteHolding?: (holdingId: number) => void;
+  onDeleteHolding?: (holdingId: string) => void;
 }
 
-const AccountsList = ({ 
-  accounts, 
-  onDeleteAccount, 
+const AccountsList = ({
+  accounts,
+  onDeleteAccount,
   onEditAccount,
   onAddHolding,
   onEditHolding,
-  onDeleteHolding 
+  onDeleteHolding
 }: AccountsListProps) => {
-  const [expandedAccount, setExpandedAccount] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<Record<number, string>>({});
+  const [expandedAccount, setExpandedAccount] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Record<string, string>>({});
 
-  const toggleAccountDetails = (accountId: number) => {
+  const toggleAccountDetails = (accountId: string) => {
     setExpandedAccount(expandedAccount === accountId ? null : accountId);
   };
 
@@ -75,7 +75,7 @@ const AccountsList = ({
         return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
   const getAccountOwnerIcon = (owner?: string) => {
     switch (owner) {
       case 'spouse':
@@ -86,7 +86,7 @@ const AccountsList = ({
         return <UserIcon className="h-4 w-4 mr-1 text-blue-500" />;
     }
   };
-  
+
   const getAccountOwnerLabel = (owner?: string) => {
     switch (owner) {
       case 'spouse':
@@ -101,7 +101,7 @@ const AccountsList = ({
   return (
     <div className="space-y-4">
       {accounts.map((account) => (
-        <Collapsible 
+        <Collapsible
           key={account.id}
           open={expandedAccount === account.id}
           onOpenChange={() => toggleAccountDetails(account.id)}
@@ -146,7 +146,7 @@ const AccountsList = ({
                 </Button>
               </CollapsibleTrigger>
             </CardContent>
-            
+
             <CollapsibleContent>
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-4 py-2">
@@ -159,11 +159,11 @@ const AccountsList = ({
                     <div className="font-medium">{account.fees}%</div>
                   </div>
                 </div>
-                
+
                 <div className="mt-4">
-                  <Tabs 
+                  <Tabs
                     value={activeTab[account.id] || "allocation"}
-                    onValueChange={(value) => setActiveTab({...activeTab, [account.id]: value})}
+                    onValueChange={(value) => setActiveTab({ ...activeTab, [account.id]: value })}
                   >
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="allocation">Asset Allocation</TabsTrigger>
@@ -174,7 +174,7 @@ const AccountsList = ({
                     </TabsContent>
                     <TabsContent value="securities">
                       {onAddHolding && onEditHolding && onDeleteHolding ? (
-                        <SecurityHoldings 
+                        <SecurityHoldings
                           accountId={account.id}
                           accountName={account.accountName}
                           onAddHolding={onAddHolding}
@@ -188,19 +188,19 @@ const AccountsList = ({
                   </Tabs>
                 </div>
               </CardContent>
-              
+
               <CardFooter className="flex justify-end space-x-2 pt-0">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
+                <Button
+                  size="sm"
+                  variant="outline"
                   className="flex items-center"
                   onClick={() => onEditAccount(account)}
                 >
                   <PencilIcon className="h-4 w-4 mr-1" /> Edit
                 </Button>
-                <Button 
-                  size="sm" 
-                  variant="destructive" 
+                <Button
+                  size="sm"
+                  variant="destructive"
                   className="flex items-center"
                   onClick={() => onDeleteAccount(account.id)}
                 >
@@ -216,7 +216,7 @@ const AccountsList = ({
 };
 
 // Component to show asset allocation for a specific account
-const AssetAllocationForAccount = ({ accountId }: { accountId: number }) => {
+const AssetAllocationForAccount = ({ accountId }: { accountId: string }) => {
   const { data: allocations, isLoading, error } = useQuery({
     queryKey: [`/api/investment-accounts/${accountId}/asset-allocations`],
   });
@@ -230,7 +230,7 @@ const AssetAllocationForAccount = ({ accountId }: { accountId: number }) => {
   }
 
   const allocationData = allocations as Array<{
-    id: number;
+    id: string;
     assetCategory: string;
     percentage: number;
   }> || [];
@@ -262,8 +262,8 @@ const AssetAllocationForAccount = ({ accountId }: { accountId: number }) => {
         {allocationData.map((allocation) => (
           <div key={allocation.id} className="flex items-center">
             <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className={`h-4 ${getCategoryColor(allocation.assetCategory)}`} 
+              <div
+                className={`h-4 ${getCategoryColor(allocation.assetCategory)}`}
                 style={{ width: `${allocation.percentage}%` }}
               ></div>
             </div>

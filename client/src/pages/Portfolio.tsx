@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
@@ -21,8 +22,8 @@ import AssetAllocationPieChart from "@/components/portfolio/AssetAllocationPieCh
 
 // Define interface for investment account
 interface SecurityHolding {
-  id: number;
-  accountId: number;
+  id: string;
+  accountId: string;
   ticker: string;
   name: string | null;
   percentage: string;
@@ -31,8 +32,8 @@ interface SecurityHolding {
 }
 
 interface InvestmentAccount {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   accountName: string;
   accountType: string;
   balance: number;
@@ -48,15 +49,17 @@ const Portfolio = () => {
   const [activeTab, setActiveTab] = useState("accounts");
   const [accountToEdit, setAccountToEdit] = useState<InvestmentAccount | null>(null);
   const { toast } = useToast();
-  const userId = 1; // For demo purposes
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // Fetch investment accounts
-  const { 
-    data: accountsData, 
+  const {
+    data: accountsData,
     isLoading: isLoadingAccounts,
     error: accountsError
   } = useQuery<InvestmentAccount[]>({
     queryKey: [`/api/users/${userId}/investment-accounts`],
+    enabled: !!userId,
   });
 
   // Function to calculate total portfolio value
@@ -64,7 +67,7 @@ const Portfolio = () => {
     if (!accountsData || !Array.isArray(accountsData)) return 0;
     return accountsData.reduce((total: number, account: InvestmentAccount) => total + Number(account.balance), 0);
   };
-  
+
   // Handle editing an account
   const handleEditAccount = (account: InvestmentAccount) => {
     setAccountToEdit(account);
@@ -73,7 +76,7 @@ const Portfolio = () => {
 
   // Delete account mutation
   const deleteAccountMutation = useMutation({
-    mutationFn: async (accountId: number) => {
+    mutationFn: async (accountId: string) => {
       return await apiRequest("DELETE", `/api/investment-accounts/${accountId}`, undefined);
     },
     onSuccess: () => {
@@ -92,7 +95,7 @@ const Portfolio = () => {
     },
   });
 
-  const handleDeleteAccount = (accountId: number) => {
+  const handleDeleteAccount = (accountId: string) => {
     if (window.confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
       deleteAccountMutation.mutate(accountId);
     }
@@ -132,7 +135,7 @@ const Portfolio = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Number of Accounts</CardTitle>
@@ -143,15 +146,15 @@ const Portfolio = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Monthly Contributions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${Array.isArray(accountsData) 
-                ? accountsData.reduce((total: number, account: InvestmentAccount) => 
+              ${Array.isArray(accountsData)
+                ? accountsData.reduce((total: number, account: InvestmentAccount) =>
                   total + (account.contributionFrequency === "monthly" ? Number(account.contributionAmount) : 0), 0).toLocaleString()
                 : "0"}
             </div>
@@ -165,11 +168,11 @@ const Portfolio = () => {
           <TabsTrigger value="allocation">Asset Allocation</TabsTrigger>
           <TabsTrigger value="add">Add New Account</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="accounts" className="mt-4">
           {Array.isArray(accountsData) && accountsData.length > 0 ? (
-            <AccountsList 
-              accounts={accountsData} 
+            <AccountsList
+              accounts={accountsData}
               onDeleteAccount={handleDeleteAccount}
               onEditAccount={handleEditAccount}
             />
@@ -186,7 +189,7 @@ const Portfolio = () => {
             </Card>
           )}
         </TabsContent>
-        
+
         <TabsContent value="edit" className="mt-4">
           {accountToEdit && (
             <EditAccountForm
@@ -206,7 +209,7 @@ const Portfolio = () => {
             />
           )}
         </TabsContent>
-        
+
         <TabsContent value="allocation" className="mt-4">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
@@ -228,7 +231,7 @@ const Portfolio = () => {
                 )}
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Allocation Recommendations</CardTitle>
@@ -267,7 +270,7 @@ const Portfolio = () => {
                     <div className="font-medium">5%</div>
                   </div>
                 </div>
-                
+
                 <div className="mt-6 p-4 bg-blue-50 rounded-md">
                   <h4 className="font-medium mb-2">Why this allocation?</h4>
                   <p className="text-sm text-gray-600">
@@ -282,10 +285,10 @@ const Portfolio = () => {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="add" className="mt-4">
-          <AddAccountForm 
-            userId={userId} 
+          <AddAccountForm
+            userId={userId}
             onSuccess={() => {
               setActiveTab("accounts");
               toast({
