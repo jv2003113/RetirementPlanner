@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ import CreatePlanForm from "@/components/retirement-plan/CreatePlanForm";
 import EditPlanForm from "@/components/retirement-plan/EditPlanForm";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RetirementPlan, AnnualSnapshot, AccountBalance, Milestone, User } from "@shared/schema";
+import { calculateRetirementProjection, InitialData, YearlyData } from "@/lib/retirement-projection";
+import ProjectionTable from "@/components/retirement/ProjectionTable";
+import ProjectionChart from "@/components/retirement/ProjectionChart";
 
 interface RetirementPlanWithDetails extends RetirementPlan {
   snapshots: AnnualSnapshot[];
@@ -152,6 +155,79 @@ export default function RetirementPlanPage() {
     setSelectedYear(year);
   };
 
+  // Calculate Projection
+  const projectionData = useMemo(() => {
+    if (!userData || !planDetails) return [];
+
+    // Aggregate assets from User Profile data (not investment-accounts table)
+    const initialAssets = {
+      '401k': (Number(userData.retirementAccount401k) || 0) + (Number(userData.retirementAccountIRA) || 0),
+      RothIRA: Number(userData.retirementAccountRoth) || 0,
+      Brokerage: Number(userData.investmentBalance) || 0,
+      Savings: (Number(userData.savingsBalance) || 0) + (Number(userData.checkingBalance) || 0),
+    };
+
+    const initialData: InitialData = {
+      currentAge: userData.currentAge || 30,
+      primaryRetireAge: planDetails.retirementAge,
+      primarySSStartAge: planDetails.socialSecurityStartAge || 67,
+      primarySSBenefit: Number(planDetails.estimatedSocialSecurityBenefit) || 0,
+      spouseRetireAge: planDetails.spouseRetirementAge || 65,
+      spouseSSStartAge: planDetails.spouseSocialSecurityStartAge || 67,
+      spouseSSBenefit: Number(planDetails.spouseEstimatedSocialSecurityBenefit) || 0,
+      lifeExpectancy: planDetails.endAge || 95,
+      portfolioGrowthRate: Number(planDetails.portfolioGrowthRate) / 100 || 0.07, // Convert percentage to decimal
+      inflationRate: Number(planDetails.inflationRate) / 100 || 0.03, // Convert percentage to decimal
+      initialAnnualSpending: Number(planDetails.desiredAnnualRetirementSpending) || 60000,
+      initialAssets,
+    };
+
+    return calculateRetirementProjection(initialData);
+  }, [userData, planDetails]);
+
+  // Calculate derived data for Dashboard and Timeline
+  const { dashboardData, timelineSnapshots } = useMemo(() => {
+    if (!projectionData.length || !userData) return { dashboardData: null, timelineSnapshots: [] };
+
+    const totalLiabilities =
+      (Number(userData.mortgageBalance) || 0) +
+      (Number(userData.creditCardDebt) || 0) +
+      (Number(userData.studentLoanDebt) || 0) +
+      (Number(userData.otherDebt) || 0);
+
+    const timelineSnapshots: AnnualSnapshot[] = projectionData.map(d => ({
+      id: `snapshot-${d.year}`,
+      planId: selectedPlanId || "temp-plan-id",
+      year: d.year,
+      age: d.age,
+      grossIncome: String(d.socialSecurityIncome + Object.values(d.withdrawals).reduce((a, b) => a + b, 0)),
+      netIncome: String((d.socialSecurityIncome + Object.values(d.withdrawals).reduce((a, b) => a + b, 0)) - (d.inflationAdjustedSpending + d.estimatedTax)),
+      totalExpenses: String(d.inflationAdjustedSpending + d.estimatedTax),
+      totalAssets: String(d.totalAssets_eoy),
+      totalLiabilities: String(totalLiabilities), // Assuming constant for now
+      netWorth: String(d.totalAssets_eoy - totalLiabilities),
+      taxesPaid: String(d.estimatedTax),
+      cumulativeTax: "0",
+      createdAt: new Date(),
+    }));
+
+    const currentYearData = projectionData.find(d => d.year === selectedYear);
+
+    let dashboardData = null;
+    if (currentYearData) {
+      const snapshot = timelineSnapshots.find(s => s.year === selectedYear) || null;
+      const accountBalances: AccountBalance[] = [
+        { id: "bal-1", snapshotId: snapshot?.id || "temp-snap-id", accountName: '401k / Traditional IRA', accountType: '401k', balance: String(currentYearData['401k_eoy']), growth: '7', contribution: '0', withdrawal: String(currentYearData.withdrawals['401k']) },
+        { id: "bal-2", snapshotId: snapshot?.id || "temp-snap-id", accountName: 'Roth IRA', accountType: 'roth_ira', balance: String(currentYearData.rothIRA_eoy), growth: '7', contribution: '0', withdrawal: String(currentYearData.withdrawals.RothIRA) },
+        { id: "bal-3", snapshotId: snapshot?.id || "temp-snap-id", accountName: 'Brokerage', accountType: 'brokerage', balance: String(currentYearData.brokerage_eoy), growth: '7', contribution: '0', withdrawal: String(currentYearData.withdrawals.Brokerage) },
+        { id: "bal-4", snapshotId: snapshot?.id || "temp-snap-id", accountName: 'Savings', accountType: 'savings', balance: String(currentYearData.savings_eoy), growth: '2', contribution: '0', withdrawal: String(currentYearData.withdrawals.Savings) },
+      ];
+      dashboardData = { snapshot, accountBalances };
+    }
+
+    return { dashboardData, timelineSnapshots };
+  }, [projectionData, userData, selectedYear]);
+
   if (plansLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -173,7 +249,7 @@ export default function RetirementPlanPage() {
             onCancel={() => setShowCreateForm(false)}
             onSuccess={(planId) => {
               setShowCreateForm(false);
-              setSelectedPlanId(planId);
+              setSelectedPlanId(String(planId));
             }}
           />
         ) : (
@@ -209,7 +285,7 @@ export default function RetirementPlanPage() {
           onCancel={() => setShowCreateForm(false)}
           onSuccess={(planId) => {
             setShowCreateForm(false);
-            setSelectedPlanId(planId);
+            setSelectedPlanId(String(planId));
           }}
         />
       </div>
@@ -327,32 +403,56 @@ export default function RetirementPlanPage() {
             </div>
           )}
 
-          {/* Interactive Timeline - Hidden on mobile */}
-          {activePlan && planDetails && (
-            <div className="hidden md:block">
-              <InteractiveTimeline
-                snapshots={planDetails.snapshots}
-                milestones={planDetails.milestones}
-                onYearSelect={handleYearSelect}
-                selectedYear={selectedYear}
-                retirementAge={activePlan.retirementAge}
-                startAge={activePlan.startAge}
-                endAge={activePlan.endAge || 95}
-                currentAge={userData?.currentAge || activePlan.startAge}
-              />
-            </div>
-          )}
 
-          {/* Financial Dashboard View */}
-          {selectedYear && planDetails && (
-            <FinancialDashboard
-              year={selectedYear}
-              age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : (activePlan?.startAge || 30) + (selectedYear - new Date().getFullYear())}
-              snapshot={yearData?.snapshot || null}
-              accountBalances={yearData?.accountBalances || []}
-              isLoading={yearLoading}
-            />
-          )}
+
+          <Tabs defaultValue="projection" className="w-full">
+            <TabsList>
+              <TabsTrigger value="projection">Projection</TabsTrigger>
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="projection">
+              {projectionData.length > 0 ? (
+                <div className="space-y-6">
+                  <ProjectionChart data={projectionData} />
+                  <ProjectionTable data={projectionData} />
+                </div>
+              ) : (
+                <div className="p-6 text-center text-gray-500">
+                  Insufficient data to generate projection. Please ensure you have account balances and plan details.
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="dashboard">
+              {/* Interactive Timeline - Moved here */}
+              {activePlan && planDetails && (
+                <div className="hidden md:block mb-6">
+                  <InteractiveTimeline
+                    snapshots={timelineSnapshots.length > 0 ? timelineSnapshots : planDetails.snapshots}
+                    milestones={planDetails.milestones}
+                    onYearSelect={handleYearSelect}
+                    selectedYear={selectedYear}
+                    retirementAge={activePlan.retirementAge}
+                    startAge={activePlan.startAge}
+                    endAge={activePlan.endAge || 95}
+                    currentAge={userData?.currentAge || activePlan.startAge}
+                  />
+                </div>
+              )}
+
+              {/* Financial Dashboard View */}
+              {selectedYear && planDetails && (
+                <FinancialDashboard
+                  year={selectedYear}
+                  age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : (activePlan?.startAge || 30) + (selectedYear - new Date().getFullYear())}
+                  snapshot={dashboardData?.snapshot || yearData?.snapshot || null}
+                  accountBalances={dashboardData?.accountBalances || yearData?.accountBalances || []}
+                  isLoading={yearLoading && !dashboardData}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </div>
