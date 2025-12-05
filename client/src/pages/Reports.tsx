@@ -39,31 +39,33 @@ import { format } from "date-fns";
 
 import { useAuth } from "@/contexts/AuthContext";
 
+import { User, InvestmentAccount, RetirementGoal, RetirementExpense, AnnualSnapshot } from "@shared/schema";
+
 const Reports = () => {
   const [activeTab, setActiveTab] = useState("summary");
   const { user } = useAuth();
   const userId = user?.id;
 
   // Fetch user data
-  const { data: userData, isLoading: isLoadingUser } = useQuery<any>({
+  const { data: userData, isLoading: isLoadingUser } = useQuery<User>({
     queryKey: [`/api/users/${userId}`],
     enabled: !!userId,
   });
 
   // Fetch investment accounts
-  const { data: accountsData, isLoading: isLoadingAccounts } = useQuery<any>({
+  const { data: accountsData, isLoading: isLoadingAccounts } = useQuery<InvestmentAccount[]>({
     queryKey: [`/api/users/${userId}/investment-accounts`],
     enabled: !!userId,
   });
 
   // Fetch retirement goals
-  const { data: goalsData, isLoading: isLoadingGoals } = useQuery<any>({
+  const { data: goalsData, isLoading: isLoadingGoals } = useQuery<RetirementGoal[]>({
     queryKey: [`/api/users/${userId}/retirement-goals`],
     enabled: !!userId,
   });
 
   // Fetch retirement expenses
-  const { data: expensesData, isLoading: isLoadingExpenses } = useQuery<any>({
+  const { data: expensesData, isLoading: isLoadingExpenses } = useQuery<RetirementExpense[]>({
     queryKey: [`/api/users/${userId}/retirement-expenses`],
     enabled: !!userId,
   });
@@ -156,7 +158,7 @@ const Reports = () => {
     return [
       {
         name: "Current",
-        income: userData.currentIncome / 12,
+        income: (userData?.currentIncome ? Number(userData.currentIncome) : 0) / 12,
         expenses: totalMonthlyExpenses * 0.7 // Assuming current expenses are lower
       },
       {
@@ -255,7 +257,7 @@ const Reports = () => {
                   {formatCurrency(dashboardData.portfolioAllocation.total)}
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  across {accountsData.length} accounts
+                  across {accountsData?.length || 0} accounts
                 </p>
               </CardContent>
             </Card>
@@ -307,11 +309,11 @@ const Reports = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span>Current Age</span>
-                        <span className="font-medium">{userData.currentAge}</span>
+                        <span className="font-medium">{userData?.currentAge || 0}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span>Years to Retirement</span>
-                        <span className="font-medium">{dashboardData.retirementReadiness.targetRetirementAge - userData.currentAge}</span>
+                        <span className="font-medium">{dashboardData.retirementReadiness.targetRetirementAge - (userData?.currentAge || 0)}</span>
                       </div>
                     </div>
                   </CardContent>

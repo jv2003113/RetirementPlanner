@@ -179,7 +179,21 @@ export default function RetirementPlanPage() {
       portfolioGrowthRate: Number(planDetails.portfolioGrowthRate) / 100 || 0.07, // Convert percentage to decimal
       inflationRate: Number(planDetails.inflationRate) / 100 || 0.03, // Convert percentage to decimal
       initialAnnualSpending: Number(planDetails.desiredAnnualRetirementSpending) || 60000,
+
       initialAssets,
+      // Mortgage Details
+      mortgageBalance: Number(userData.mortgageBalance) || 0,
+      mortgagePayment: Number(userData.mortgagePayment) || 0,
+      mortgageInterestRate: Number(userData.mortgageRate) / 100 || 0.04,
+      mortgageYearsLeft: Number(userData.mortgageYearsLeft) || 30,
+      // Additional Income
+      pensionIncome: Number(planDetails.pensionIncome) || 0,
+      spousePensionIncome: Number(planDetails.spousePensionIncome) || 0,
+      otherRetirementIncome: Number(planDetails.otherRetirementIncome) || 0,
+      // Pre-Retirement Income
+      currentIncome: Number(userData.currentIncome) || 0,
+      spouseCurrentIncome: Number(userData.spouseCurrentIncome) || 0,
+      expectedIncomeGrowth: Number(userData.expectedIncomeGrowth) / 100 || 0.03,
     };
 
     return calculateRetirementProjection(initialData);
@@ -200,12 +214,12 @@ export default function RetirementPlanPage() {
       planId: selectedPlanId || "temp-plan-id",
       year: d.year,
       age: d.age,
-      grossIncome: String(d.socialSecurityIncome + Object.values(d.withdrawals).reduce((a, b) => a + b, 0)),
-      netIncome: String((d.socialSecurityIncome + Object.values(d.withdrawals).reduce((a, b) => a + b, 0)) - (d.inflationAdjustedSpending + d.estimatedTax)),
+      grossIncome: String(d.socialSecurityIncome + d.pensionIncome + (d.currentIncome || 0) + (d.spouseCurrentIncome || 0) + d.totalGrossWithdrawal),
+      netIncome: String((d.socialSecurityIncome + d.pensionIncome + (d.currentIncome || 0) + (d.spouseCurrentIncome || 0) + d.totalGrossWithdrawal) - (d.inflationAdjustedSpending + d.estimatedTax)),
       totalExpenses: String(d.inflationAdjustedSpending + d.estimatedTax),
       totalAssets: String(d.totalAssets_eoy),
-      totalLiabilities: String(totalLiabilities), // Assuming constant for now
-      netWorth: String(d.totalAssets_eoy - totalLiabilities),
+      totalLiabilities: String(d.totalLiabilities_eoy),
+      netWorth: String(d.totalAssets_eoy - d.totalLiabilities_eoy),
       taxesPaid: String(d.estimatedTax),
       cumulativeTax: "0",
       createdAt: new Date(),
@@ -449,6 +463,7 @@ export default function RetirementPlanPage() {
                   snapshot={dashboardData?.snapshot || yearData?.snapshot || null}
                   accountBalances={dashboardData?.accountBalances || yearData?.accountBalances || []}
                   isLoading={yearLoading && !dashboardData}
+                  detailedData={projectionData.find(d => d.year === selectedYear)}
                 />
               )}
             </TabsContent>

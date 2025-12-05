@@ -34,7 +34,7 @@ export default function ProjectionTable({ data }: ProjectionTableProps) {
                             <TableHead>Year</TableHead>
                             <TableHead>Age</TableHead>
                             <TableHead className="text-right">Spending</TableHead>
-                            <TableHead className="text-right">SS Income</TableHead>
+                            <TableHead className="text-right">Fixed Income</TableHead>
                             <TableHead className="text-right">RMD</TableHead>
                             <TableHead className="text-right">Withdrawals</TableHead>
                             <TableHead className="text-right">Taxes</TableHead>
@@ -48,7 +48,7 @@ export default function ProjectionTable({ data }: ProjectionTableProps) {
                                 <TableCell>{row.year}</TableCell>
                                 <TableCell>{row.age}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(row.inflationAdjustedSpending)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(row.socialSecurityIncome)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(row.socialSecurityIncome + (row.pensionIncome || 0) + (row.currentIncome || 0) + (row.spouseCurrentIncome || 0))}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(row.rmdCalculated)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(row.totalGrossWithdrawal)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(row.estimatedTax)}</TableCell>

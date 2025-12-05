@@ -44,7 +44,31 @@ export default function ProjectionChart({ data }: ProjectionChartProps) {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="age" label={{ value: 'Age', position: 'insideBottomRight', offset: -5 }} />
                             <YAxis tickFormatter={(value) => `$${value / 1000}k`} />
-                            <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                            <Tooltip
+                                formatter={(value: number) => formatCurrency(value)}
+                                content={({ active, payload, label }) => {
+                                    if (active && payload && payload.length) {
+                                        const total = payload.reduce((sum, entry) => sum + (entry.value as number), 0);
+                                        return (
+                                            <div className="bg-white p-4 border border-gray-200 shadow-lg rounded-lg">
+                                                <p className="font-bold mb-2">Age {label}</p>
+                                                {payload.map((entry, index) => (
+                                                    <div key={index} className="flex items-center gap-2 text-sm">
+                                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                        <span className="text-gray-600">{entry.name}:</span>
+                                                        <span className="font-medium ml-auto">{formatCurrency(entry.value as number)}</span>
+                                                    </div>
+                                                ))}
+                                                <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between font-bold">
+                                                    <span>Total Assets:</span>
+                                                    <span>{formatCurrency(total)}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                }}
+                            />
                             <Legend />
                             <Area type="monotone" dataKey="401k_eoy" stackId="1" stroke="#8884d8" fill="#8884d8" name="401k" />
                             <Area type="monotone" dataKey="rothIRA_eoy" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="Roth IRA" />

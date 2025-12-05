@@ -17,6 +17,19 @@ export interface InitialData {
         Brokerage: number;
         Savings: number;
     };
+    // Mortgage Details
+    mortgageBalance: number;
+    mortgagePayment: number; // Monthly
+    mortgageInterestRate: number; // e.g., 0.04 for 4%
+    mortgageYearsLeft: number;
+    // Additional Income
+    pensionIncome: number;
+    spousePensionIncome: number;
+    otherRetirementIncome: number;
+    // Pre-Retirement Income
+    currentIncome: number;
+    spouseCurrentIncome: number;
+    expectedIncomeGrowth: number;
 }
 
 // Define the structure for the yearly output data, optimized for retiree viewing
@@ -26,9 +39,14 @@ export interface YearlyData {
 
     // Expenses (Inflation Adjusted)
     inflationAdjustedSpending: number;
+    livingExpenses: number;
+    mortgagePayment: number;
 
     // Income Sources
     socialSecurityIncome: number;
+    pensionIncome: number; // Sum of Pension + Other
+    currentIncome: number; // For pre-retirement
+    spouseCurrentIncome: number; // For pre-retirement
     rmdCalculated: number; // Required Minimum Distribution from 401k
     totalGrossWithdrawal: number; // Total amount pulled from accounts
 
@@ -42,6 +60,10 @@ export interface YearlyData {
     brokerage_eoy: number;
     savings_eoy: number;
     totalAssets_eoy: number;
+
+    // Liabilities (End of Year)
+    mortgageBalance_eoy: number;
+    totalLiabilities_eoy: number;
 
     // Withdrawals Breakdown
     withdrawals: {
@@ -75,27 +97,82 @@ export function calculateRetirementProjection(data: InitialData): YearlyData[] {
     let currentBrokerage = data.initialAssets.Brokerage;
     let currentSavings = data.initialAssets.Savings;
 
-    // Initial spending for the first year
-    let currentAnnualSpending = data.initialAnnualSpending;
+    // Mortgage State
+    let currentMortgageBalance = data.mortgageBalance;
+    let mortgageYearsRemaining = data.mortgageYearsLeft;
+    const annualMortgagePayment = data.mortgagePayment * 12;
+
+    // Pre-Retirement Income State
+    let currentTotalIncome = data.currentIncome + data.spouseCurrentIncome;
+
+    // Initial spending breakdown
+    // We assume initialAnnualSpending INCLUDES the mortgage payment.
+    // So Base Living Expenses = Total - Mortgage
+    let currentLivingExpenses = Math.max(0, data.initialAnnualSpending - (currentMortgageBalance > 0 ? annualMortgagePayment : 0));
 
     for (let age = data.currentAge; age <= data.lifeExpectancy; age++) {
         const year = currentYear + (age - data.currentAge);
 
-        // 1. Inflation & Spending
-        // For the first year (age === data.currentAge), use initialAnnualSpending.
-        // For subsequent years, inflate the previous year's spending.
+        // 1. Inflation & Spending & Income Growth
         if (age > data.currentAge) {
-            currentAnnualSpending = currentAnnualSpending * (1 + data.inflationRate);
+            currentLivingExpenses = currentLivingExpenses * (1 + data.inflationRate);
+            currentTotalIncome = currentTotalIncome * (1 + data.expectedIncomeGrowth);
         }
 
-        // 2. Income (Social Security)
+        // Calculate Total Spending for this year
+        let mortgagePaymentThisYear = 0;
+
+        // Mortgage Payoff Logic
+        if (currentMortgageBalance > 0 && mortgageYearsRemaining > 0) {
+            mortgagePaymentThisYear = annualMortgagePayment;
+
+            // Calculate Interest
+            const interestPayment = currentMortgageBalance * data.mortgageInterestRate;
+            const principalPayment = Math.min(currentMortgageBalance, annualMortgagePayment - interestPayment);
+
+            currentMortgageBalance -= principalPayment;
+            if (currentMortgageBalance < 0) currentMortgageBalance = 0;
+
+            mortgageYearsRemaining--;
+        }
+
+        const currentAnnualSpending = currentLivingExpenses + mortgagePaymentThisYear;
+
+
+        // 2. Income
         let socialSecurityIncome = 0;
-        if (age >= data.primarySSStartAge) {
-            socialSecurityIncome += data.primarySSBenefit;
+        let pensionIncome = 0;
+        let isPreRetirement = age < data.primaryRetireAge; // Simplified check, could be more complex if spouse retires at different time
+
+        if (isPreRetirement) {
+            // Pre-Retirement Phase: Income covers expenses, surplus reinvested
+            // We assume "currentTotalIncome" is the gross income available.
+            // Note: In a real app, we'd handle taxes on this income more precisely.
+            // Here we treat it as net or assume taxes are part of expenses/handled simply.
+
+            // We do NOT map it to pensionIncome anymore, to avoid duplication in the dashboard.
+            // The dashboard will use 'currentIncome' and 'spouseCurrentIncome' for display.
+            // The ProjectionTable needs to be aware of this change if it relies on pensionIncome for the "Fixed Income" column.
+            pensionIncome = 0;
+        } else {
+            // Post-Retirement Phase
+            if (age >= data.primarySSStartAge) {
+                socialSecurityIncome += data.primarySSBenefit;
+            }
+            if (age >= data.spouseSSStartAge) {
+                socialSecurityIncome += data.spouseSSBenefit;
+            }
+
+            if (age >= data.primaryRetireAge) {
+                pensionIncome += data.pensionIncome;
+                pensionIncome += data.otherRetirementIncome;
+            }
+            if (age >= data.spouseRetireAge) {
+                pensionIncome += data.spousePensionIncome;
+            }
         }
-        if (age >= data.spouseSSStartAge) {
-            socialSecurityIncome += data.spouseSSBenefit;
-        }
+
+        const totalFixedIncome = socialSecurityIncome + pensionIncome;
 
         // 3. RMD Calculation
         // RMDs only apply to 401k (Pre-Tax) balance.
@@ -113,8 +190,22 @@ export function calculateRetirementProjection(data: InitialData): YearlyData[] {
         // The prompt says "Assume a simplified, flat 15% tax rate on all taxable withdrawals (RMD and any other withdrawals from 401k or Brokerage)."
         // It implies SS is not taxed or handled separately. Let's assume SS covers spending directly.
 
-        // Remaining need after SS:
-        let remainingNeed = Math.max(0, currentAnnualSpending - socialSecurityIncome);
+        // Remaining need after Fixed Income:
+        let remainingNeed = currentAnnualSpending - totalFixedIncome;
+
+        // CRITICAL FIX: During pre-retirement, we must also subtract the current salary income
+        // from the remaining need, otherwise the system will think we need to withdraw from the portfolio.
+        if (isPreRetirement) {
+            remainingNeed -= currentTotalIncome;
+        }
+
+        // Handle Surplus (Income > Spending)
+        if (remainingNeed < 0) {
+            // Surplus! Reinvest into Brokerage.
+            const surplus = Math.abs(remainingNeed);
+            currentBrokerage += surplus;
+            remainingNeed = 0;
+        }
 
         // We have RMD which MUST be taken.
         // RMD is taxable.
@@ -268,7 +359,12 @@ export function calculateRetirementProjection(data: InitialData): YearlyData[] {
             year,
             age,
             inflationAdjustedSpending: currentAnnualSpending,
+            livingExpenses: currentLivingExpenses,
+            mortgagePayment: mortgagePaymentThisYear,
             socialSecurityIncome,
+            pensionIncome,
+            currentIncome: isPreRetirement ? data.currentIncome * Math.pow(1 + data.expectedIncomeGrowth, age - data.currentAge) : 0, // Approximate for display
+            spouseCurrentIncome: isPreRetirement ? data.spouseCurrentIncome * Math.pow(1 + data.expectedIncomeGrowth, age - data.currentAge) : 0, // Approximate for display
             rmdCalculated,
             totalGrossWithdrawal,
             taxableWithdrawals: totalTaxableWithdrawals,
@@ -278,6 +374,8 @@ export function calculateRetirementProjection(data: InitialData): YearlyData[] {
             brokerage_eoy: currentBrokerage,
             savings_eoy: currentSavings,
             totalAssets_eoy,
+            mortgageBalance_eoy: currentMortgageBalance,
+            totalLiabilities_eoy: currentMortgageBalance, // Add other liabilities if we had them tracked separately
             withdrawals,
             isDepleted
         });

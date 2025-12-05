@@ -59,11 +59,11 @@ interface ConversionScenario {
   netWorth: number;
 }
 
-interface RothConversionCalculatorProps {
-  userId?: number;
-}
+import { useAuth } from "@/contexts/AuthContext";
 
-const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps) => {
+const RothConversionCalculator = () => {
+  const { user } = useAuth();
+  const userId = user?.id;
   const { toast } = useToast();
   const [scenarios, setScenarios] = useState<ConversionScenario[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -83,7 +83,7 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
   const savePlanMutation = useMutation({
     mutationFn: async (planData: any) => {
       const plan = await apiRequest("POST", "/api/roth-conversion-plans", planData);
-      
+
       // Save scenarios for the plan if plan creation was successful
       if (scenarios.length > 0 && plan && (plan as any).id) {
         try {
@@ -104,7 +104,7 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
           // Don't fail the entire operation if scenarios fail to save
         }
       }
-      
+
       return plan;
     },
     onSuccess: (response) => {
@@ -128,8 +128,8 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
   const getTraditionalIraBalance = () => {
     if (!accountsData || !Array.isArray(accountsData)) return 0;
     return accountsData
-      .filter((account: any) => 
-        account.accountType === 'traditional_ira' || 
+      .filter((account: any) =>
+        account.accountType === 'traditional_ira' ||
         account.accountType === '401k' ||
         account.accountType === '403b'
       )
@@ -181,7 +181,7 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
 
     for (let year = 1; year <= values.yearsToConvert; year++) {
       const age = values.currentAge + year - 1;
-      
+
       // Calculate conversion amount for this year
       const annualConversion = Math.min(
         values.conversionAmount / values.yearsToConvert,
@@ -216,7 +216,7 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
     const yearsAfterConversion = values.retirementAge - values.currentAge - values.yearsToConvert;
     for (let year = values.yearsToConvert + 1; year <= yearsAfterConversion; year++) {
       const age = values.currentAge + year - 1;
-      
+
       // Apply growth to both accounts
       traditionalBalance *= (1 + values.expectedReturn / 100);
       rothBalance *= (1 + values.expectedReturn / 100);
@@ -411,11 +411,11 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
               <Button type="submit" className="w-full">
                 Calculate Conversion Strategy
               </Button>
-              
+
               {showResults && scenarios.length > 0 && (
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="w-full"
                   onClick={handleSavePlan}
                   disabled={savePlanMutation.isPending}
@@ -574,8 +574,8 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
                           <div className="text-sm text-gray-500">Traditional IRA at Retirement</div>
                           <div className="text-xl font-bold">
                             {formatCurrency(
-                              form.getValues("traditionalIraBalance") * 
-                              Math.pow(1 + form.getValues("expectedReturn") / 100, 
+                              form.getValues("traditionalIraBalance") *
+                              Math.pow(1 + form.getValues("expectedReturn") / 100,
                                 form.getValues("retirementAge") - form.getValues("currentAge")
                               )
                             )}
@@ -585,10 +585,10 @@ const RothConversionCalculator = ({ userId = 1 }: RothConversionCalculatorProps)
                           <div className="text-sm text-gray-500">Tax on Withdrawals</div>
                           <div className="text-xl font-bold text-red-600">
                             {formatCurrency(
-                              (form.getValues("traditionalIraBalance") * 
-                              Math.pow(1 + form.getValues("expectedReturn") / 100, 
-                                form.getValues("retirementAge") - form.getValues("currentAge")
-                              )) * (form.getValues("expectedRetirementTaxRate") / 100)
+                              (form.getValues("traditionalIraBalance") *
+                                Math.pow(1 + form.getValues("expectedReturn") / 100,
+                                  form.getValues("retirementAge") - form.getValues("currentAge")
+                                )) * (form.getValues("expectedRetirementTaxRate") / 100)
                             )}
                           </div>
                         </div>

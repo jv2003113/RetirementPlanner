@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useMultiStepForm } from '@/contexts/MultiStepFormContext';
-import { 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  HomeIcon, 
-  UtensilsIcon, 
+import {
+  HomeIcon,
+  UtensilsIcon,
   CarIcon,
   HeartPulseIcon,
   ZapIcon,
@@ -38,7 +39,7 @@ interface ExpenseItem {
 
 export const CurrentExpensesStep: React.FC = () => {
   const { form } = useMultiStepForm();
-  
+
   // Expense categories with icons
   const expenseCategories = {
     housing: {
@@ -127,7 +128,7 @@ export const CurrentExpensesStep: React.FC = () => {
 
   // Update expense item
   const updateExpense = (id: string, field: keyof ExpenseItem, value: string) => {
-    const updatedExpenses = expenses.map(expense => 
+    const updatedExpenses = expenses.map(expense =>
       expense.id === id ? { ...expense, [field]: value } : expense
     );
     form.setValue('expenses', updatedExpenses);
@@ -266,18 +267,12 @@ export const CurrentExpensesStep: React.FC = () => {
 
                 {/* Amount Input */}
                 <div className="col-span-2">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">$</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={expense.amount}
-                      onChange={(e) => updateExpense(expense.id, 'amount', e.target.value)}
-                      className="h-9 pl-8 text-right"
-                    />
-                  </div>
+                  <CurrencyInput
+                    placeholder="0.00"
+                    value={expense.amount}
+                    onValueChange={(value) => updateExpense(expense.id, 'amount', value)}
+                    className="h-9 text-right"
+                  />
                 </div>
 
                 {/* Remove Button */}
