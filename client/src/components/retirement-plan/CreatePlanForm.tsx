@@ -20,33 +20,33 @@ interface PlanFormData {
   planName: string;
   planType: 'single' | 'couple';
   planVariant: 'A' | 'B' | 'C';
-  
+
   // Primary person
   startAge: number;
   retirementAge: number;
   endAge: number;
-  
+
   // Spouse (if applicable)
   spouseStartAge?: number;
   spouseRetirementAge?: number;
   spouseEndAge?: number;
-  
+
   // Social Security
   socialSecurityStartAge: number;
   estimatedSocialSecurityBenefit: number;
   spouseSocialSecurityStartAge?: number;
   spouseEstimatedSocialSecurityBenefit?: number;
-  
+
   // Income Sources
   pensionIncome: number;
   spousePensionIncome?: number;
   otherRetirementIncome: number;
-  
+
   // Spending
   desiredAnnualRetirementSpending: number;
   majorOneTimeExpenses: number;
   majorExpensesDescription?: string;
-  
+
   // Economic assumptions
   inflationRate: number;
   portfolioGrowthRate: number;
@@ -56,7 +56,7 @@ interface PlanFormData {
 export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const [formData, setFormData] = useState<PlanFormData>({
     planName: '',
     planType: 'single',
@@ -107,11 +107,11 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
           initialNetWorth: "0", // Will be calculated
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to create plan');
       }
-      
+
       return response.json();
     },
     onSuccess: (newPlan) => {
@@ -126,15 +126,15 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
     if (!formData.planName.trim()) {
       newErrors.planName = 'Plan name is required';
     }
-    
+
     if (formData.startAge >= formData.retirementAge) {
       newErrors.retirementAge = 'Retirement age must be after start age';
     }
-    
+
     if (formData.retirementAge >= formData.endAge) {
       newErrors.endAge = 'Life expectancy must be after retirement age';
     }
-    
+
     if (formData.planType === 'couple') {
       if (!formData.spouseStartAge || !formData.spouseRetirementAge || !formData.spouseEndAge) {
         newErrors.spouse = 'All spouse ages are required for couple plans';
@@ -172,7 +172,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
             Configure the key parameters for your retirement scenario analysis
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Plan Basics */}
@@ -237,7 +237,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                 <Calendar className="h-5 w-5 text-blue-600" />
                 <h3 className="text-lg font-semibold">Age Parameters</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="startAge">Current Age *</Label>
@@ -250,7 +250,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                     onChange={(e) => updateFormData('startAge', parseInt(e.target.value))}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="retirementAge">Retirement Age *</Label>
                   <Input
@@ -266,7 +266,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                     <p className="text-sm text-red-600 mt-1">{errors.retirementAge}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <Label htmlFor="endAge">Life Expectancy *</Label>
                   <Input
@@ -303,7 +303,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                         onChange={(e) => updateFormData('spouseStartAge', parseInt(e.target.value))}
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="spouseRetirementAge">Spouse Retirement Age</Label>
                       <Input
@@ -315,7 +315,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                         onChange={(e) => updateFormData('spouseRetirementAge', parseInt(e.target.value))}
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="spouseEndAge">Spouse Life Expectancy</Label>
                       <Input
@@ -346,7 +346,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                 <Shield className="h-5 w-5 text-green-600" />
                 <h3 className="text-lg font-semibold">Social Security</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="socialSecurityStartAge">Social Security Start Age *</Label>
@@ -364,7 +364,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                   )}
                   <p className="text-xs text-gray-500 mt-1">Age 62-70</p>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="estimatedSocialSecurityBenefit">Annual SS Benefit *</Label>
                   <Input
@@ -402,7 +402,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                         <p className="text-sm text-red-600 mt-1">{errors.spouseSocialSecurityStartAge}</p>
                       )}
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="spouseEstimatedSocialSecurityBenefit">Spouse Annual SS Benefit</Label>
                       <Input
@@ -427,7 +427,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                 <Briefcase className="h-5 w-5 text-blue-600" />
                 <h3 className="text-lg font-semibold">Retirement Income Sources</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="pensionIncome">Annual Pension Income</Label>
@@ -441,7 +441,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                   />
                   <p className="text-xs text-gray-500 mt-1">Your annual pension income</p>
                 </div>
-                
+
                 {formData.planType === 'couple' && (
                   <div>
                     <Label htmlFor="spousePensionIncome">Spouse Pension Income</Label>
@@ -456,7 +456,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                     <p className="text-xs text-gray-500 mt-1">Spouse annual pension</p>
                   </div>
                 )}
-                
+
                 <div>
                   <Label htmlFor="otherRetirementIncome">Other Retirement Income</Label>
                   <Input
@@ -480,7 +480,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                 <Home className="h-5 w-5 text-orange-600" />
                 <h3 className="text-lg font-semibold">Retirement Spending</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="desiredAnnualRetirementSpending">Annual Retirement Spending *</Label>
@@ -498,7 +498,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                   )}
                   <p className="text-xs text-gray-500 mt-1">Your target annual spending in retirement</p>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="majorOneTimeExpenses">Major One-Time Expenses</Label>
                   <Input
@@ -512,7 +512,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                   <p className="text-xs text-gray-500 mt-1">New home, large trips, etc.</p>
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="majorExpensesDescription">Major Expenses Description</Label>
                 <Input
@@ -533,7 +533,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                 <TrendingUp className="h-5 w-5 text-green-600" />
                 <h3 className="text-lg font-semibold">Economic Assumptions</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="inflationRate">Inflation Rate (%)</Label>
@@ -548,7 +548,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
                   />
                   <p className="text-xs text-gray-500 mt-1">Typical: 2.0% - 4.0%</p>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="portfolioGrowthRate">Portfolio Growth Rate (%)</Label>
                   <Input
@@ -570,15 +570,15 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createPlanMutation.isPending}
                 className="min-w-32"
               >
                 {createPlanMutation.isPending ? 'Creating...' : 'Create Plan'}
               </Button>
             </div>
-            
+
             {createPlanMutation.error && (
               <Alert className="mt-4">
                 <AlertCircle className="h-4 w-4" />

@@ -10,7 +10,7 @@ import {
     DollarSign
 } from "lucide-react";
 import type { AnnualSnapshot, AccountBalance } from "@shared/schema";
-import type { YearlyData } from "@/lib/retirement-projection";
+import type { YearlyData } from "@shared/schema";
 
 interface FinancialDashboardProps {
     year: number;

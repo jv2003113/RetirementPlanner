@@ -9,7 +9,7 @@ import {
     Legend
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { YearlyData } from "@/lib/retirement-projection";
+import type { YearlyData } from "@shared/schema";
 
 interface ProjectionChartProps {
     data: YearlyData[];

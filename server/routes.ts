@@ -23,6 +23,7 @@ import {
 } from "../shared/schema";
 import { z } from "zod";
 import { generateRetirementPlan } from "./planGenerator";
+import { calculateRetirementProjection } from "./services/projectionService";
 
 // Middleware to check if user is authenticated
 function requireAuth(req: Request, res: Response, next: any) {

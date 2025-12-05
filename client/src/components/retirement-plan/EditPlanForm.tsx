@@ -21,33 +21,33 @@ interface PlanFormData {
   planName: string;
   planType: 'single' | 'couple';
   planVariant: 'A' | 'B' | 'C';
-  
+
   // Primary person
   startAge: number;
   retirementAge: number;
   endAge: number;
-  
+
   // Spouse (if applicable)
   spouseStartAge?: number;
   spouseRetirementAge?: number;
   spouseEndAge?: number;
-  
+
   // Social Security
   socialSecurityStartAge: number;
   estimatedSocialSecurityBenefit: number;
   spouseSocialSecurityStartAge?: number;
   spouseEstimatedSocialSecurityBenefit?: number;
-  
+
   // Income Sources
   pensionIncome: number;
   spousePensionIncome?: number;
   otherRetirementIncome: number;
-  
+
   // Spending
   desiredAnnualRetirementSpending: number;
   majorOneTimeExpenses: number;
   majorExpensesDescription?: string;
-  
+
   // Economic assumptions
   inflationRate: number;
   portfolioGrowthRate: number;
@@ -56,7 +56,7 @@ interface PlanFormData {
 export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const getPlanVariant = (planType: string | null): 'A' | 'B' | 'C' => {
     switch (planType) {
       case 'A': return 'A';
@@ -65,7 +65,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
       default: return 'A';
     }
   };
-  
+
   // Initialize form data with existing plan values
   const [formData, setFormData] = useState<PlanFormData>({
     planName: plan.planName,
@@ -121,11 +121,11 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
           majorExpensesDescription: data.majorExpensesDescription,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update plan');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -141,15 +141,15 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
     if (!formData.planName.trim()) {
       newErrors.planName = 'Plan name is required';
     }
-    
+
     if (formData.startAge >= formData.retirementAge) {
       newErrors.retirementAge = 'Retirement age must be after start age';
     }
-    
+
     if (formData.retirementAge >= formData.endAge) {
       newErrors.endAge = 'Life expectancy must be after retirement age';
     }
-    
+
     if (formData.planType === 'couple') {
       if (!formData.spouseStartAge || !formData.spouseRetirementAge || !formData.spouseEndAge) {
         newErrors.spouse = 'All spouse ages are required for couple plans';
@@ -187,7 +187,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
             Update the parameters for your retirement scenario analysis
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Plan Basics */}
@@ -252,7 +252,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                 <Calendar className="h-5 w-5 text-blue-600" />
                 <h3 className="text-lg font-semibold">Age Parameters</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="startAge">Current Age *</Label>
@@ -265,7 +265,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                     onChange={(e) => updateFormData('startAge', parseInt(e.target.value))}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="retirementAge">Retirement Age *</Label>
                   <Input
@@ -281,7 +281,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                     <p className="text-sm text-red-600 mt-1">{errors.retirementAge}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <Label htmlFor="endAge">Life Expectancy *</Label>
                   <Input
@@ -318,7 +318,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                         onChange={(e) => updateFormData('spouseStartAge', parseInt(e.target.value))}
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="spouseRetirementAge">Spouse Retirement Age</Label>
                       <Input
@@ -330,7 +330,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                         onChange={(e) => updateFormData('spouseRetirementAge', parseInt(e.target.value))}
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="spouseEndAge">Spouse Life Expectancy</Label>
                       <Input
@@ -361,7 +361,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                 <Shield className="h-5 w-5 text-green-600" />
                 <h3 className="text-lg font-semibold">Social Security</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="socialSecurityStartAge">Social Security Start Age *</Label>
@@ -379,7 +379,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                   )}
                   <p className="text-xs text-gray-500 mt-1">Age 62-70</p>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="estimatedSocialSecurityBenefit">Annual SS Benefit *</Label>
                   <Input
@@ -417,7 +417,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                         <p className="text-sm text-red-600 mt-1">{errors.spouseSocialSecurityStartAge}</p>
                       )}
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="spouseEstimatedSocialSecurityBenefit">Spouse Annual SS Benefit</Label>
                       <Input
@@ -442,7 +442,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                 <Briefcase className="h-5 w-5 text-blue-600" />
                 <h3 className="text-lg font-semibold">Retirement Income Sources</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="pensionIncome">Annual Pension Income</Label>
@@ -456,7 +456,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                   />
                   <p className="text-xs text-gray-500 mt-1">Your annual pension income</p>
                 </div>
-                
+
                 {formData.planType === 'couple' && (
                   <div>
                     <Label htmlFor="spousePensionIncome">Spouse Pension Income</Label>
@@ -471,7 +471,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                     <p className="text-xs text-gray-500 mt-1">Spouse annual pension</p>
                   </div>
                 )}
-                
+
                 <div>
                   <Label htmlFor="otherRetirementIncome">Other Retirement Income</Label>
                   <Input
@@ -495,7 +495,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                 <Home className="h-5 w-5 text-orange-600" />
                 <h3 className="text-lg font-semibold">Retirement Spending</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="desiredAnnualRetirementSpending">Annual Retirement Spending *</Label>
@@ -513,7 +513,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                   )}
                   <p className="text-xs text-gray-500 mt-1">Your target annual spending in retirement</p>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="majorOneTimeExpenses">Major One-Time Expenses</Label>
                   <Input
@@ -527,7 +527,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                   <p className="text-xs text-gray-500 mt-1">New home, large trips, etc.</p>
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="majorExpensesDescription">Major Expenses Description</Label>
                 <Input
@@ -548,7 +548,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                 <TrendingUp className="h-5 w-5 text-green-600" />
                 <h3 className="text-lg font-semibold">Economic Assumptions</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="inflationRate">Inflation Rate (%)</Label>
@@ -563,7 +563,7 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
                   />
                   <p className="text-xs text-gray-500 mt-1">Typical: 2.0% - 4.0%</p>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="portfolioGrowthRate">Portfolio Growth Rate (%)</Label>
                   <Input
@@ -585,15 +585,15 @@ export default function EditPlanForm({ plan, onCancel, onSuccess }: EditPlanForm
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={updatePlanMutation.isPending}
                 className="min-w-32"
               >
                 {updatePlanMutation.isPending ? 'Updating...' : 'Update Plan'}
               </Button>
             </div>
-            
+
             {updatePlanMutation.error && (
               <Alert className="mt-4">
                 <AlertCircle className="h-4 w-4" />

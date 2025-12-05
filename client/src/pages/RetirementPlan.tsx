@@ -16,8 +16,7 @@ import PlanParametersPanel from "@/components/retirement-plan/PlanParametersPane
 import CreatePlanForm from "@/components/retirement-plan/CreatePlanForm";
 import EditPlanForm from "@/components/retirement-plan/EditPlanForm";
 import { useAuth } from "@/contexts/AuthContext";
-import type { RetirementPlan, AnnualSnapshot, AccountBalance, Milestone, User } from "@shared/schema";
-import { calculateRetirementProjection, InitialData, YearlyData } from "@/lib/retirement-projection";
+import type { RetirementPlan, AnnualSnapshot, AccountBalance, Milestone, User, InitialData, YearlyData } from "@shared/schema";
 import ProjectionTable from "@/components/retirement/ProjectionTable";
 import ProjectionChart from "@/components/retirement/ProjectionChart";
 
@@ -155,9 +154,9 @@ export default function RetirementPlanPage() {
     setSelectedYear(year);
   };
 
-  // Calculate Projection
-  const projectionData = useMemo(() => {
-    if (!userData || !planDetails) return [];
+  // Construct Initial Data for Projection
+  const projectionInitialData = useMemo<InitialData | null>(() => {
+    if (!userData || !planDetails) return null;
 
     // Aggregate assets from User Profile data (not investment-accounts table)
     const initialAssets = {
@@ -167,7 +166,7 @@ export default function RetirementPlanPage() {
       Savings: (Number(userData.savingsBalance) || 0) + (Number(userData.checkingBalance) || 0),
     };
 
-    const initialData: InitialData = {
+    return {
       currentAge: userData.currentAge || 30,
       primaryRetireAge: planDetails.retirementAge,
       primarySSStartAge: planDetails.socialSecurityStartAge || 67,
@@ -195,9 +194,23 @@ export default function RetirementPlanPage() {
       spouseCurrentIncome: Number(userData.spouseCurrentIncome) || 0,
       expectedIncomeGrowth: Number(userData.expectedIncomeGrowth) / 100 || 0.03,
     };
-
-    return calculateRetirementProjection(initialData);
   }, [userData, planDetails]);
+
+  // Fetch Projection from API
+  const { data: projectionData = [], isLoading: isProjectionLoading } = useQuery<YearlyData[]>({
+    queryKey: ['projection', projectionInitialData],
+    queryFn: async () => {
+      if (!projectionInitialData) return [];
+      const response = await fetch('/api/projections/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projectionInitialData),
+      });
+      if (!response.ok) throw new Error('Failed to calculate projection');
+      return response.json();
+    },
+    enabled: !!projectionInitialData,
+  });
 
   // Calculate derived data for Dashboard and Timeline
   const { dashboardData, timelineSnapshots } = useMemo(() => {
@@ -462,7 +475,7 @@ export default function RetirementPlanPage() {
                   age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : (activePlan?.startAge || 30) + (selectedYear - new Date().getFullYear())}
                   snapshot={dashboardData?.snapshot || yearData?.snapshot || null}
                   accountBalances={dashboardData?.accountBalances || yearData?.accountBalances || []}
-                  isLoading={yearLoading && !dashboardData}
+                  isLoading={(yearLoading || isProjectionLoading) && !dashboardData}
                   detailedData={projectionData.find(d => d.year === selectedYear)}
                 />
               )}

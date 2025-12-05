@@ -503,3 +503,81 @@ export type InsertLiability = z.infer<typeof insertLiabilitySchema>;
 
 export type StandardMilestone = typeof standardMilestones.$inferSelect;
 export type InsertStandardMilestone = z.infer<typeof insertStandardMilestoneSchema>;
+
+// Projection Types
+export interface InitialData {
+  currentAge: number;
+  primaryRetireAge: number;
+  primarySSStartAge: number;
+  primarySSBenefit: number; // Annual
+  spouseRetireAge: number;
+  spouseSSStartAge: number;
+  spouseSSBenefit: number; // Annual
+  lifeExpectancy: number;
+  portfolioGrowthRate: number; // e.g., 0.07 (7%)
+  inflationRate: number; // e.g., 0.03 (3%)
+  initialAnnualSpending: number; // Retirement spending goal
+  initialAssets: {
+    '401k': number;
+    RothIRA: number;
+    Brokerage: number;
+    Savings: number;
+  };
+  // Mortgage Details
+  mortgageBalance: number;
+  mortgagePayment: number; // Monthly
+  mortgageInterestRate: number; // e.g., 0.04 for 4%
+  mortgageYearsLeft: number;
+  // Additional Income
+  pensionIncome: number;
+  spousePensionIncome: number;
+  otherRetirementIncome: number;
+  // Pre-Retirement Income
+  currentIncome: number;
+  spouseCurrentIncome: number;
+  expectedIncomeGrowth: number;
+}
+
+export interface YearlyData {
+  year: number;
+  age: number;
+
+  // Expenses (Inflation Adjusted)
+  inflationAdjustedSpending: number;
+  livingExpenses: number;
+  mortgagePayment: number;
+
+  // Income Sources
+  socialSecurityIncome: number;
+  pensionIncome: number; // Sum of Pension + Other
+  currentIncome: number; // For pre-retirement
+  spouseCurrentIncome: number; // For pre-retirement
+  rmdCalculated: number; // Required Minimum Distribution from 401k
+  totalGrossWithdrawal: number; // Total amount pulled from accounts
+
+  // Tax
+  taxableWithdrawals: number; // Sum of RMD, 401k, and Brokerage withdrawals
+  estimatedTax: number;
+
+  // Asset Balances (End of Year - EOY)
+  '401k_eoy': number;
+  rothIRA_eoy: number;
+  brokerage_eoy: number;
+  savings_eoy: number;
+  totalAssets_eoy: number;
+
+  // Liabilities (End of Year)
+  mortgageBalance_eoy: number;
+  totalLiabilities_eoy: number;
+
+  // Withdrawals Breakdown
+  withdrawals: {
+    '401k': number;
+    RothIRA: number;
+    Brokerage: number;
+    Savings: number;
+  };
+
+  // Status
+  isDepleted: boolean;
+}

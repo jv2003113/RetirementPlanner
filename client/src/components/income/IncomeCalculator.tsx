@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   calculateFutureValue,
   calculateMonthlyRetirementIncome,
   estimateSocialSecurityBenefits
@@ -26,12 +26,12 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
   const [currentAge, setCurrentAge] = useState(userData?.currentAge || 40);
   const [retirementAge, setRetirementAge] = useState(userData?.targetRetirementAge || 67);
   const [currentSavings, setCurrentSavings] = useState(
-    accountsData?.reduce((total: number, account: any) => 
+    accountsData?.reduce((total: number, account: any) =>
       total + (account.isRetirementAccount ? Number(account.balance) : 0), 0) || 100000
   );
   const [monthlyContribution, setMonthlyContribution] = useState(
-    accountsData?.reduce((total: number, account: any) => 
-      total + (account.contributionFrequency === "monthly" && account.isRetirementAccount ? 
+    accountsData?.reduce((total: number, account: any) =>
+      total + (account.contributionFrequency === "monthly" && account.isRetirementAccount ?
         Number(account.contributionAmount) : 0), 0) || 500
   );
   const [annualReturn, setAnnualReturn] = useState(7);
@@ -91,7 +91,7 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
                 onValueChange={(value) => setCurrentAge(value[0])}
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium">Retirement Age: {retirementAge}</label>
@@ -105,7 +105,7 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
                 onValueChange={(value) => setRetirementAge(value[0])}
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium">Current Retirement Savings</label>
@@ -118,7 +118,7 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
                 onChange={(e) => setCurrentSavings(Number(e.target.value))}
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium">Monthly Contribution</label>
@@ -132,7 +132,7 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
               />
             </div>
           </div>
-          
+
           <div className="space-y-6">
             <div className="space-y-2">
               <div className="flex justify-between">
@@ -147,7 +147,7 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
                 onValueChange={(value) => setAnnualReturn(value[0])}
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium">Withdrawal Rate: {withdrawalRate}%</label>
@@ -161,7 +161,7 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
                 onValueChange={(value) => setWithdrawalRate(value[0])}
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium">Current Annual Income</label>
@@ -174,18 +174,18 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
                 onChange={(e) => setCurrentIncome(Number(e.target.value))}
               />
             </div>
-            
+
             <div className="mt-8 p-4 bg-blue-50 rounded-lg">
               <h3 className="font-semibold mb-2">Quick Tip</h3>
               <p className="text-sm text-gray-700">
-                The 4% rule is a common guideline for retirement withdrawals. It suggests you can withdraw 4% of your 
-                portfolio in the first year of retirement, then adjust that amount for inflation each year, with a high 
+                The 4% rule is a common guideline for retirement withdrawals. It suggests you can withdraw 4% of your
+                portfolio in the first year of retirement, then adjust that amount for inflation each year, with a high
                 probability of not running out of money for at least 30 years.
               </p>
             </div>
           </div>
         </div>
-        
+
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-6">
@@ -196,7 +196,7 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
@@ -210,7 +210,7 @@ const IncomeCalculator = ({ userData, accountsData }: IncomeCalculatorProps) => 
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
