@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/api';
 
 interface User {
   id: string;
@@ -48,20 +49,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: authData, isLoading, error } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include',
-      });
+      const response = await apiRequest('/api/auth/me');
       if (!response.ok) {
         if (response.status === 401) {
-          return null; // Not authenticated
+          return null; // Not authenticated - this is a valid state, not an error
         }
         throw new Error('Failed to check authentication');
       }
       const data = await response.json();
       return data.user;
     },
-    retry: 1,
+    retry: false, // Don't retry on 401 - it's a valid "not authenticated" state
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 
   // Update user state when auth data changes
@@ -74,12 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      const response = await fetch('/api/auth/login', {
+      const response = await apiRequest('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 
@@ -101,12 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Signup mutation
   const signupMutation = useMutation({
     mutationFn: async (userData: SignupData) => {
-      const response = await fetch('/api/auth/signup', {
+      const response = await apiRequest('/api/auth/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
         body: JSON.stringify(userData),
       });
 
@@ -127,9 +119,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/auth/logout', {
+      const response = await apiRequest('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include',
       });
 
       if (!response.ok) {

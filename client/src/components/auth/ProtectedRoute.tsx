@@ -16,7 +16,20 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Fetch user data to check if profile is complete
   const { data: userData, isLoading: isLoadingUser, error } = useQuery<User>({
-    queryKey: [`/api/users/${userId}`],
+    queryKey: ['user', userId],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/${userId}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          return null;
+        }
+        throw new Error('Failed to fetch user data');
+      }
+      const data = await response.json();
+      return data;
+    },
     enabled: !!authUser && isAuthenticated,
     retry: false,
   });
@@ -40,7 +53,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [userData, isLoadingUser, setLocation, location]);
 
+  console.log('[ProtectedRoute] isLoading:', isLoading, 'isLoadingUser:', isLoadingUser, 'error:', error, 'isAuthenticated:', isAuthenticated);
+
   if (isLoading || isLoadingUser) {
+    console.log('[ProtectedRoute] Showing loading state');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -52,12 +68,17 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (error) {
-    return null;
+    console.log('[ProtectedRoute] Error fetching user data, but continuing:', error);
+    // Don't block rendering just because user data fetch failed
+    // The app can still work with the auth user data
+    return <>{children}</>;
   }
 
   if (!isAuthenticated) {
+    console.log('[ProtectedRoute] Not authenticated, returning null');
     return null; // App will handle redirecting to auth page
   }
 
+  console.log('[ProtectedRoute] Rendering children');
   return <>{children}</>;
 }

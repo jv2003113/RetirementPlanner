@@ -26,8 +26,11 @@ import RothConversionCalculator from "@/components/tax/RothConversionCalculator"
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  console.log('[Router] isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
+
   // Show loading screen while checking authentication
   if (isLoading) {
+    console.log('[Router] Showing loading screen');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -40,10 +43,12 @@ function Router() {
 
   // Show auth page if not authenticated
   if (!isAuthenticated) {
+    console.log('[Router] Showing auth page');
     return <Auth />;
   }
 
   // Show main app if authenticated
+  console.log('[Router] Showing main app');
   return (
     <ProtectedRoute>
       <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 text-gray-800">

@@ -17,6 +17,7 @@ import CreatePlanForm from "@/components/retirement-plan/CreatePlanForm";
 import EditPlanForm from "@/components/retirement-plan/EditPlanForm";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RetirementPlan, AnnualSnapshot, AccountBalance, Milestone, User, InitialData, YearlyData } from "@shared/schema";
+import { apiRequest } from "@/lib/api";
 import ProjectionTable from "@/components/retirement/ProjectionTable";
 import ProjectionChart from "@/components/retirement/ProjectionChart";
 
@@ -80,9 +81,7 @@ export default function RetirementPlanPage() {
   const { data: plans, isLoading: plansLoading } = useQuery<RetirementPlan[]>({
     queryKey: ["retirement-plans"],
     queryFn: async () => {
-      const response = await fetch("/api/retirement-plans", {
-        credentials: 'include',
-      });
+      const response = await apiRequest("/api/retirement-plans");
       if (!response.ok) throw new Error("Failed to fetch retirement plans");
       return response.json();
     },
@@ -92,9 +91,7 @@ export default function RetirementPlanPage() {
     queryKey: ["retirement-plan-details", selectedPlanId],
     queryFn: async () => {
       if (!selectedPlanId) return null;
-      const response = await fetch(`/api/retirement-plans/${selectedPlanId}/details`, {
-        credentials: 'include',
-      });
+      const response = await apiRequest(`/api/retirement-plans/${selectedPlanId}/details`);
       if (!response.ok) throw new Error("Failed to fetch plan details");
       return response.json();
     },
@@ -105,12 +102,9 @@ export default function RetirementPlanPage() {
     queryKey: ["year-details", selectedPlanId, selectedYear],
     queryFn: async () => {
       if (!selectedPlanId || !selectedYear) return null;
-      const response = await fetch(`/api/retirement-plans/${selectedPlanId}/year/${selectedYear}`, {
-        credentials: 'include',
-      });
+      const response = await apiRequest(`/api/retirement-plans/${selectedPlanId}/year/${selectedYear}`);
       if (!response.ok) {
         if (response.status === 404) {
-          // Year data doesn't exist, return null instead of throwing
           return null;
         }
         throw new Error("Failed to fetch year details");
@@ -202,9 +196,8 @@ export default function RetirementPlanPage() {
     queryKey: ['projection', projectionInitialData],
     queryFn: async () => {
       if (!projectionInitialData) return [];
-      const response = await fetch('/api/projections/calculate', {
+      const response = await apiRequest('/api/projections/calculate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(projectionInitialData),
       });
       if (!response.ok) throw new Error('Failed to calculate projection');

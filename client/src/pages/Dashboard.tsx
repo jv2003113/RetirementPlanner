@@ -48,7 +48,16 @@ const Dashboard = () => {
   const userId = authUser?.id || 1;
 
   const { data, isLoading, error } = useQuery<DashboardData>({
-    queryKey: [`/api/users/${userId}/dashboard`],
+    queryKey: ['dashboard', userId],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/${userId}/dashboard`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+      return response.json();
+    },
     refetchOnWindowFocus: false,
   });
 
@@ -57,18 +66,18 @@ const Dashboard = () => {
       <div className="py-4">
         <Skeleton className="h-8 w-64 mb-1" />
         <Skeleton className="h-4 w-96 mb-8" />
-        
+
         <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
           <Skeleton className="h-40" />
           <Skeleton className="h-40" />
           <Skeleton className="h-40" />
         </div>
-        
+
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 mb-8">
           <Skeleton className="h-80" />
           <Skeleton className="h-80" />
         </div>
-        
+
         <div className="grid grid-cols-1 gap-5 mb-8">
           <Skeleton className="h-80" />
           <Skeleton className="h-96" />
@@ -98,7 +107,7 @@ const Dashboard = () => {
           bgColor="bg-primary"
           description={`On track for retirement at age ${data!.retirementReadiness.targetRetirementAge}`}
         />
-        
+
         <RetirementReadinessCard
           score={data!.monthlyIncome.projected}
           label="Projected Monthly Income"
@@ -106,7 +115,7 @@ const Dashboard = () => {
           bgColor="bg-[#43A047]"
           description={`${data!.monthlyIncome.percentOfCurrent}% of current income`}
         />
-        
+
         <RetirementReadinessCard
           score={data!.savingsRate.percentage}
           label="Current Savings Rate"
@@ -121,7 +130,7 @@ const Dashboard = () => {
         <PortfolioAllocationChart data={data!.portfolioAllocation} />
         <div className="grid grid-cols-1 gap-5">
           <RetirementGoalsCard goals={data!.retirementGoals || []} />
-          <RetirementMilestones 
+          <RetirementMilestones
             user={{
               currentAge: 30,
               targetRetirementAge: data!.retirementReadiness.targetRetirementAge || 65,
@@ -130,7 +139,7 @@ const Dashboard = () => {
           />
         </div>
       </div>
-      
+
       {/* Recommendations Section */}
       <div className="mt-8 grid grid-cols-1 gap-5">
         <RecommendationsCard recommendations={data!.recommendations} />

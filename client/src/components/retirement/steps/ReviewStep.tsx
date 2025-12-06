@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useMultiStepForm, FORM_STEPS } from '@/contexts/MultiStepFormContext';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useMultiStepForm, FORM_STEPS } from '@/contexts/MultiStepFormContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiRequest } from "@/lib/api";
 import type { RetirementPlan } from '@shared/schema';
 import {
   PieChart,
@@ -59,7 +60,7 @@ export const ReviewStep: React.FC = () => {
   const { data: existingPlans = [], isLoading: plansLoading } = useQuery<RetirementPlan[]>({
     queryKey: ["retirement-plans"],
     queryFn: async () => {
-      const response = await fetch("/api/retirement-plans");
+      const response = await apiRequest("/api/retirement-plans");
       if (!response.ok) throw new Error("Failed to fetch retirement plans");
       return response.json();
     },
@@ -763,11 +764,8 @@ export const ReviewStep: React.FC = () => {
         throw new Error('Failed to serialize form data');
       }
 
-      const response = await fetch('/api/retirement-plans/generate', {
+      const response = await apiRequest('/api/retirement-plans/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: stringifiedBody,
       });
 

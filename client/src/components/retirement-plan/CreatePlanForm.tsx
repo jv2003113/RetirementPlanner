@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Plus, User, Users, TrendingUp, Calendar, Shield, DollarSign, Home, PiggyBank, Briefcase } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiRequest } from "@/lib/api";
 
 interface CreatePlanFormProps {
   onCancel: () => void;
@@ -79,9 +80,8 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
 
   const createPlanMutation = useMutation({
     mutationFn: async (data: PlanFormData) => {
-      const response = await fetch('/api/retirement-plans', {
+      const response = await apiRequest('/api/retirement-plans', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planName: data.planName,
           planType: data.planVariant,
@@ -104,7 +104,7 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
           desiredAnnualRetirementSpending: data.desiredAnnualRetirementSpending.toString(),
           majorOneTimeExpenses: data.majorOneTimeExpenses.toString(),
           majorExpensesDescription: data.majorExpensesDescription,
-          initialNetWorth: "0", // Will be calculated
+          initialNetWorth: "0",
         }),
       });
 

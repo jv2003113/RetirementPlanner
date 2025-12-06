@@ -3,13 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  CalendarDays, 
-  TrendingUp, 
-  Home, 
-  GraduationCap, 
-  Heart, 
-  Plane, 
+import {
+  CalendarDays,
+  TrendingUp,
+  Home,
+  GraduationCap,
+  Heart,
+  Plane,
   Shield,
   DollarSign,
   Clock,
@@ -21,6 +21,7 @@ import {
   Trophy
 } from "lucide-react";
 import type { AnnualSnapshot, Milestone, StandardMilestone } from "@shared/schema";
+import { apiRequest } from "@/lib/api";
 
 interface InteractiveTimelineProps {
   snapshots: AnnualSnapshot[];
@@ -135,11 +136,11 @@ export default function InteractiveTimeline({
   currentAge
 }: InteractiveTimelineProps) {
   const [hoveredYear, setHoveredYear] = useState<number | null>(null);
-  const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; content: any }>({ 
-    visible: false, 
-    x: 0, 
-    y: 0, 
-    content: null 
+  const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; content: any }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    content: null
   });
   const timelineRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -148,7 +149,7 @@ export default function InteractiveTimeline({
   const { data: standardMilestonesData, isLoading: standardMilestonesLoading } = useQuery<StandardMilestone[]>({
     queryKey: ["standard-milestones"],
     queryFn: async () => {
-      const response = await fetch("/api/milestones/standard");
+      const response = await apiRequest("/api/milestones/standard");
       if (!response.ok) throw new Error("Failed to fetch standard milestones");
       return response.json();
     },
@@ -160,7 +161,7 @@ export default function InteractiveTimeline({
       const currentAgePosition = ((currentAge - startAge) / (endAge - startAge)) * timelineRef.current.offsetWidth;
       const containerWidth = scrollContainerRef.current.offsetWidth;
       const scrollPosition = Math.max(0, currentAgePosition - containerWidth / 2);
-      
+
       setTimeout(() => {
         scrollContainerRef.current?.scrollTo({
           left: scrollPosition,
@@ -180,10 +181,10 @@ export default function InteractiveTimeline({
     m => m.targetAge >= startAge && m.targetAge <= endAge
   );
   // Transform and filter standard milestones from API
-  const generalMilestones = standardMilestonesData 
+  const generalMilestones = standardMilestonesData
     ? standardMilestonesData
-        .map(transformStandardMilestone)
-        .filter(m => m.targetAge >= startAge && m.targetAge <= endAge)
+      .map(transformStandardMilestone)
+      .filter(m => m.targetAge >= startAge && m.targetAge <= endAge)
     : [];
 
   // Calculate milestone offsets to prevent overlap
@@ -193,9 +194,9 @@ export default function InteractiveTimeline({
       const otherPosition = getPositionForAge(m.targetAge);
       return Math.abs(position - otherPosition) < 3; // Within 3% of each other
     });
-    
+
     if (conflictingMilestones.length <= 1) return 0;
-    
+
     const index = conflictingMilestones.findIndex(m => m.targetAge === age);
     const offset = (index - (conflictingMilestones.length - 1) / 2) * 15; // 15px spacing
     return offset;
@@ -239,27 +240,27 @@ export default function InteractiveTimeline({
         <div className="space-y-4">
           {/* Main Timeline with Integrated Milestones */}
           <div className="relative py-2">
-            
+
             {/* Scrollable Timeline Container */}
-            <div 
+            <div
               ref={scrollContainerRef}
-              className="relative overflow-x-auto pb-4" 
+              className="relative overflow-x-auto pb-4"
               style={{ scrollBehavior: 'smooth' }}
             >
-              <div 
-                ref={timelineRef} 
+              <div
+                ref={timelineRef}
                 className="relative h-24 min-w-full"
                 style={{ width: `${Math.max(totalYears * 60, 800)}px` }} // 60px per year, minimum 800px
               >
                 {/* Main timeline line */}
-                <div 
+                <div
                   className="absolute top-1/2 h-1 bg-gradient-to-r from-blue-400 via-green-400 to-purple-400 rounded-full transform -translate-y-1/2"
-                  style={{ 
-                    left: '2%', 
+                  style={{
+                    left: '2%',
                     right: '2%'
                   }}
                 ></div>
-                
+
                 {/* Age numbers with milestones */}
                 {Array.from({ length: totalYears }, (_, i) => {
                   const age = startAge + i;
@@ -268,25 +269,25 @@ export default function InteractiveTimeline({
                   const isRetired = age >= retirementAge;
                   const isSelected = selectedYear === year;
                   const position = (i / (totalYears - 1)) * 100; // Even distribution
-                  
+
                   // Find milestones at this age
                   const planMilestone = planMilestones.find(m => m.targetAge === age);
                   const generalMilestone = generalMilestones.find(m => m.targetAge === age);
-                  
+
                   // Get all milestones for this age for tooltip
                   const allMilestonesAtAge = [
                     ...planMilestones.filter(m => m.targetAge === age),
                     ...personalMilestones.filter(m => m.targetAge === age),
                     ...generalMilestones.filter(m => m.targetAge === age)
                   ];
-                  
+
                   return (
                     <div key={age}>
                       <div
                         className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
-                        style={{ 
+                        style={{
                           left: `${2 + (position * 0.96)}%`, // Add 2% margin and compress to 96% width
-                          top: '50%' 
+                          top: '50%'
                         }}
                         onClick={() => handleYearClick(age)}
                         onMouseEnter={(e) => {
@@ -354,7 +355,7 @@ export default function InteractiveTimeline({
                   );
                 })}
               </div>
-              
+
             </div>
           </div>
 
@@ -388,7 +389,7 @@ export default function InteractiveTimeline({
             <div className="font-bold text-sm mb-2 text-blue-300">
               Age {tooltip.content.age} • {tooltip.content.year}
             </div>
-            
+
             {tooltip.content.milestones.length > 0 ? (
               <div className="space-y-2">
                 {tooltip.content.milestones.map((milestone: any, index: number) => (
