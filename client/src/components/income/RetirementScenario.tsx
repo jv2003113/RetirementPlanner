@@ -1,22 +1,22 @@
 import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -40,16 +40,16 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
   // Current stats
   const currentAge = userData?.currentAge || 40;
   const currentRetirementAge = userData?.targetRetirementAge || 67;
-  const currentPortfolioValue = accountsData?.reduce((total: number, account: any) => 
+  const currentPortfolioValue = accountsData?.reduce((total: number, account: any) =>
     total + (account.isRetirementAccount ? Number(account.balance) : 0), 0) || 100000;
-  const currentMonthlyContribution = accountsData?.reduce((total: number, account: any) => 
-    total + (account.contributionFrequency === "monthly" && account.isRetirementAccount ? 
+  const currentMonthlyContribution = accountsData?.reduce((total: number, account: any) =>
+    total + (account.contributionFrequency === "monthly" && account.isRetirementAccount ?
       Number(account.contributionAmount) : 0), 0) || 500;
 
   // Calculate modified values based on scenarios
   const modifiedRetirementAge = currentRetirementAge + retirementAgeChange;
   const modifiedMonthlyContribution = currentMonthlyContribution * (1 + savingsRateChange / 100);
-  
+
   // Years to retirement
   const yearsToRetirement = Math.max(0, modifiedRetirementAge - currentAge);
 
@@ -57,7 +57,7 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
   const calculateScenario = (scenarioType: string) => {
     let projectedValue = 0;
     let monthlyIncome = 0;
-    
+
     switch (scenarioType) {
       case "baseline":
         projectedValue = calculateFutureValue(
@@ -87,7 +87,7 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
         monthlyIncome = calculateMonthlyRetirementIncome(projectedValue);
         break;
     }
-    
+
     return {
       projectedValue,
       monthlyIncome
@@ -204,17 +204,17 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
-                    <YAxis 
+                    <YAxis
                       tickFormatter={(value) => `$${value / 1000000}M`}
                       label={{ value: 'Portfolio Value', angle: -90, position: 'insideLeft' }}
                     />
                     <Tooltip formatter={(value) => formatCurrency(value as number)} />
                     <Legend />
-                    <Bar 
-                      dataKey="portfolioValue" 
-                      name="Portfolio Value" 
-                      fill="#1E88E5" 
-                      onClick={(data) => setSelectedScenario(data.name.toLowerCase())}
+                    <Bar
+                      dataKey="portfolioValue"
+                      name="Portfolio Value"
+                      fill="#1E88E5"
+                      onClick={(data) => setSelectedScenario(data.name?.toLowerCase() || '')}
                       className="cursor-pointer"
                     />
                   </BarChart>
@@ -235,17 +235,17 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
-                    <YAxis 
+                    <YAxis
                       tickFormatter={(value) => `$${value / 1000}k`}
                       label={{ value: 'Monthly Income', angle: -90, position: 'insideLeft' }}
                     />
                     <Tooltip formatter={(value) => formatCurrency(value as number)} />
                     <Legend />
-                    <Bar 
-                      dataKey="monthlyIncome" 
-                      name="Monthly Income" 
+                    <Bar
+                      dataKey="monthlyIncome"
+                      name="Monthly Income"
                       fill="#43A047"
-                      onClick={(data) => setSelectedScenario(data.name.toLowerCase())}
+                      onClick={(data) => setSelectedScenario(data.name?.toLowerCase() || '')}
                       className="cursor-pointer"
                     />
                   </BarChart>
@@ -269,7 +269,7 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
                 onValueChange={(value) => setSavingsRateChange(value[0])}
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium">Adjust Retirement Age: {retirementAgeChange > 0 ? `+${retirementAgeChange}` : retirementAgeChange} years</label>
@@ -286,7 +286,7 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
           </div>
         </CardFooter>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>{scenarioDetails.title}</CardTitle>
@@ -295,8 +295,8 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <RadioGroup 
-            defaultValue="baseline" 
+          <RadioGroup
+            defaultValue="baseline"
             value={selectedScenario}
             onValueChange={setSelectedScenario}
             className="mb-6"
@@ -314,28 +314,28 @@ const RetirementScenario = ({ userData, accountsData }: RetirementScenarioProps)
               <Label htmlFor="pessimistic">Pessimistic</Label>
             </div>
           </RadioGroup>
-          
+
           <div className="space-y-4">
             <div>
               <h3 className="text-sm font-medium text-gray-500">Average Annual Return</h3>
               <div className="font-medium">{scenarioDetails.returnRate}</div>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-500">Monthly Contribution</h3>
               <div className="font-medium">{scenarioDetails.monthlyContribution}</div>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-500">Retirement Age</h3>
               <div className="font-medium">{scenarioDetails.retirementAge}</div>
             </div>
-            
+
             <div className="pt-4 border-t">
               <h3 className="text-sm font-medium text-gray-500">Projected Portfolio Value</h3>
               <div className="text-xl font-bold">{scenarioDetails.projectedValue}</div>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-500">Projected Monthly Income</h3>
               <div className="text-xl font-bold">{scenarioDetails.monthlyIncome}</div>

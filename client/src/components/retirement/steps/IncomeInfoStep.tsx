@@ -1,12 +1,12 @@
 import React from 'react';
 import { useMultiStepForm } from '@/contexts/MultiStepFormContext';
-import { 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
   FormMessage,
-  FormDescription 
+  FormDescription
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,11 +44,11 @@ export const IncomeInfoStep: React.FC = () => {
                   <FormControl>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input 
-                        type="number" 
-                        placeholder="75000" 
+                      <Input
+                        type="number"
+                        placeholder="75000"
                         className="pl-10"
-                        {...field} 
+                        {...field}
                       />
                     </div>
                   </FormControl>
@@ -59,61 +59,36 @@ export const IncomeInfoStep: React.FC = () => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
-              name="expectedFutureIncome"
+              name="expectedIncomeGrowth"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Expected Peak Income</FormLabel>
+                  <FormLabel>Expected Annual Income Growth</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input 
-                        type="number" 
-                        placeholder="100000" 
+                      <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="number"
+                        placeholder="3"
+                        min="0"
+                        max="20"
+                        step="0.1"
                         className="pl-10"
-                        {...field} 
+                        {...field}
                       />
+                      <span className="absolute right-3 top-3 text-gray-400">%</span>
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Highest income you expect to earn in your career
+                    Average annual percentage increase you expect in your income
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-
-          <FormField
-            control={form.control}
-            name="expectedIncomeGrowth"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Expected Annual Income Growth</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input 
-                      type="number" 
-                      placeholder="3" 
-                      min="0"
-                      max="20"
-                      step="0.1"
-                      className="pl-10"
-                      {...field} 
-                    />
-                    <span className="absolute right-3 top-3 text-gray-400">%</span>
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Average annual percentage increase you expect in your income
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </CardContent>
       </Card>
 
@@ -140,11 +115,11 @@ export const IncomeInfoStep: React.FC = () => {
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input 
-                          type="number" 
-                          placeholder="65000" 
+                        <Input
+                          type="number"
+                          placeholder="65000"
                           className="pl-10"
-                          {...field} 
+                          {...field}
                         />
                       </div>
                     </FormControl>
@@ -155,26 +130,30 @@ export const IncomeInfoStep: React.FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
-                name="spouseExpectedFutureIncome"
+                name="spouseExpectedIncomeGrowth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Spouse Expected Peak Income</FormLabel>
+                    <FormLabel>Spouse Expected Annual Income Growth</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input 
-                          type="number" 
-                          placeholder="85000" 
+                        <TrendingUp className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          type="number"
+                          placeholder="3"
+                          min="0"
+                          max="20"
+                          step="0.1"
                           className="pl-10"
-                          {...field} 
+                          {...field}
                         />
+                        <span className="absolute right-3 top-3 text-gray-400">%</span>
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Highest income your spouse expects to earn
+                      Average annual percentage increase in spouse's income
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -206,16 +185,16 @@ export const IncomeInfoStep: React.FC = () => {
                   <FormItem>
                     <FormLabel>Other Income Source 1</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="e.g., Rental Property, Side Business" 
-                        {...field} 
+                      <Input
+                        placeholder="e.g., Rental Property, Side Business"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="otherIncomeAmount1"
@@ -225,11 +204,11 @@ export const IncomeInfoStep: React.FC = () => {
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input 
-                          type="number" 
-                          placeholder="12000" 
+                        <Input
+                          type="number"
+                          placeholder="12000"
                           className="pl-10"
-                          {...field} 
+                          {...field}
                         />
                       </div>
                     </FormControl>
@@ -247,16 +226,16 @@ export const IncomeInfoStep: React.FC = () => {
                   <FormItem>
                     <FormLabel>Other Income Source 2</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="e.g., Freelancing, Investments" 
-                        {...field} 
+                      <Input
+                        placeholder="e.g., Freelancing, Investments"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="otherIncomeAmount2"
@@ -266,11 +245,11 @@ export const IncomeInfoStep: React.FC = () => {
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input 
-                          type="number" 
-                          placeholder="8000" 
+                        <Input
+                          type="number"
+                          placeholder="8000"
                           className="pl-10"
-                          {...field} 
+                          {...field}
                         />
                       </div>
                     </FormControl>

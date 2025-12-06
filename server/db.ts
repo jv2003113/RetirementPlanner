@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 
 import { Pool } from 'pg';
-import { 
+import {
   users, type User, type InsertUser,
   retirementGoals, type RetirementGoal, type InsertRetirementGoal,
   investmentAccounts, type InvestmentAccount, type InsertInvestmentAccount,
@@ -33,7 +33,7 @@ const db = drizzle(pool);
 
 export class PostgresStorage implements IStorage {
   // User operations
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     const results = await db.select().from(users).where(eq(users.id, id));
     return results[0];
   }
@@ -48,7 +48,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
     const results = await db
       .update(users)
       .set(userData)
@@ -58,14 +58,14 @@ export class PostgresStorage implements IStorage {
   }
 
   // Retirement goals operations
-  async getRetirementGoals(userId: number): Promise<RetirementGoal[]> {
+  async getRetirementGoals(userId: string): Promise<RetirementGoal[]> {
     return await db
       .select()
       .from(retirementGoals)
       .where(eq(retirementGoals.userId, userId));
   }
 
-  async getRetirementGoal(id: number): Promise<RetirementGoal | undefined> {
+  async getRetirementGoal(id: string): Promise<RetirementGoal | undefined> {
     const results = await db
       .select()
       .from(retirementGoals)
@@ -81,7 +81,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateRetirementGoal(id: number, goalData: Partial<InsertRetirementGoal>): Promise<RetirementGoal | undefined> {
+  async updateRetirementGoal(id: string, goalData: Partial<InsertRetirementGoal>): Promise<RetirementGoal | undefined> {
     const results = await db
       .update(retirementGoals)
       .set(goalData)
@@ -90,7 +90,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteRetirementGoal(id: number): Promise<boolean> {
+  async deleteRetirementGoal(id: string): Promise<boolean> {
     const results = await db
       .delete(retirementGoals)
       .where(eq(retirementGoals.id, id))
@@ -99,14 +99,14 @@ export class PostgresStorage implements IStorage {
   }
 
   // Investment accounts operations
-  async getInvestmentAccounts(userId: number): Promise<InvestmentAccount[]> {
+  async getInvestmentAccounts(userId: string): Promise<InvestmentAccount[]> {
     return await db
       .select()
       .from(investmentAccounts)
       .where(eq(investmentAccounts.userId, userId));
   }
 
-  async getInvestmentAccount(id: number): Promise<InvestmentAccount | undefined> {
+  async getInvestmentAccount(id: string): Promise<InvestmentAccount | undefined> {
     const results = await db
       .select()
       .from(investmentAccounts)
@@ -122,7 +122,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateInvestmentAccount(id: number, accountData: Partial<InsertInvestmentAccount>): Promise<InvestmentAccount | undefined> {
+  async updateInvestmentAccount(id: string, accountData: Partial<InsertInvestmentAccount>): Promise<InvestmentAccount | undefined> {
     const results = await db
       .update(investmentAccounts)
       .set(accountData)
@@ -131,7 +131,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteInvestmentAccount(id: number): Promise<boolean> {
+  async deleteInvestmentAccount(id: string): Promise<boolean> {
     const results = await db
       .delete(investmentAccounts)
       .where(eq(investmentAccounts.id, id))
@@ -140,7 +140,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Asset allocations operations
-  async getAssetAllocations(accountId: number): Promise<AssetAllocation[]> {
+  async getAssetAllocations(accountId: string): Promise<AssetAllocation[]> {
     return await db
       .select()
       .from(assetAllocations)
@@ -155,7 +155,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateAssetAllocation(id: number, allocationData: Partial<InsertAssetAllocation>): Promise<AssetAllocation | undefined> {
+  async updateAssetAllocation(id: string, allocationData: Partial<InsertAssetAllocation>): Promise<AssetAllocation | undefined> {
     const results = await db
       .update(assetAllocations)
       .set(allocationData)
@@ -164,7 +164,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteAssetAllocation(id: number): Promise<boolean> {
+  async deleteAssetAllocation(id: string): Promise<boolean> {
     const results = await db
       .delete(assetAllocations)
       .where(eq(assetAllocations.id, id))
@@ -173,14 +173,14 @@ export class PostgresStorage implements IStorage {
   }
 
   // Security holdings operations
-  async getSecurityHoldings(accountId: number): Promise<SecurityHolding[]> {
+  async getSecurityHoldings(accountId: string): Promise<SecurityHolding[]> {
     return await db
       .select()
       .from(securityHoldings)
       .where(eq(securityHoldings.accountId, accountId));
   }
 
-  async getSecurityHolding(id: number): Promise<SecurityHolding | undefined> {
+  async getSecurityHolding(id: string): Promise<SecurityHolding | undefined> {
     const results = await db
       .select()
       .from(securityHoldings)
@@ -196,7 +196,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateSecurityHolding(id: number, holdingData: Partial<InsertSecurityHolding>): Promise<SecurityHolding | undefined> {
+  async updateSecurityHolding(id: string, holdingData: Partial<InsertSecurityHolding>): Promise<SecurityHolding | undefined> {
     const results = await db
       .update(securityHoldings)
       .set(holdingData)
@@ -205,7 +205,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteSecurityHolding(id: number): Promise<boolean> {
+  async deleteSecurityHolding(id: string): Promise<boolean> {
     const results = await db
       .delete(securityHoldings)
       .where(eq(securityHoldings.id, id))
@@ -214,7 +214,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Retirement expenses operations
-  async getRetirementExpenses(userId: number): Promise<RetirementExpense[]> {
+  async getRetirementExpenses(userId: string): Promise<RetirementExpense[]> {
     return await db
       .select()
       .from(retirementExpenses)
@@ -229,7 +229,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateRetirementExpense(id: number, expenseData: Partial<InsertRetirementExpense>): Promise<RetirementExpense | undefined> {
+  async updateRetirementExpense(id: string, expenseData: Partial<InsertRetirementExpense>): Promise<RetirementExpense | undefined> {
     const results = await db
       .update(retirementExpenses)
       .set(expenseData)
@@ -238,7 +238,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteRetirementExpense(id: number): Promise<boolean> {
+  async deleteRetirementExpense(id: string): Promise<boolean> {
     const results = await db
       .delete(retirementExpenses)
       .where(eq(retirementExpenses.id, id))
@@ -247,17 +247,17 @@ export class PostgresStorage implements IStorage {
   }
 
   // Activities operations
-  async getActivities(userId: number, limit?: number): Promise<Activity[]> {
+  async getActivities(userId: string, limit?: number): Promise<Activity[]> {
     let query = db
       .select()
       .from(activities)
       .where(eq(activities.userId, userId))
       .orderBy(desc(activities.date));
-    
+
     if (limit) {
-      query = query.limit(limit);
+      return await query.limit(limit);
     }
-    
+
     return await query;
   }
 
@@ -270,7 +270,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Recommendations operations (static data for demo)
-  async getRecommendations(userId: number): Promise<Recommendation[]> {
+  async getRecommendations(userId: string): Promise<Recommendation[]> {
     return [
       {
         id: "rec-1",
@@ -301,7 +301,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Roth conversion plans operations
-  async getRothConversionPlans(userId: number): Promise<RothConversionPlan[]> {
+  async getRothConversionPlans(userId: string): Promise<RothConversionPlan[]> {
     return await db
       .select()
       .from(rothConversionPlans)
@@ -309,7 +309,7 @@ export class PostgresStorage implements IStorage {
       .orderBy(desc(rothConversionPlans.createdAt));
   }
 
-  async getRothConversionPlan(id: number): Promise<RothConversionPlan | undefined> {
+  async getRothConversionPlan(id: string): Promise<RothConversionPlan | undefined> {
     const results = await db
       .select()
       .from(rothConversionPlans)
@@ -325,7 +325,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateRothConversionPlan(id: number, planData: Partial<InsertRothConversionPlan>): Promise<RothConversionPlan | undefined> {
+  async updateRothConversionPlan(id: string, planData: Partial<InsertRothConversionPlan>): Promise<RothConversionPlan | undefined> {
     const results = await db
       .update(rothConversionPlans)
       .set({ ...planData, updatedAt: new Date() })
@@ -334,7 +334,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteRothConversionPlan(id: number): Promise<boolean> {
+  async deleteRothConversionPlan(id: string): Promise<boolean> {
     const results = await db
       .delete(rothConversionPlans)
       .where(eq(rothConversionPlans.id, id))
@@ -343,7 +343,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Roth conversion scenarios operations
-  async getRothConversionScenarios(planId: number): Promise<RothConversionScenario[]> {
+  async getRothConversionScenarios(planId: string): Promise<RothConversionScenario[]> {
     return await db
       .select()
       .from(rothConversionScenarios)
@@ -359,7 +359,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteRothConversionScenarios(planId: number): Promise<boolean> {
+  async deleteRothConversionScenarios(planId: string): Promise<boolean> {
     const results = await db
       .delete(rothConversionScenarios)
       .where(eq(rothConversionScenarios.planId, planId))
@@ -367,8 +367,7 @@ export class PostgresStorage implements IStorage {
     return results.length > 0;
   }
 
-  // Multi-step form progress operations
-  async getMultiStepFormProgress(userId: number): Promise<MultiStepFormProgress | undefined> {
+  async getMultiStepFormProgress(userId: string): Promise<MultiStepFormProgress | undefined> {
     const results = await db
       .select()
       .from(multiStepFormProgress)
@@ -384,7 +383,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateMultiStepFormProgress(userId: number, progressData: Partial<InsertMultiStepFormProgress>): Promise<MultiStepFormProgress | undefined> {
+  async updateMultiStepFormProgress(userId: string, progressData: Partial<InsertMultiStepFormProgress>): Promise<MultiStepFormProgress | undefined> {
     const results = await db
       .update(multiStepFormProgress)
       .set({ ...progressData, lastUpdated: new Date() })
@@ -393,7 +392,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteMultiStepFormProgress(userId: number): Promise<boolean> {
+  async deleteMultiStepFormProgress(userId: string): Promise<boolean> {
     const results = await db
       .delete(multiStepFormProgress)
       .where(eq(multiStepFormProgress.userId, userId))
@@ -402,7 +401,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Retirement plans operations
-  async getRetirementPlans(userId: number): Promise<RetirementPlan[]> {
+  async getRetirementPlans(userId: string): Promise<RetirementPlan[]> {
     return await db
       .select()
       .from(retirementPlans)
@@ -410,7 +409,7 @@ export class PostgresStorage implements IStorage {
       .orderBy(desc(retirementPlans.createdAt));
   }
 
-  async getRetirementPlan(id: number): Promise<RetirementPlan | undefined> {
+  async getRetirementPlan(id: string): Promise<RetirementPlan | undefined> {
     const results = await db
       .select()
       .from(retirementPlans)
@@ -426,7 +425,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateRetirementPlan(id: number, planData: Partial<InsertRetirementPlan>): Promise<RetirementPlan | undefined> {
+  async updateRetirementPlan(id: string, planData: Partial<InsertRetirementPlan>): Promise<RetirementPlan | undefined> {
     const results = await db
       .update(retirementPlans)
       .set({ ...planData, updatedAt: new Date() })
@@ -435,7 +434,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteRetirementPlan(id: number): Promise<boolean> {
+  async deleteRetirementPlan(id: string): Promise<boolean> {
     const results = await db
       .delete(retirementPlans)
       .where(eq(retirementPlans.id, id))
@@ -443,19 +442,19 @@ export class PostgresStorage implements IStorage {
     return results.length > 0;
   }
 
-  async clearPlanData(planId: number): Promise<void> {
+  async clearPlanData(planId: string): Promise<void> {
     // First delete all account balances for snapshots of this plan
     const planSnapshots = await db
       .select({ id: annualSnapshots.id })
       .from(annualSnapshots)
       .where(eq(annualSnapshots.planId, planId));
-    
+
     for (const snapshot of planSnapshots) {
       await db
         .delete(accountBalances)
         .where(eq(accountBalances.snapshotId, snapshot.id));
     }
-    
+
     // Then delete all annual snapshots for this plan
     await db
       .delete(annualSnapshots)
@@ -463,7 +462,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Annual snapshots operations
-  async getAnnualSnapshots(planId: number): Promise<AnnualSnapshot[]> {
+  async getAnnualSnapshots(planId: string): Promise<AnnualSnapshot[]> {
     return await db
       .select()
       .from(annualSnapshots)
@@ -471,7 +470,7 @@ export class PostgresStorage implements IStorage {
       .orderBy(annualSnapshots.year);
   }
 
-  async getAnnualSnapshot(planId: number, year: number): Promise<AnnualSnapshot | undefined> {
+  async getAnnualSnapshot(planId: string, year: number): Promise<AnnualSnapshot | undefined> {
     const results = await db
       .select()
       .from(annualSnapshots)
@@ -487,7 +486,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateAnnualSnapshot(id: number, snapshotData: Partial<InsertAnnualSnapshot>): Promise<AnnualSnapshot | undefined> {
+  async updateAnnualSnapshot(id: string, snapshotData: Partial<InsertAnnualSnapshot>): Promise<AnnualSnapshot | undefined> {
     const results = await db
       .update(annualSnapshots)
       .set(snapshotData)
@@ -497,7 +496,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Account balances operations
-  async getAccountBalances(snapshotId: number): Promise<AccountBalance[]> {
+  async getAccountBalances(snapshotId: string): Promise<AccountBalance[]> {
     return await db
       .select()
       .from(accountBalances)
@@ -512,7 +511,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateAccountBalance(id: number, balanceData: Partial<InsertAccountBalance>): Promise<AccountBalance | undefined> {
+  async updateAccountBalance(id: string, balanceData: Partial<InsertAccountBalance>): Promise<AccountBalance | undefined> {
     const results = await db
       .update(accountBalances)
       .set(balanceData)
@@ -522,9 +521,9 @@ export class PostgresStorage implements IStorage {
   }
 
   // Milestones operations
-  async getMilestones(planId?: number, userId?: number): Promise<Milestone[]> {
+  async getMilestones(planId?: string, userId?: string): Promise<Milestone[]> {
     let query = db.select().from(milestones);
-    
+
     if (planId && userId) {
       return await db
         .select()
@@ -544,7 +543,7 @@ export class PostgresStorage implements IStorage {
         .where(eq(milestones.userId, userId))
         .orderBy(milestones.targetYear);
     }
-    
+
     return await db
       .select()
       .from(milestones)
@@ -560,7 +559,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateMilestone(id: number, milestoneData: Partial<InsertMilestone>): Promise<Milestone | undefined> {
+  async updateMilestone(id: string, milestoneData: Partial<InsertMilestone>): Promise<Milestone | undefined> {
     const results = await db
       .update(milestones)
       .set(milestoneData)
@@ -569,7 +568,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async deleteMilestone(id: number): Promise<boolean> {
+  async deleteMilestone(id: string): Promise<boolean> {
     const results = await db
       .delete(milestones)
       .where(eq(milestones.id, id))
@@ -578,7 +577,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Liabilities operations
-  async getLiabilities(snapshotId: number): Promise<Liability[]> {
+  async getLiabilities(snapshotId: string): Promise<Liability[]> {
     return await db
       .select()
       .from(liabilities)
@@ -593,7 +592,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  async updateLiability(id: number, liabilityData: Partial<InsertLiability>): Promise<Liability | undefined> {
+  async updateLiability(id: string, liabilityData: Partial<InsertLiability>): Promise<Liability | undefined> {
     const results = await db
       .update(liabilities)
       .set(liabilityData)

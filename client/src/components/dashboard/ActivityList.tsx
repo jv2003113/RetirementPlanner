@@ -1,18 +1,18 @@
 import React from 'react';
 import { Activity } from '@shared/schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  LucideIcon, 
-  AlertCircle, 
-  DollarSign, 
-  Target, 
-  Briefcase, 
-  FileText, 
-  TrendingUp, 
-  Sliders, 
-  Home, 
-  HeartPulse, 
-  GraduationCap, 
+import {
+  LucideIcon,
+  AlertCircle,
+  DollarSign,
+  Target,
+  Briefcase,
+  FileText,
+  TrendingUp,
+  Sliders,
+  Home,
+  HeartPulse,
+  GraduationCap,
   PlaneTakeoff
 } from 'lucide-react';
 
@@ -40,11 +40,11 @@ const formatActivityTitle = (activity: Activity): string => {
   if ('title' in activity) {
     return activity.title as string;
   }
-  
+
   // Otherwise format from type
-  const type = activity.activityType || 'general';
+  const type = (activity as any).activityType || 'general';
   return type.split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
 
@@ -59,7 +59,7 @@ const ActivityList: React.FC<ActivityListProps> = ({ activities }) => {
           activities.map((activity, index) => {
             // Determine the icon based on the activity type
             let activityType = activity.activityType || 'general';
-            
+
             // If type is goal-related, check the description for more specific icons
             if (activityType === 'goal') {
               if (activity.description?.toLowerCase().includes('income')) {
@@ -74,20 +74,19 @@ const ActivityList: React.FC<ActivityListProps> = ({ activities }) => {
                 activityType = 'education';
               }
             }
-            
+
             const Icon = iconMap[activityType] || FileText;
-            
+
             return (
               <div key={activity.id || index} className="flex items-start space-x-3">
-                <div className={`p-2 rounded-md ${
-                  activityType === 'alert' ? 'bg-red-100 text-red-600' :
-                  activityType === 'financial' || activityType === 'income' ? 'bg-green-100 text-green-600' :
-                  activityType === 'goal' ? 'bg-blue-100 text-blue-600' :
-                  activityType === 'account' || activityType === 'portfolio' ? 'bg-purple-100 text-purple-600' :
-                  activityType === 'travel' ? 'bg-amber-100 text-amber-600' :
-                  activityType === 'healthcare' ? 'bg-cyan-100 text-cyan-600' :
-                  'bg-gray-100 text-gray-600'
-                }`}>
+                <div className={`p-2 rounded-md ${activityType === 'alert' ? 'bg-red-100 text-red-600' :
+                    activityType === 'financial' || activityType === 'income' ? 'bg-green-100 text-green-600' :
+                      activityType === 'goal' ? 'bg-blue-100 text-blue-600' :
+                        activityType === 'account' || activityType === 'portfolio' ? 'bg-purple-100 text-purple-600' :
+                          activityType === 'travel' ? 'bg-amber-100 text-amber-600' :
+                            activityType === 'healthcare' ? 'bg-cyan-100 text-cyan-600' :
+                              'bg-gray-100 text-gray-600'
+                  }`}>
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1">

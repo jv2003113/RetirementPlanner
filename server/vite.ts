@@ -26,7 +26,7 @@ export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
-    allowedHosts: true,
+    allowedHosts: true as any,
   };
 
   const vite = await createViteServer({
@@ -62,9 +62,9 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
-      
+
       // Set no-cache headers for HTML in development
-      res.status(200).set({ 
+      res.status(200).set({
         "Content-Type": "text/html",
         "Cache-Control": "no-cache, no-store, must-revalidate"
       }).end(page);
@@ -89,10 +89,10 @@ export function serveStatic(app: Express) {
     maxAge: 0, // Default to no cache, we'll set specific headers below
     setHeaders: (res, filePath) => {
       const ext = path.extname(filePath).toLowerCase();
-      
+
       // Check if file has version hash (Vite typically adds hashes to built files)
       const hasVersionHash = /\.[a-f0-9]{8,}\.(js|css|woff2?|ttf|eot)$/i.test(filePath);
-      
+
       if (hasVersionHash) {
         // Versioned files can be cached for a long time
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');

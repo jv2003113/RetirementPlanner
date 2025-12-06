@@ -290,7 +290,7 @@ export const ReviewStep: React.FC = () => {
               <strong>Your Current Income:</strong> {formatCurrency(formData.currentIncome)}
             </div>
             <div>
-              <strong>Expected Peak Income:</strong> {formatCurrency(formData.expectedFutureIncome)}
+              {/* Expected Peak Income removed as it's no longer in schema */}
             </div>
             {formData.hasSpouse && (
               <>
@@ -298,7 +298,7 @@ export const ReviewStep: React.FC = () => {
                   <strong>Spouse Current Income:</strong> {formatCurrency(formData.spouseCurrentIncome)}
                 </div>
                 <div>
-                  <strong>Spouse Peak Income:</strong> {formatCurrency(formData.spouseExpectedFutureIncome)}
+                  {/* Spouse Peak Income removed as it's no longer in schema */}
                 </div>
               </>
             )}
@@ -717,7 +717,7 @@ export const ReviewStep: React.FC = () => {
       setIsGeneratingPlan(true);
 
       // Get current form data when button is clicked
-      const currentFormData = getFormData();
+      const currentFormData = getFormData() as Record<string, any>;
       console.log('Starting plan generation with form data:', currentFormData);
       console.log('Current age:', currentFormData.currentAge);
       console.log('Target retirement age:', currentFormData.targetRetirementAge);
@@ -725,7 +725,7 @@ export const ReviewStep: React.FC = () => {
       console.log('Assets - 401k:', currentFormData.retirementAccount401k);
 
       // Clean form data to ensure it's JSON serializable
-      const cleanFormData = {};
+      const cleanFormData: Record<string, any> = {};
       for (const [key, value] of Object.entries(currentFormData)) {
         // Only include primitive values and arrays of primitives
         if (value !== undefined && value !== null) {

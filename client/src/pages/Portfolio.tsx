@@ -288,7 +288,7 @@ const Portfolio = () => {
 
         <TabsContent value="add" className="mt-4">
           <AddAccountForm
-            userId={userId}
+            userId={userId || ""}
             onSuccess={() => {
               setActiveTab("accounts");
               toast({

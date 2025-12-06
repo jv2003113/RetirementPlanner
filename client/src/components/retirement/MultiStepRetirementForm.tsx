@@ -17,7 +17,7 @@ import { ReviewStep } from './steps/ReviewStep';
 // Progress indicator component
 const StepIndicator: React.FC = () => {
   const { currentStep, completedSteps, totalSteps, navigateToStep, canGoToStep, getStepTitle } = useMultiStepForm();
-  
+
   const steps = [
     { number: FORM_STEPS.PERSONAL_INFO, title: 'Personal', icon: User, colors: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-600', ring: 'ring-blue-200', border: 'border-blue-600' } },
     { number: FORM_STEPS.INCOME_INFO, title: 'Income', icon: DollarSign, colors: { bg: 'bg-green-600', hover: 'hover:bg-green-700', text: 'text-green-600', ring: 'ring-green-200', border: 'border-green-600' } },
@@ -47,9 +47,8 @@ const StepIndicator: React.FC = () => {
         {/* Desktop view */}
         <div className="hidden md:flex justify-between items-end relative">
           {/* Top border line connecting tabs to page border */}
-          <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
-            steps.find(step => step.number === currentStep)?.colors.bg || 'bg-gray-300'
-          } z-0`} />
+          <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${steps.find(step => step.number === currentStep)?.colors.bg || 'bg-gray-300'
+            } z-0`} />
           {steps.map((step, index) => {
             const isCompleted = completedSteps.includes(step.number);
             const isCurrent = currentStep === step.number;
@@ -61,9 +60,9 @@ const StepIndicator: React.FC = () => {
                 {/* Step title - moved to top */}
                 <span className={`
                   text-xs text-center font-medium transition-all duration-200 mb-2
-                  ${isCurrent 
+                  ${isCurrent
                     ? `${step.colors.text} font-bold text-sm transform scale-105`
-                    : isCompleted 
+                    : isCompleted
                       ? `${step.colors.text} font-medium`
                       : `${step.colors.text} font-normal`
                   }
@@ -74,7 +73,7 @@ const StepIndicator: React.FC = () => {
                 {/* Modern tab-style container */}
                 <div className={`
                   relative px-6 py-4 transition-all duration-300
-                  ${isCurrent 
+                  ${isCurrent
                     ? `bg-white rounded-t-xl shadow-lg border-t-2 border-l-2 border-r-2 ${step.colors.border} mb-0 z-10 pb-8`
                     : 'bg-transparent mb-4'
                   }
@@ -90,10 +89,10 @@ const StepIndicator: React.FC = () => {
                     disabled={!canClick}
                     className={`
                       w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
-                      ${isCurrent 
-                        ? `${step.colors.bg} text-white shadow-md scale-110 transform` 
-                        : isCompleted 
-                          ? `${step.colors.bg} text-white ${step.colors.hover} scale-100` 
+                      ${isCurrent
+                        ? `${step.colors.bg} text-white shadow-md scale-110 transform`
+                        : isCompleted
+                          ? `${step.colors.bg} text-white ${step.colors.hover} scale-100`
                           : canClick
                             ? `${step.colors.bg} text-white ${step.colors.hover} scale-100`
                             : 'bg-gray-200 text-gray-500 cursor-not-allowed scale-100'
@@ -109,11 +108,11 @@ const StepIndicator: React.FC = () => {
                   <div className={`
                     absolute h-0.5 w-full mt-5 -z-10
                     ${isCompleted ? step.colors.bg.replace('bg-', 'bg-') : 'bg-gray-200'}
-                  `} style={{ 
-                    left: '50%', 
-                    width: `calc(100% / ${steps.length - 1})`,
-                    transform: 'translateX(-50%)'
-                  }} />
+                  `} style={{
+                      left: '50%',
+                      width: `calc(100% / ${steps.length - 1})`,
+                      transform: 'translateX(-50%)'
+                    }} />
                 )}
               </div>
             );
@@ -123,9 +122,8 @@ const StepIndicator: React.FC = () => {
         {/* Mobile view - horizontal scroll */}
         <div className="md:hidden relative">
           {/* Top border line for mobile */}
-          <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
-            steps.find(step => step.number === currentStep)?.colors.bg || 'bg-gray-300'
-          } z-0`} />
+          <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${steps.find(step => step.number === currentStep)?.colors.bg || 'bg-gray-300'
+            } z-0`} />
           <div className="flex items-end gap-2 overflow-x-auto pb-0 scrollbar-hide">
             {steps.map((step, index) => {
               const isCompleted = completedSteps.includes(step.number);
@@ -138,9 +136,9 @@ const StepIndicator: React.FC = () => {
                   {/* Step title - mobile compact */}
                   <span className={`
                     text-xs text-center font-medium transition-all duration-200 mb-1 whitespace-nowrap
-                    ${isCurrent 
+                    ${isCurrent
                       ? `${step.colors.text} font-bold`
-                      : isCompleted 
+                      : isCompleted
                         ? `${step.colors.text} font-medium`
                         : `${step.colors.text} font-normal`
                     }
@@ -151,7 +149,7 @@ const StepIndicator: React.FC = () => {
                   {/* Mobile tab container */}
                   <div className={`
                     relative px-3 py-2 transition-all duration-300
-                    ${isCurrent 
+                    ${isCurrent
                       ? `bg-white rounded-t-lg shadow-lg border-t-2 border-l-2 border-r-2 ${step.colors.border} mb-0 z-10 pb-4`
                       : 'bg-transparent mb-2'
                     }
@@ -167,10 +165,10 @@ const StepIndicator: React.FC = () => {
                       disabled={!canClick}
                       className={`
                         w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300
-                        ${isCurrent 
-                          ? `${step.colors.bg} text-white shadow-md scale-105 transform` 
-                          : isCompleted 
-                            ? `${step.colors.bg} text-white ${step.colors.hover}` 
+                        ${isCurrent
+                          ? `${step.colors.bg} text-white shadow-md scale-105 transform`
+                          : isCompleted
+                            ? `${step.colors.bg} text-white ${step.colors.hover}`
                             : canClick
                               ? `${step.colors.bg} text-white ${step.colors.hover}`
                               : 'bg-gray-200 text-gray-500 cursor-not-allowed'
@@ -192,9 +190,9 @@ const StepIndicator: React.FC = () => {
 
 // Navigation buttons component
 const NavigationButtons: React.FC = () => {
-  const { 
-    currentStep, 
-    prevStep, 
+  const {
+    currentStep,
+    prevStep,
     nextStep,
     isLoading,
     totalSteps
@@ -241,7 +239,7 @@ const NavigationButtons: React.FC = () => {
 // Step content renderer
 const StepContent: React.FC = () => {
   const { currentStep, getStepTitle, getStepDescription } = useMultiStepForm();
-  
+
   const steps = [
     { number: FORM_STEPS.PERSONAL_INFO, title: 'Personal', icon: User, colors: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-600', ring: 'ring-blue-200', border: 'border-blue-600' } },
     { number: FORM_STEPS.INCOME_INFO, title: 'Income', icon: DollarSign, colors: { bg: 'bg-green-600', hover: 'hover:bg-green-700', text: 'text-green-600', ring: 'ring-green-200', border: 'border-green-600' } },
@@ -299,7 +297,7 @@ const StepContent: React.FC = () => {
 // Main form component content
 const MultiStepFormContent: React.FC = () => {
   const { form } = useMultiStepForm();
-  
+
   return (
     <Form {...form}>
       <form>
@@ -314,7 +312,7 @@ const MultiStepFormContent: React.FC = () => {
 
 // Main component with provider
 interface MultiStepRetirementFormProps {
-  userId: number;
+  userId: string;
 }
 
 const MultiStepRetirementForm: React.FC<MultiStepRetirementFormProps> = ({ userId }) => {

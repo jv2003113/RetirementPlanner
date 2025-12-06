@@ -192,6 +192,7 @@ export default function RetirementPlanPage() {
       // Pre-Retirement Income
       currentIncome: Number(userData.currentIncome) || 0,
       spouseCurrentIncome: Number(userData.spouseCurrentIncome) || 0,
+      spouseExpectedIncomeGrowth: Number(userData.spouseExpectedIncomeGrowth) / 100 || 0.03,
       expectedIncomeGrowth: Number(userData.expectedIncomeGrowth) / 100 || 0.03,
     };
   }, [userData, planDetails]);
@@ -235,6 +236,8 @@ export default function RetirementPlanPage() {
       netWorth: String(d.totalAssets_eoy - d.totalLiabilities_eoy),
       taxesPaid: String(d.estimatedTax),
       cumulativeTax: "0",
+      incomeBreakdown: null,
+      expenseBreakdown: null,
       createdAt: new Date(),
     }));
 
@@ -475,8 +478,8 @@ export default function RetirementPlanPage() {
                   age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : (activePlan?.startAge || 30) + (selectedYear - new Date().getFullYear())}
                   snapshot={dashboardData?.snapshot || yearData?.snapshot || null}
                   accountBalances={dashboardData?.accountBalances || yearData?.accountBalances || []}
+                  liabilities={yearData?.liabilities || []}
                   isLoading={(yearLoading || isProjectionLoading) && !dashboardData}
-                  detailedData={projectionData.find(d => d.year === selectedYear)}
                 />
               )}
             </TabsContent>

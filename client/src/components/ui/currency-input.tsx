@@ -4,12 +4,12 @@ import { cn } from '@/lib/utils';
 
 interface CurrencyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
     value?: string | number;
-    onChange: (value: string) => void;
+    onValueChange: (value: string) => void;
     className?: string;
 }
 
 export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
-    ({ value, onChange, className, ...props }, ref) => {
+    ({ value, onValueChange, className, ...props }, ref) => {
         const [displayValue, setDisplayValue] = useState('');
 
         // Format number with commas
@@ -36,7 +36,7 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
             // Allow only numbers and one decimal point
             if (rawValue === '' || /^\d*\.?\d*$/.test(rawValue)) {
                 // Update parent with raw value
-                onChange(rawValue);
+                onValueChange(rawValue);
 
                 // Update local display value with formatting
                 // We only format if it's a valid number, otherwise keep as is (e.g. "1.")

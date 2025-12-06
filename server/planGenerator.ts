@@ -18,6 +18,8 @@ interface FinancialProjection {
   netWorth: number;
   taxesPaid: number;
   cumulativeTax: number;
+  mortgageBalance: number;
+  mortgagePayment: number;
   accounts: {
     type: string;
     name: string;
@@ -33,7 +35,7 @@ export class RetirementPlanGenerator {
   private inflationRate: number;
   private portfolioGrowthRate: number;
   private bondGrowthRate: number;
-  
+
   constructor(plan: RetirementPlan) {
     this.plan = plan;
     this.inflationRate = parseFloat(plan.inflationRate || "3.0") / 100;
@@ -44,15 +46,15 @@ export class RetirementPlanGenerator {
   async generateFullPlan(options: PlanGenerationOptions = { generateSnapshots: true, generateAccountBalances: true, generateMilestones: true }): Promise<void> {
     // Generate financial projections for each year
     const projections = this.calculateFinancialProjections();
-    
+
     if (options.generateSnapshots) {
       await this.createAnnualSnapshots(projections);
     }
-    
+
     if (options.generateMilestones) {
       await this.createStandardMilestones();
     }
-    
+
     // Update plan with calculated total lifetime tax
     const totalLifetimeTax = projections.reduce((sum, proj) => sum + proj.taxesPaid, 0);
     await storage.updateRetirementPlan(this.plan.id, {
@@ -63,7 +65,7 @@ export class RetirementPlanGenerator {
   private calculateFinancialProjections(): FinancialProjection[] {
     const projections: FinancialProjection[] = [];
     const currentYear = new Date().getFullYear();
-    
+
     // Starting financial values
     let total401k = parseFloat(this.plan.initialNetWorth || "250000") * 0.4;
     let totalRothIRA = parseFloat(this.plan.initialNetWorth || "250000") * 0.3;
@@ -71,18 +73,18 @@ export class RetirementPlanGenerator {
     let totalSavings = parseFloat(this.plan.initialNetWorth || "250000") * 0.1;
     let mortgageBalance = 400000; // Starting mortgage
     let cumulativeTax = 0;
-    
+
     // Calculate for each year from start to end age
     console.log(`🧮 Calculating projections from age ${this.plan.startAge} to ${this.plan.endAge} for plan ${this.plan.id}`);
     for (let age = this.plan.startAge; age <= this.plan.endAge; age++) {
       const year = currentYear + (age - this.plan.startAge);
       const isRetired = age >= this.plan.retirementAge;
       const isWorkingAge = age < this.plan.retirementAge;
-      
+
       // Income calculations
       let grossIncome = 0;
       let netIncome = 0;
-      
+
       if (isWorkingAge) {
         // Working years - salary increases with inflation
         const yearsWorked = age - this.plan.startAge;
@@ -95,21 +97,21 @@ export class RetirementPlanGenerator {
         grossIncome = portfolioValue * withdrawalRate;
         netIncome = grossIncome * 0.85; // Lower tax rate in retirement
       }
-      
+
       // Expenses increase with inflation
       const yearsFromStart = age - this.plan.startAge;
       const totalExpenses = 45000 * Math.pow(1 + this.inflationRate, yearsFromStart);
-      
+
       // Account contributions and growth
       let contribution401k = 0;
       let contributionRothIRA = 0;
       let contributionBrokerage = 0;
       let contributionSavings = 0;
-      
+
       let withdrawal401k = 0;
       let withdrawalRothIRA = 0;
       let withdrawalBrokerage = 0;
-      
+
       if (isWorkingAge) {
         // Contributions during working years
         contribution401k = Math.min(23000, grossIncome * 0.15); // 15% up to limit
@@ -123,27 +125,27 @@ export class RetirementPlanGenerator {
         withdrawalRothIRA = totalWithdrawals * 0.2;
         withdrawalBrokerage = totalWithdrawals * 0.4;
       }
-      
+
       // Apply contributions and withdrawals
       total401k = (total401k + contribution401k - withdrawal401k) * (1 + this.portfolioGrowthRate);
       totalRothIRA = (totalRothIRA + contributionRothIRA - withdrawalRothIRA) * (1 + this.portfolioGrowthRate);
       totalBrokerage = (totalBrokerage + contributionBrokerage - withdrawalBrokerage) * (1 + this.portfolioGrowthRate);
       totalSavings = (totalSavings + contributionSavings) * (1 + this.bondGrowthRate);
-      
+
       // Mortgage paydown (30-year from age 30)
       if (age < 60) {
         const annualPayment = 28000; // Roughly $2,333/month
         mortgageBalance = Math.max(0, mortgageBalance * 1.05 - annualPayment); // 5% interest
       }
-      
+
       // Tax calculations
       const taxesPaid = isWorkingAge ? grossIncome * 0.25 : grossIncome * 0.15;
       cumulativeTax += taxesPaid;
-      
+
       const totalAssets = total401k + totalRothIRA + totalBrokerage + totalSavings;
       const totalLiabilities = mortgageBalance;
       const netWorth = totalAssets - totalLiabilities;
-      
+
       projections.push({
         year,
         age,
@@ -155,6 +157,8 @@ export class RetirementPlanGenerator {
         netWorth,
         taxesPaid,
         cumulativeTax,
+        mortgageBalance,
+        mortgagePayment: age < 60 ? 28000 / 12 : 0,
         accounts: [
           {
             type: "401k",
@@ -191,7 +195,7 @@ export class RetirementPlanGenerator {
         ]
       });
     }
-    
+
     return projections;
   }
 
@@ -200,7 +204,7 @@ export class RetirementPlanGenerator {
     console.log(`🔄 Creating ${projections.length} annual snapshots for plan ${this.plan.id}`);
     for (let i = 0; i < projections.length; i++) {
       const projection = projections[i];
-      
+
       const snapshot = await storage.createAnnualSnapshot({
         planId: this.plan.id,
         year: projection.year,
@@ -214,7 +218,7 @@ export class RetirementPlanGenerator {
         taxesPaid: projection.taxesPaid.toFixed(2),
         cumulativeTax: projection.cumulativeTax.toFixed(2)
       });
-      
+
       // Create account balances for this snapshot
       for (const account of projection.accounts) {
         await storage.createAccountBalance({
@@ -227,12 +231,24 @@ export class RetirementPlanGenerator {
           growth: account.growth.toFixed(2)
         });
       }
+
+      // Create liability records for this snapshot
+      if (projection.mortgageBalance > 0) {
+        await storage.createLiability({
+          snapshotId: snapshot.id,
+          liabilityType: 'mortgage',
+          liabilityName: 'Primary Mortgage',
+          balance: projection.mortgageBalance.toFixed(2),
+          interestRate: '5.0',
+          monthlyPayment: projection.mortgagePayment.toFixed(2)
+        });
+      }
     }
   }
 
   private async createStandardMilestones(): Promise<void> {
     const currentYear = new Date().getFullYear();
-    
+
     // Create key retirement milestones
     const milestonesToCreate: InsertMilestone[] = [
       {
@@ -272,7 +288,7 @@ export class RetirementPlanGenerator {
         icon: "dollar-sign"
       }
     ];
-    
+
     // Only create milestones that fall within the plan timeline
     for (const milestone of milestonesToCreate) {
       if (milestone.targetAge && milestone.targetAge >= this.plan.startAge && milestone.targetAge <= this.plan.endAge) {

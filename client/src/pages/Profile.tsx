@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Profile = () => {
   const { user: authUser } = useAuth();
-  const userId = authUser?.id || 1; // Use authenticated user's ID
+  const userId = authUser?.id || "demo-user"; // Use authenticated user's ID
 
   // Fetch user profile data
   const { data: userData, isLoading: isLoadingUser } = useQuery<User>({

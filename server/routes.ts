@@ -531,7 +531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create activity for adding a new security holding
       await storage.createActivity({
-        userId: (await storage.getInvestmentAccount(holdingData.accountId))?.userId || 1,
+        userId: (await storage.getInvestmentAccount(String(holdingData.accountId)))?.userId || "user-id",
         activityType: "portfolio_update",
         description: `Added ${holdingData.ticker} to portfolio`,
         date: new Date(),
@@ -566,7 +566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create activity for updating security holding
       await storage.createActivity({
-        userId: (await storage.getInvestmentAccount(existingHolding.accountId))?.userId || 1,
+        userId: (await storage.getInvestmentAccount(String(existingHolding.accountId)))?.userId || "user-id",
         activityType: "portfolio_update",
         description: `Updated ${existingHolding.ticker} allocation`,
         date: new Date(),
@@ -604,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create activity for deleting security holding
       await storage.createActivity({
-        userId: (await storage.getInvestmentAccount(existingHolding.accountId))?.userId || 1,
+        userId: (await storage.getInvestmentAccount(String(existingHolding.accountId)))?.userId || "user-id",
         activityType: "portfolio_update",
         description: `Removed ${existingHolding.ticker} from portfolio`,
         date: new Date(),
@@ -804,7 +804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const scenario of scenarios) {
         const scenarioData = {
           ...scenario,
-          planId
+          planId: planId
         };
         const createdScenario = await storage.createRothConversionScenario(scenarioData);
         createdScenarios.push(createdScenario);
@@ -1539,7 +1539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           maritalStatus: "single",
           dependents: 0,
           currentIncome: "85000",
-          expectedFutureIncome: "120000",
+          spouseExpectedIncomeGrowth: "3",
           desiredLifestyle: "comfortable",
           hasSpouse: false,
           totalMonthlyExpenses: "4500"
@@ -1576,6 +1576,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`❌ Failed to generate demo plan projections:`, genError);
         // Continue even if generation fails
       }
+
+      const currentYear = new Date().getFullYear();
+      const snapshots = await storage.getAnnualSnapshots(plan.id);
 
       /* Legacy manual snapshot creation - replaced by unified generator
       const currentYear = new Date().getFullYear();

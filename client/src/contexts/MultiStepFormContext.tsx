@@ -40,9 +40,10 @@ const multiStepFormSchema = z.object({
 
   // Step 2: Income Information  
   currentIncome: z.string().transform((val) => val === "" ? "0" : val),
-  expectedFutureIncome: z.string().optional().transform((val) => val === "" ? "0" : val),
+
   spouseCurrentIncome: z.string().optional().transform((val) => val === "" ? "0" : val),
-  spouseExpectedFutureIncome: z.string().optional().transform((val) => val === "" ? "0" : val),
+
+  spouseExpectedIncomeGrowth: z.coerce.number().min(0).max(20).optional(),
   otherIncomeSource1: z.string().optional(),
   otherIncomeAmount1: z.string().optional(),
   otherIncomeSource2: z.string().optional(),
@@ -116,9 +117,9 @@ export const stepSchemas = {
   }),
   [FORM_STEPS.INCOME_INFO]: multiStepFormSchema.pick({
     currentIncome: true,
-    expectedFutureIncome: true,
+
     spouseCurrentIncome: true,
-    spouseExpectedFutureIncome: true,
+    spouseExpectedIncomeGrowth: true,
     otherIncomeSource1: true,
     otherIncomeAmount1: true,
     otherIncomeSource2: true,
@@ -200,7 +201,7 @@ export const useMultiStepForm = () => {
 
 interface MultiStepFormProviderProps {
   children: ReactNode;
-  userId: number;
+  userId: string;
 }
 
 export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ children, userId }) => {
@@ -232,9 +233,9 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       targetRetirementAge: 65,
       hasSpouse: false,
       currentIncome: '0',
-      expectedFutureIncome: '0',
+
       spouseCurrentIncome: '0',
-      spouseExpectedFutureIncome: '0',
+      spouseExpectedIncomeGrowth: 3,
       savingsBalance: '0',
       checkingBalance: '0',
       investmentBalance: '0',
@@ -269,7 +270,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         maritalStatus: userData.maritalStatus || '',
         dependents: userData.dependents || 0,
         currentIncome: String(userData.currentIncome || '0'),
-        expectedFutureIncome: String(userData.expectedFutureIncome || '0'),
+
         desiredLifestyle: userData.desiredLifestyle || '',
         hasSpouse: userData.hasSpouse || false,
         spouseFirstName: userData.spouseFirstName || '',
@@ -277,13 +278,13 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         spouseCurrentAge: userData.spouseCurrentAge || undefined,
         spouseTargetRetirementAge: userData.spouseTargetRetirementAge || undefined,
         spouseCurrentIncome: String(userData.spouseCurrentIncome || '0'),
-        spouseExpectedFutureIncome: String(userData.spouseExpectedFutureIncome || '0'),
+        spouseExpectedIncomeGrowth: Number(userData.spouseExpectedIncomeGrowth) || 3,
         // Income - Additional sources
         otherIncomeSource1: userData.otherIncomeSource1 || '',
         otherIncomeAmount1: String(userData.otherIncomeAmount1 || '0'),
         otherIncomeSource2: userData.otherIncomeSource2 || '',
         otherIncomeAmount2: String(userData.otherIncomeAmount2 || '0'),
-        expectedIncomeGrowth: userData.expectedIncomeGrowth || 3,
+        expectedIncomeGrowth: Number(userData.expectedIncomeGrowth) || 3,
         // Assets
         savingsBalance: String(userData.savingsBalance || '0'),
         checkingBalance: String(userData.checkingBalance || '0'),
@@ -296,14 +297,14 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         // Liabilities
         mortgageBalance: String(userData.mortgageBalance || '0'),
         mortgagePayment: String(userData.mortgagePayment || '0'),
-        mortgageRate: userData.mortgageRate || 4.5,
+        mortgageRate: Number(userData.mortgageRate) || 4.5,
         mortgageYearsLeft: userData.mortgageYearsLeft || 30,
         creditCardDebt: String(userData.creditCardDebt || '0'),
         studentLoanDebt: String(userData.studentLoanDebt || '0'),
         otherDebt: String(userData.otherDebt || '0'),
         totalMonthlyDebtPayments: String(userData.totalMonthlyDebtPayments || '0'),
         // Expenses
-        expenses: userData.expenses || [{
+        expenses: (userData.expenses as any) || [{
           id: '1',
           category: '',
           description: '',
@@ -320,7 +321,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         investmentExperience: userData.investmentExperience || '',
         riskTolerance: userData.riskTolerance || '',
         investmentTimeline: userData.investmentTimeline || '',
-        preferredInvestmentTypes: userData.preferredInvestmentTypes || [],
+        preferredInvestmentTypes: (userData.preferredInvestmentTypes as any) || [],
         marketVolatilityComfort: userData.marketVolatilityComfort || '',
         investmentRebalancingPreference: userData.investmentRebalancingPreference || '',
       });
@@ -330,14 +331,14 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
 
   // Load progress state - ONLY on initial load, not on every change
   const [hasLoadedInitialProgress, setHasLoadedInitialProgress] = useState(false);
-  
+
   useEffect(() => {
     if (progress && !hasLoadedInitialProgress && progress.userId === userId) {
       // Only load from database once and ensure it's for the correct user
       setCurrentStep(progress.currentStep as FormStepType);
       setCompletedSteps(progress.completedSteps as FormStepType[]);
       setHasLoadedInitialProgress(true);
-      
+
       // Load saved form data if exists
       if (progress.formData && typeof progress.formData === 'object') {
         const savedFormData = progress.formData as Partial<MultiStepFormData>;
@@ -390,7 +391,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
   const getStepTitle = (step: FormStepType): string => {
     const titles = {
       [FORM_STEPS.PERSONAL_INFO]: "Personal Information",
-      [FORM_STEPS.INCOME_INFO]: "Income Information", 
+      [FORM_STEPS.INCOME_INFO]: "Income Information",
       [FORM_STEPS.CURRENT_EXPENSES]: "Current Expenses",
       [FORM_STEPS.CURRENT_ASSETS]: "Current Assets",
       [FORM_STEPS.LIABILITIES]: "Liabilities & Debts",
@@ -408,11 +409,11 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       [FORM_STEPS.CURRENT_EXPENSES]: "Review and update your monthly spending categories",
       [FORM_STEPS.CURRENT_ASSETS]: "Update your savings, investments, and asset information",
       [FORM_STEPS.LIABILITIES]: "Review and update your debts and monthly obligations",
-      [FORM_STEPS.RETIREMENT_GOALS]: "Adjust your retirement goals and lifestyle preferences", 
+      [FORM_STEPS.RETIREMENT_GOALS]: "Adjust your retirement goals and lifestyle preferences",
       [FORM_STEPS.RISK_ASSESSMENT]: "Update your investment preferences and risk tolerance",
       [FORM_STEPS.REVIEW]: "Review and verify all your retirement planning information",
     };
-    
+
     return descriptions[step];
   };
 
@@ -428,7 +429,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
   const validateCurrentStep = async (): Promise<boolean> => {
     const stepSchema = stepSchemas[currentStep];
     const currentData = form.getValues();
-    
+
     try {
       stepSchema.parse(currentData);
       return true;
@@ -484,7 +485,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         maritalStatus: formData.maritalStatus,
         dependents: Number(formData.dependents) || 0,
         currentIncome: formData.currentIncome,
-        expectedFutureIncome: formData.expectedFutureIncome,
+
         desiredLifestyle: formData.desiredLifestyle,
         hasSpouse: formData.hasSpouse,
         spouseFirstName: formData.spouseFirstName,
@@ -492,13 +493,13 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         spouseCurrentAge: formData.spouseCurrentAge ? Number(formData.spouseCurrentAge) : undefined,
         spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
         spouseCurrentIncome: formData.spouseCurrentIncome,
-        spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
+        spouseExpectedIncomeGrowth: String(formData.spouseExpectedIncomeGrowth || 3),
         // Income - Additional sources
         otherIncomeSource1: formData.otherIncomeSource1,
         otherIncomeAmount1: formData.otherIncomeAmount1,
         otherIncomeSource2: formData.otherIncomeSource2,
         otherIncomeAmount2: formData.otherIncomeAmount2,
-        expectedIncomeGrowth: formData.expectedIncomeGrowth,
+        expectedIncomeGrowth: String(formData.expectedIncomeGrowth || 3),
         // Expenses
         expenses: formData.expenses || [],
         totalMonthlyExpenses: formData.totalMonthlyExpenses,
@@ -514,7 +515,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         // Liabilities
         mortgageBalance: formData.mortgageBalance,
         mortgagePayment: formData.mortgagePayment,
-        mortgageRate: formData.mortgageRate,
+        mortgageRate: formData.mortgageRate ? String(formData.mortgageRate) : undefined,
         mortgageYearsLeft: formData.mortgageYearsLeft,
         creditCardDebt: formData.creditCardDebt,
         studentLoanDebt: formData.studentLoanDebt,
@@ -565,7 +566,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
     if (!isValid) return;
 
     const formData = form.getValues();
-    
+
     // Convert form data to user update format and save to database
     const userUpdateData = {
       firstName: formData.firstName,
@@ -577,7 +578,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       maritalStatus: formData.maritalStatus,
       dependents: Number(formData.dependents) || 0,
       currentIncome: formData.currentIncome,
-      expectedFutureIncome: formData.expectedFutureIncome,
+
       desiredLifestyle: formData.desiredLifestyle,
       hasSpouse: formData.hasSpouse,
       spouseFirstName: formData.spouseFirstName,
@@ -585,13 +586,13 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       spouseCurrentAge: formData.spouseCurrentAge ? Number(formData.spouseCurrentAge) : undefined,
       spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
       spouseCurrentIncome: formData.spouseCurrentIncome,
-      spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
+      spouseExpectedIncomeGrowth: String(formData.spouseExpectedIncomeGrowth || 3),
       // Income - Additional sources
       otherIncomeSource1: formData.otherIncomeSource1,
       otherIncomeAmount1: formData.otherIncomeAmount1,
       otherIncomeSource2: formData.otherIncomeSource2,
       otherIncomeAmount2: formData.otherIncomeAmount2,
-      expectedIncomeGrowth: formData.expectedIncomeGrowth,
+      expectedIncomeGrowth: String(formData.expectedIncomeGrowth || 3),
       // Expenses
       expenses: formData.expenses || [],
       totalMonthlyExpenses: formData.totalMonthlyExpenses,
@@ -607,7 +608,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       // Liabilities
       mortgageBalance: formData.mortgageBalance,
       mortgagePayment: formData.mortgagePayment,
-      mortgageRate: formData.mortgageRate,
+      mortgageRate: formData.mortgageRate ? String(formData.mortgageRate) : undefined,
       mortgageYearsLeft: formData.mortgageYearsLeft,
       creditCardDebt: formData.creditCardDebt,
       studentLoanDebt: formData.studentLoanDebt,
@@ -650,7 +651,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
 
       // Check if wizard is complete (all steps done)
       const isWizardComplete = newCompletedSteps.length >= totalSteps;
-      
+
       // Save progress
       await saveProgressMutation.mutateAsync({
         userId,
@@ -684,7 +685,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
           maritalStatus: formData.maritalStatus,
           dependents: Number(formData.dependents) || 0,
           currentIncome: formData.currentIncome,
-          expectedFutureIncome: formData.expectedFutureIncome,
+
           desiredLifestyle: formData.desiredLifestyle,
           hasSpouse: formData.hasSpouse,
           spouseFirstName: formData.spouseFirstName,
@@ -692,13 +693,13 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
           spouseCurrentAge: formData.spouseCurrentAge ? Number(formData.spouseCurrentAge) : undefined,
           spouseTargetRetirementAge: formData.spouseTargetRetirementAge ? Number(formData.spouseTargetRetirementAge) : undefined,
           spouseCurrentIncome: formData.spouseCurrentIncome,
-          spouseExpectedFutureIncome: formData.spouseExpectedFutureIncome,
+          spouseExpectedIncomeGrowth: String(formData.spouseExpectedIncomeGrowth || 3),
           // Income - Additional sources
           otherIncomeSource1: formData.otherIncomeSource1,
           otherIncomeAmount1: formData.otherIncomeAmount1,
           otherIncomeSource2: formData.otherIncomeSource2,
           otherIncomeAmount2: formData.otherIncomeAmount2,
-          expectedIncomeGrowth: formData.expectedIncomeGrowth,
+          expectedIncomeGrowth: String(formData.expectedIncomeGrowth || 3),
           // Expenses
           expenses: formData.expenses || [],
           totalMonthlyExpenses: formData.totalMonthlyExpenses,
@@ -714,7 +715,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
           // Liabilities
           mortgageBalance: formData.mortgageBalance,
           mortgagePayment: formData.mortgagePayment,
-          mortgageRate: formData.mortgageRate,
+          mortgageRate: formData.mortgageRate ? String(formData.mortgageRate) : undefined,
           mortgageYearsLeft: formData.mortgageYearsLeft,
           creditCardDebt: formData.creditCardDebt,
           studentLoanDebt: formData.studentLoanDebt,

@@ -9,16 +9,15 @@ import {
     Wallet,
     DollarSign
 } from "lucide-react";
-import type { AnnualSnapshot, AccountBalance } from "@shared/schema";
-import type { YearlyData } from "@shared/schema";
+import type { AnnualSnapshot, AccountBalance, Liability } from "@shared/schema";
 
 interface FinancialDashboardProps {
     year: number;
     age: number;
     snapshot: AnnualSnapshot | null;
     accountBalances: AccountBalance[];
+    liabilities?: Liability[];
     isLoading: boolean;
-    detailedData?: YearlyData;
 }
 
 const formatCurrency = (value: number) => {
@@ -34,8 +33,8 @@ export default function FinancialDashboard({
     age,
     snapshot,
     accountBalances,
+    liabilities = [],
     isLoading,
-    detailedData
 }: FinancialDashboardProps) {
     if (isLoading) {
         return (
@@ -123,16 +122,22 @@ export default function FinancialDashboard({
                         </div>
 
                         <div className="flex-grow space-y-3 border-t pt-3">
-                            {detailedData ? (
+                            {liabilities && liabilities.length > 0 ? (
                                 <>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600">Mortgage Balance</span>
-                                        <span className="font-medium">{formatCurrency(detailedData.mortgageBalance_eoy)}</span>
-                                    </div>
-                                    {/* Placeholder for other liabilities if added later */}
+                                    {liabilities.map((liability, i) => (
+                                        <div key={i} className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-600">{liability.liabilityName || liability.liabilityType}</span>
+                                            <span className="font-medium">{formatCurrency(parseFloat(liability.balance))}</span>
+                                        </div>
+                                    ))}
                                 </>
+                            ) : totalLiabilities > 0 ? (
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Total Liabilities</span>
+                                    <span className="font-medium">{formatCurrency(totalLiabilities)}</span>
+                                </div>
                             ) : (
-                                <div className="text-sm text-gray-400 italic">Details unavailable</div>
+                                <div className="text-sm text-gray-400 italic">No liabilities</div>
                             )}
                         </div>
                     </CardContent>
@@ -152,41 +157,19 @@ export default function FinancialDashboard({
                         </div>
 
                         <div className="flex-grow space-y-3 border-t pt-3">
-                            {detailedData ? (
+                            {grossIncome > 0 ? (
                                 <>
-                                    {detailedData.currentIncome > 0 && (
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600">Salary (Self)</span>
-                                            <span className="font-medium">{formatCurrency(detailedData.currentIncome)}</span>
-                                        </div>
-                                    )}
-                                    {detailedData.spouseCurrentIncome > 0 && (
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600">Salary (Spouse)</span>
-                                            <span className="font-medium">{formatCurrency(detailedData.spouseCurrentIncome)}</span>
-                                        </div>
-                                    )}
-                                    {detailedData.socialSecurityIncome > 0 && (
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600">Social Security</span>
-                                            <span className="font-medium">{formatCurrency(detailedData.socialSecurityIncome)}</span>
-                                        </div>
-                                    )}
-                                    {detailedData.pensionIncome > 0 && (
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600">Pension & Other</span>
-                                            <span className="font-medium">{formatCurrency(detailedData.pensionIncome)}</span>
-                                        </div>
-                                    )}
-                                    {detailedData.totalGrossWithdrawal > 0 && (
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600">Portfolio Withdrawals</span>
-                                            <span className="font-medium">{formatCurrency(detailedData.totalGrossWithdrawal)}</span>
-                                        </div>
-                                    )}
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-600">Gross Income</span>
+                                        <span className="font-medium">{formatCurrency(parseFloat(snapshot.grossIncome || "0"))}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-600">Net Income</span>
+                                        <span className="font-medium">{formatCurrency(parseFloat(snapshot.netIncome || "0"))}</span>
+                                    </div>
                                 </>
                             ) : (
-                                <div className="text-sm text-gray-400 italic">Details unavailable</div>
+                                <div className="text-sm text-gray-400 italic">No income data</div>
                             )}
                         </div>
                     </CardContent>
@@ -206,25 +189,19 @@ export default function FinancialDashboard({
                         </div>
 
                         <div className="flex-grow space-y-3 border-t pt-3">
-                            {detailedData ? (
+                            {totalExpenses > 0 ? (
                                 <>
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600">Living Expenses</span>
-                                        <span className="font-medium">{formatCurrency(detailedData.livingExpenses)}</span>
+                                        <span className="text-gray-600">Total Expenses</span>
+                                        <span className="font-medium">{formatCurrency(parseFloat(snapshot.totalExpenses || "0"))}</span>
                                     </div>
-                                    {detailedData.mortgagePayment > 0 && (
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600">Mortgage Payment</span>
-                                            <span className="font-medium">{formatCurrency(detailedData.mortgagePayment)}</span>
-                                        </div>
-                                    )}
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600">Taxes</span>
-                                        <span className="font-medium">{formatCurrency(detailedData.estimatedTax)}</span>
+                                        <span className="text-gray-600">Taxes Paid</span>
+                                        <span className="font-medium">{formatCurrency(parseFloat(snapshot.taxesPaid || "0"))}</span>
                                     </div>
                                 </>
                             ) : (
-                                <div className="text-sm text-gray-400 italic">Details unavailable</div>
+                                <div className="text-sm text-gray-400 italic">No expense data</div>
                             )}
                         </div>
                     </CardContent>

@@ -40,7 +40,6 @@ export const users = pgTable("users", {
   maritalStatus: text("marital_status"),
   dependents: integer("dependents"),
   currentIncome: decimal("current_income", { precision: 10, scale: 2 }),
-  expectedFutureIncome: decimal("expected_future_income", { precision: 10, scale: 2 }),
   desiredLifestyle: text("desired_lifestyle"), // frugal, comfortable, luxurious
   // Spouse information
   hasSpouse: boolean("has_spouse").default(false),
@@ -49,13 +48,13 @@ export const users = pgTable("users", {
   spouseCurrentAge: integer("spouse_current_age"),
   spouseTargetRetirementAge: integer("spouse_target_retirement_age"),
   spouseCurrentIncome: decimal("spouse_current_income", { precision: 10, scale: 2 }),
-  spouseExpectedFutureIncome: decimal("spouse_expected_future_income", { precision: 10, scale: 2 }),
   // Additional Income Sources
   otherIncomeSource1: text("other_income_source_1"),
   otherIncomeAmount1: decimal("other_income_amount_1", { precision: 10, scale: 2 }),
   otherIncomeSource2: text("other_income_source_2"),
   otherIncomeAmount2: decimal("other_income_amount_2", { precision: 10, scale: 2 }),
   expectedIncomeGrowth: decimal("expected_income_growth", { precision: 5, scale: 2 }),
+  spouseExpectedIncomeGrowth: decimal("spouse_expected_income_growth", { precision: 5, scale: 2 }),
   // Current Expenses (stored as JSON array)
   expenses: jsonb("expenses"),
   totalMonthlyExpenses: decimal("total_monthly_expenses", { precision: 10, scale: 2 }),
@@ -166,9 +165,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   expectedIncomeGrowth: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   mortgageRate: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   currentIncome: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
-  expectedFutureIncome: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   spouseCurrentIncome: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
-  spouseExpectedFutureIncome: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+  spouseExpectedIncomeGrowth: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   otherIncomeAmount1: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   otherIncomeAmount2: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   totalMonthlyExpenses: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
@@ -397,6 +395,8 @@ export const annualSnapshots = pgTable("annual_snapshots", {
   netWorth: decimal("net_worth", { precision: 12, scale: 2 }).notNull(),
   taxesPaid: decimal("taxes_paid", { precision: 12, scale: 2 }).default("0"),
   cumulativeTax: decimal("cumulative_tax", { precision: 12, scale: 2 }).default("0"),
+  incomeBreakdown: jsonb("income_breakdown"),
+  expenseBreakdown: jsonb("expense_breakdown"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -536,6 +536,7 @@ export interface InitialData {
   currentIncome: number;
   spouseCurrentIncome: number;
   expectedIncomeGrowth: number;
+  spouseExpectedIncomeGrowth: number;
 }
 
 export interface YearlyData {
