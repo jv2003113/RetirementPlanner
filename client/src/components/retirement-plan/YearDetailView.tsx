@@ -3,12 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  PiggyBank, 
-  CreditCard, 
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  PiggyBank,
+  CreditCard,
   Home,
   Calendar,
   ArrowLeft,
@@ -16,13 +16,21 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
-import type { AnnualSnapshot, AccountBalance, Liability } from "@shared/schema";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { AnnualSnapshot, AnnualSnapshotAsset, AnnualSnapshotLiability } from "@shared/schema";
 
 interface YearDetailViewProps {
   yearData: {
     snapshot: AnnualSnapshot;
-    accountBalances: AccountBalance[];
-    liabilities: Liability[];
+    accountBalances: AnnualSnapshotAsset[];
+    liabilities: AnnualSnapshotLiability[];
   } | null;
   selectedYear: number | null;
   isLoading: boolean;
@@ -30,12 +38,12 @@ interface YearDetailViewProps {
   planDetails: any;
 }
 
-export default function YearDetailView({ 
-  yearData, 
-  selectedYear, 
-  isLoading, 
+export default function YearDetailView({
+  yearData,
+  selectedYear,
+  isLoading,
   onYearChange,
-  planDetails 
+  planDetails
 }: YearDetailViewProps) {
   const [showAllAccounts, setShowAllAccounts] = useState(false);
   const [showAllLiabilities, setShowAllLiabilities] = useState(false);
@@ -190,18 +198,18 @@ export default function YearDetailView({
               Age {snapshot.age} • Complete financial overview for this year
             </CardDescription>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => onYearChange(selectedYear - 1)}
               disabled={!planDetails?.snapshots?.some((s: any) => s.year === selectedYear - 1)}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => onYearChange(selectedYear + 1)}
               disabled={!planDetails?.snapshots?.some((s: any) => s.year === selectedYear + 1)}
@@ -211,7 +219,7 @@ export default function YearDetailView({
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -226,7 +234,7 @@ export default function YearDetailView({
               <TrendingUp className="h-8 w-8 text-green-500" />
             </div>
           </div>
-          
+
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between">
               <div>
@@ -238,7 +246,7 @@ export default function YearDetailView({
               <DollarSign className="h-8 w-8 text-blue-500" />
             </div>
           </div>
-          
+
           <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
             <div className="flex items-center justify-between">
               <div>
@@ -250,7 +258,7 @@ export default function YearDetailView({
               <TrendingUp className="h-8 w-8 text-orange-500" />
             </div>
           </div>
-          
+
           <div className="bg-red-50 p-4 rounded-lg border border-red-200">
             <div className="flex items-center justify-between">
               <div>
@@ -269,8 +277,8 @@ export default function YearDetailView({
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Account Balances</h3>
             {accountBalances.length > 6 && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowAllAccounts(!showAllAccounts)}
               >
@@ -279,26 +287,26 @@ export default function YearDetailView({
               </Button>
             )}
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {visibleAccounts.map((account, index) => (
               <Card key={index} className="bg-gray-50">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      {getAccountTypeIcon(account.accountType)}
-                      <Badge variant="secondary" className={getAccountTypeColor(account.accountType)}>
-                        {account.accountType.replace('_', ' ').toUpperCase()}
+                      {getAccountTypeIcon(account.type)}
+                      <Badge variant="secondary" className={getAccountTypeColor(account.type)}>
+                        {account.type.replace('_', ' ').toUpperCase()}
                       </Badge>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-1">
-                    {account.accountName && (
-                      <p className="font-medium text-gray-700">{account.accountName}</p>
+                    {account.name && (
+                      <p className="font-medium text-gray-700">{account.name}</p>
                     )}
                     <p className="text-xl font-bold">{formatCurrency(account.balance)}</p>
-                    
+
                     <div className="flex justify-between text-sm text-gray-600">
                       {parseFloat(account.contribution || '0') > 0 && (
                         <span className="text-green-600">
@@ -331,8 +339,8 @@ export default function YearDetailView({
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Liabilities</h3>
                 {liabilities.length > 4 && (
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setShowAllLiabilities(!showAllLiabilities)}
                   >
@@ -341,41 +349,39 @@ export default function YearDetailView({
                   </Button>
                 )}
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {visibleLiabilities.map((liability, index) => (
-                  <Card key={index} className="bg-red-50 border-red-200">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Liability</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead className="text-right">Payment</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visibleLiabilities.map((liability, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
                         <div className="flex items-center gap-2">
-                          {getLiabilityIcon(liability.liabilityType)}
-                          <Badge variant="secondary" className={getLiabilityColor(liability.liabilityType)}>
-                            {liability.liabilityType.replace('_', ' ').toUpperCase()}
-                          </Badge>
+                          {getLiabilityIcon(liability.type)}
+                          <div>
+                            <p className="font-medium">{liability.name}</p>
+                            <Badge variant="secondary" className="text-xs">
+                              {liability.type.replace('_', ' ')}
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        {liability.liabilityName && (
-                          <p className="font-medium text-gray-700">{liability.liabilityName}</p>
-                        )}
-                        <p className="text-xl font-bold text-red-700">
-                          {formatCurrency(liability.balance)}
-                        </p>
-                        
-                        <div className="flex justify-between text-sm text-gray-600">
-                          {liability.interestRate && (
-                            <span>{formatPercent(liability.interestRate)} APR</span>
-                          )}
-                          {liability.monthlyPayment && (
-                            <span>{formatCurrency(liability.monthlyPayment)}/month</span>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(liability.balance)}
+                      </TableCell>
+                      <TableCell className="text-right text-red-600">
+                        {liability.payment ? formatCurrency(liability.payment) + '/mo' : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </>
         )}
@@ -404,6 +410,6 @@ export default function YearDetailView({
           </>
         )}
       </CardContent>
-    </Card>
+    </Card >
   );
 }

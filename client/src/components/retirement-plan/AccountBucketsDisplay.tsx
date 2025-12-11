@@ -4,32 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   Legend,
   LineChart,
   Line
 } from "recharts";
-import { 
-  PiggyBank, 
-  TrendingUp, 
-  DollarSign, 
+import {
+  PiggyBank,
+  TrendingUp,
+  DollarSign,
   Calculator,
   Wallet,
   CreditCard,
   Home,
   Building
 } from "lucide-react";
-import type { AnnualSnapshot, AccountBalance } from "@shared/schema";
+import type { AnnualSnapshot, AnnualSnapshotAsset } from "@shared/schema";
 
 interface AccountBucketsDisplayProps {
   snapshots: AnnualSnapshot[];
@@ -49,10 +49,10 @@ interface BucketData {
   description: string;
 }
 
-const ACCOUNT_TYPE_CONFIG: Record<string, { 
-  displayName: string; 
-  icon: React.ReactNode; 
-  color: string; 
+const ACCOUNT_TYPE_CONFIG: Record<string, {
+  displayName: string;
+  icon: React.ReactNode;
+  color: string;
   category: 'retirement' | 'taxable' | 'cash';
   description: string;
 }> = {
@@ -100,13 +100,13 @@ const ACCOUNT_TYPE_CONFIG: Record<string, {
   },
 };
 
-export default function AccountBucketsDisplay({ 
-  snapshots, 
-  retirementAge, 
-  detailed = false 
+export default function AccountBucketsDisplay({
+  snapshots,
+  retirementAge,
+  detailed = false
 }: AccountBucketsDisplayProps) {
   const [selectedView, setSelectedView] = useState<'end' | 'retirement'>('end');
-  
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -119,7 +119,7 @@ export default function AccountBucketsDisplay({
   // Process account data from snapshots
   const processAccountData = () => {
     const bucketData: Record<string, BucketData> = {};
-    
+
     // Initialize bucket data with config
     Object.entries(ACCOUNT_TYPE_CONFIG).forEach(([type, config]) => {
       bucketData[type] = {
@@ -141,7 +141,7 @@ export default function AccountBucketsDisplay({
       // For demo purposes, we'll simulate some data
       const isRetirement = snapshot.age >= retirementAge;
       const isEnd = snapshot === snapshots[snapshots.length - 1];
-      
+
       // Simulate account balance distribution
       const totalAssets = Number(snapshot.totalAssets);
       if (totalAssets > 0) {
@@ -152,7 +152,7 @@ export default function AccountBucketsDisplay({
         const brokerage = totalAssets * 0.15;
         const savings = totalAssets * 0.04;
         const checking = totalAssets * 0.01;
-        
+
         if (isEnd) {
           bucketData['401k'].endBalance = retirement401k;
           bucketData['traditional_ira'].endBalance = traditionalIRA;
@@ -161,7 +161,7 @@ export default function AccountBucketsDisplay({
           bucketData['savings'].endBalance = savings;
           bucketData['checking'].endBalance = checking;
         }
-        
+
         if (isRetirement && bucketData['401k'].retirementBalance === 0) {
           bucketData['401k'].retirementBalance = retirement401k;
           bucketData['traditional_ira'].retirementBalance = traditionalIRA;
@@ -174,7 +174,7 @@ export default function AccountBucketsDisplay({
     });
 
     // Filter out accounts with zero balances
-    return Object.values(bucketData).filter(bucket => 
+    return Object.values(bucketData).filter(bucket =>
       bucket.endBalance > 0 || bucket.retirementBalance > 0
     );
   };
@@ -182,7 +182,7 @@ export default function AccountBucketsDisplay({
   const buckets = processAccountData();
   const totalEndBalance = buckets.reduce((sum, bucket) => sum + bucket.endBalance, 0);
   const totalRetirementBalance = buckets.reduce((sum, bucket) => sum + bucket.retirementBalance, 0);
-  
+
   // Prepare data for charts
   const pieData = buckets.map(bucket => ({
     name: bucket.displayName,
@@ -200,7 +200,7 @@ export default function AccountBucketsDisplay({
   const groupedBuckets = buckets.reduce((acc, bucket) => {
     const config = ACCOUNT_TYPE_CONFIG[bucket.type];
     if (!config) return acc;
-    
+
     if (!acc[config.category]) {
       acc[config.category] = [];
     }
@@ -209,11 +209,11 @@ export default function AccountBucketsDisplay({
   }, {} as Record<string, BucketData[]>);
 
   const categoryTotals = {
-    retirement: groupedBuckets.retirement?.reduce((sum, bucket) => 
+    retirement: groupedBuckets.retirement?.reduce((sum, bucket) =>
       sum + (selectedView === 'end' ? bucket.endBalance : bucket.retirementBalance), 0) || 0,
-    taxable: groupedBuckets.taxable?.reduce((sum, bucket) => 
+    taxable: groupedBuckets.taxable?.reduce((sum, bucket) =>
       sum + (selectedView === 'end' ? bucket.endBalance : bucket.retirementBalance), 0) || 0,
-    cash: groupedBuckets.cash?.reduce((sum, bucket) => 
+    cash: groupedBuckets.cash?.reduce((sum, bucket) =>
       sum + (selectedView === 'end' ? bucket.endBalance : bucket.retirementBalance), 0) || 0,
   };
 
@@ -232,16 +232,16 @@ export default function AccountBucketsDisplay({
               Your money organized by account type and tax treatment
             </CardDescription>
           </div>
-          
+
           <div className="flex gap-2">
-            <Button 
+            <Button
               variant={selectedView === 'retirement' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setSelectedView('retirement')}
             >
               At Retirement
             </Button>
-            <Button 
+            <Button
               variant={selectedView === 'end' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setSelectedView('end')}
@@ -251,7 +251,7 @@ export default function AccountBucketsDisplay({
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {!detailed ? (
           // Summary View
@@ -270,7 +270,7 @@ export default function AccountBucketsDisplay({
                   {totalBalance > 0 ? ((categoryTotals.retirement / totalBalance) * 100).toFixed(1) : 0}% of total
                 </div>
               </div>
-              
+
               <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="h-5 w-5 text-orange-600" />
@@ -283,7 +283,7 @@ export default function AccountBucketsDisplay({
                   {totalBalance > 0 ? ((categoryTotals.taxable / totalBalance) * 100).toFixed(1) : 0}% of total
                 </div>
               </div>
-              
+
               <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="h-5 w-5 text-teal-600" />
@@ -328,20 +328,20 @@ export default function AccountBucketsDisplay({
               <TabsTrigger value="comparison">Comparison</TabsTrigger>
               <TabsTrigger value="growth">Growth Timeline</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="breakdown" className="space-y-4">
               {/* Individual Account Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {buckets.map((bucket) => {
                   const balance = selectedView === 'end' ? bucket.endBalance : bucket.retirementBalance;
                   const percentage = totalBalance > 0 ? (balance / totalBalance) * 100 : 0;
-                  
+
                   return (
                     <Card key={bucket.type} className="bg-gradient-to-br from-gray-50 to-white">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <div 
+                            <div
                               className="p-2 rounded-full"
                               style={{ backgroundColor: `${bucket.color}20` }}
                             >
@@ -353,20 +353,20 @@ export default function AccountBucketsDisplay({
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <div className="text-2xl font-bold" style={{ color: bucket.color }}>
                             {formatCurrency(balance)}
                           </div>
-                          
-                          <Progress 
-                            value={percentage} 
+
+                          <Progress
+                            value={percentage}
                             className="h-2"
-                            style={{ 
+                            style={{
                               backgroundColor: `${bucket.color}20`,
                             }}
                           />
-                          
+
                           <div className="flex justify-between text-sm text-gray-600">
                             <span>{percentage.toFixed(1)}% of total</span>
                           </div>
@@ -377,7 +377,7 @@ export default function AccountBucketsDisplay({
                 })}
               </div>
             </TabsContent>
-            
+
             <TabsContent value="comparison">
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -393,7 +393,7 @@ export default function AccountBucketsDisplay({
                 </ResponsiveContainer>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="growth">
               <div className="text-center text-gray-500 py-8">
                 <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />

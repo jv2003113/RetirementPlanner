@@ -223,6 +223,25 @@ export function calculateRetirementProjection(data: InitialData): YearlyData[] {
             mortgageBalance_eoy: currentMortgageBalance,
             totalLiabilities_eoy: currentMortgageBalance,
             withdrawals,
+            assets: [
+                { type: '401k', name: '401(k)', balance: current401k, growth: current401k * data.portfolioGrowthRate, contribution: 0, withdrawal: withdrawals['401k'] },
+                { type: 'roth_ira', name: 'Roth IRA', balance: currentRothIRA, growth: currentRothIRA * data.portfolioGrowthRate, contribution: 0, withdrawal: withdrawals.RothIRA },
+                { type: 'brokerage', name: 'Brokerage', balance: currentBrokerage, growth: currentBrokerage * data.portfolioGrowthRate, contribution: 0, withdrawal: withdrawals.Brokerage },
+                { type: 'savings', name: 'Savings', balance: currentSavings, growth: currentSavings * data.portfolioGrowthRate, contribution: 0, withdrawal: withdrawals.Savings }
+            ],
+            liabilities: currentMortgageBalance > 0 ? [
+                { type: 'mortgage', name: 'Home Mortgage', balance: currentMortgageBalance, payment: annualMortgagePayment }
+            ] : [],
+            income: [
+                ...(socialSecurityIncome > 0 ? [{ source: 'social_security', amount: socialSecurityIncome }] : []),
+                ...(pensionIncome > 0 ? [{ source: 'pension', amount: pensionIncome }] : []),
+                ...(isPreRetirement ? [{ source: 'salary', amount: data.currentIncome * Math.pow(1 + data.expectedIncomeGrowth, age - data.currentAge) }] : [])
+            ],
+            expenses: [
+                { category: 'living', amount: currentLivingExpenses },
+                ...(mortgagePaymentThisYear > 0 ? [{ category: 'housing', amount: mortgagePaymentThisYear }] : []),
+                { category: 'taxes', amount: estimatedTax }
+            ],
             isDepleted
         });
 

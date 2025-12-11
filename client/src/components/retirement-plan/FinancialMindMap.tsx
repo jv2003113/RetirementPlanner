@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  DollarSign, 
-  TrendingUp, 
+import {
+  DollarSign,
+  TrendingUp,
   TrendingDown,
-  Home, 
+  Home,
   Car,
   CreditCard,
   PiggyBank,
@@ -19,13 +19,13 @@ import {
   Wallet,
   ShoppingCart
 } from "lucide-react";
-import type { AnnualSnapshot, AccountBalance } from "@shared/schema";
+import type { AnnualSnapshot, AnnualSnapshotAsset, AnnualSnapshotLiability } from "@shared/schema";
 
 interface FinancialMindMapProps {
   year: number;
   age: number;
   snapshot: AnnualSnapshot | null;
-  accountBalances: AccountBalance[];
+  accountBalances: AnnualSnapshotAsset[];
   isLoading: boolean;
 }
 
@@ -53,12 +53,12 @@ const formatPercentage = (value: number, total: number) => {
   return `${Math.round((Math.abs(value) / total) * 100)}%`;
 };
 
-export default function FinancialMindMap({ 
-  year, 
-  age, 
-  snapshot, 
-  accountBalances, 
-  isLoading 
+export default function FinancialMindMap({
+  year,
+  age,
+  snapshot,
+  accountBalances,
+  isLoading
 }: FinancialMindMapProps) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
@@ -96,11 +96,11 @@ export default function FinancialMindMap({
 
   // Group account balances by type
   const accountsByType = accountBalances.reduce((acc, account) => {
-    const type = account.accountType;
+    const type = account.type;
     if (!acc[type]) acc[type] = [];
     acc[type].push(account);
     return acc;
-  }, {} as Record<string, AccountBalance[]>);
+  }, {} as Record<string, AnnualSnapshotAsset[]>);
 
   // Create financial nodes for the mind map
   const nodes: FinancialNode[] = [
@@ -186,11 +186,11 @@ export default function FinancialMindMap({
 
   const getDetailNodes = () => {
     const detailNodes: any[] = [];
-    
+
     // Show all detail nodes for all main nodes
     nodes.filter(n => n.id !== 'center').forEach(parentNode => {
       const detailPositions = getDetailPositions(parentNode.position, parentNode.id, parentNode.details.length);
-      
+
       parentNode.details.forEach((detail, index) => {
         detailNodes.push({
           id: `${parentNode.id}-detail-${index}`,
@@ -204,13 +204,13 @@ export default function FinancialMindMap({
         });
       });
     });
-    
+
     return detailNodes;
   };
 
-  const getDetailPositions = (parentPos: {x: number, y: number}, parentId: string, count: number) => {
-    const positions: Array<{x: number, y: number}> = [];
-    
+  const getDetailPositions = (parentPos: { x: number, y: number }, parentId: string, count: number) => {
+    const positions: Array<{ x: number, y: number }> = [];
+
     // Define specific positions for each node's details to prevent overlaps
     const detailConfigs = {
       'income': [
@@ -246,8 +246,8 @@ export default function FinancialMindMap({
     const centerNode = nodes.find(n => n.id === 'center');
     if (!centerNode) return [];
 
-    const lines: Array<{from: {x: number, y: number}, to: {x: number, y: number}, color: string}> = [];
-    
+    const lines: Array<{ from: { x: number, y: number }, to: { x: number, y: number }, color: string }> = [];
+
     // Main node connections
     nodes
       .filter(n => n.id !== 'center')
@@ -311,15 +311,15 @@ export default function FinancialMindMap({
           {nodes.map((node) => {
             const isCenter = node.id === 'center';
             const isHovered = hoveredNode === node.id;
-            
+
             return (
               <TooltipProvider key={node.id}>
                 <Tooltip>
                   <TooltipTrigger>
                     <div
                       className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 group"
-                      style={{ 
-                        left: `${node.position.x}%`, 
+                      style={{
+                        left: `${node.position.x}%`,
                         top: `${node.position.y}%`,
                         zIndex: isCenter ? 15 : 10
                       }}
@@ -386,8 +386,8 @@ export default function FinancialMindMap({
                 <TooltipTrigger>
                   <div
                     className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 animate-in fade-in zoom-in"
-                    style={{ 
-                      left: `${detailNode.position.x}%`, 
+                    style={{
+                      left: `${detailNode.position.x}%`,
                       top: `${detailNode.position.y}%`,
                       zIndex: 5
                     }}
@@ -407,7 +407,7 @@ export default function FinancialMindMap({
                         {detailNode.title}
                       </div>
                       <div className="font-bold text-xs text-gray-900">
-                        {detailNode.title.toLowerCase().includes('ratio') 
+                        {detailNode.title.toLowerCase().includes('ratio')
                           ? `${detailNode.value.toFixed(1)}%`
                           : formatCurrency(detailNode.value)
                         }
@@ -419,7 +419,7 @@ export default function FinancialMindMap({
                   <div className="max-w-xs">
                     <div className="font-semibold mb-1">{detailNode.title}</div>
                     <div className="text-lg font-bold">
-                      {detailNode.title.toLowerCase().includes('ratio') 
+                      {detailNode.title.toLowerCase().includes('ratio')
                         ? `${detailNode.value.toFixed(1)}%`
                         : formatCurrency(detailNode.value)
                       }

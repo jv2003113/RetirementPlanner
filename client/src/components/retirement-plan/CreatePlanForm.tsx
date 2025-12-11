@@ -12,15 +12,18 @@ import { AlertCircle, Plus, User, Users, TrendingUp, Calendar, Shield, DollarSig
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/api";
 
+import { RetirementPlan } from "@shared/schema";
+
 interface CreatePlanFormProps {
   onCancel: () => void;
   onSuccess: (planId: number) => void;
+  existingPlans: RetirementPlan[];
 }
 
 interface PlanFormData {
   planName: string;
   planType: 'single' | 'couple';
-  planVariant: 'A' | 'B' | 'C';
+  planVariant: 'B' | 'C' | 'D'; // Updated to specific requested variants, though we can keep string for flexibility
 
   // Primary person
   startAge: number;
@@ -54,25 +57,50 @@ interface PlanFormData {
   bondGrowthRate: number;
 }
 
-export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormProps) {
+export default function CreatePlanForm({ onCancel, onSuccess, existingPlans }: CreatePlanFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Determine default plan variant (B -> C -> D)
+  // The user requested: "make the first plan after the primary plan as Plan B and the ones that follow as Plan C and Plan D"
+  const getNextPlanVariant = () => {
+    const existingVariants = new Set(existingPlans.map(p => p.planType));
+    if (!existingVariants.has('B')) return 'B';
+    if (!existingVariants.has('C')) return 'C';
+    if (!existingVariants.has('D')) return 'D';
+    return 'B'; // Fallback
+  };
+
+  const defaultVariant = getNextPlanVariant();
+
   const [formData, setFormData] = useState<PlanFormData>({
-    planName: '',
-    planType: 'single',
-    planVariant: 'A',
+    planName: `Plan ${defaultVariant}`,
+    planType: user?.hasSpouse ? 'couple' : 'single',
+    planVariant: defaultVariant as any,
     startAge: user?.currentAge || 30,
     retirementAge: user?.targetRetirementAge || 65,
     endAge: 95,
+
+    // Spouse defaults from profile
+    spouseStartAge: user?.spouseCurrentAge || undefined,
+    spouseRetirementAge: user?.spouseTargetRetirementAge || undefined,
+    spouseEndAge: user?.hasSpouse ? 95 : undefined,
+
     inflationRate: 3.0,
     portfolioGrowthRate: 7.0,
     bondGrowthRate: 4.0,
     socialSecurityStartAge: 67,
     estimatedSocialSecurityBenefit: 30000,
+
+    // Spouse SS defaults
+    spouseSocialSecurityStartAge: user?.hasSpouse ? 67 : undefined,
+    spouseEstimatedSocialSecurityBenefit: user?.hasSpouse ? 25000 : undefined,
+
     pensionIncome: 0,
     otherRetirementIncome: 0,
-    desiredAnnualRetirementSpending: 80000,
+
+    // Spending defaults from profile
+    desiredAnnualRetirementSpending: Number(user?.expectedAnnualExpenses) || (Number(user?.totalMonthlyExpenses) * 12) || 80000,
     majorOneTimeExpenses: 0,
   });
 
@@ -216,14 +244,14 @@ export default function CreatePlanForm({ onCancel, onSuccess }: CreatePlanFormPr
 
               <div>
                 <Label htmlFor="planVariant">Plan Variant</Label>
-                <Select value={formData.planVariant} onValueChange={(value: 'A' | 'B' | 'C') => updateFormData('planVariant', value)}>
+                <Select value={formData.planVariant} onValueChange={(value: 'B' | 'C' | 'D') => updateFormData('planVariant', value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="A">Plan-A</SelectItem>
                     <SelectItem value="B">Plan-B</SelectItem>
                     <SelectItem value="C">Plan-C</SelectItem>
+                    <SelectItem value="D">Plan-D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

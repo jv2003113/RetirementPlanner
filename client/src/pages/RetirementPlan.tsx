@@ -16,13 +16,20 @@ import PlanParametersPanel from "@/components/retirement-plan/PlanParametersPane
 import CreatePlanForm from "@/components/retirement-plan/CreatePlanForm";
 import EditPlanForm from "@/components/retirement-plan/EditPlanForm";
 import { useAuth } from "@/contexts/AuthContext";
-import type { RetirementPlan, AnnualSnapshot, AccountBalance, Milestone, User, InitialData, YearlyData } from "@shared/schema";
+import type { RetirementPlan, AnnualSnapshot, Milestone, User, InitialData, YearlyData, AnnualSnapshotAsset, AnnualSnapshotLiability, AnnualSnapshotIncome, AnnualSnapshotExpense } from "@shared/schema";
 import { apiRequest } from "@/lib/api";
 import ProjectionTable from "@/components/retirement/ProjectionTable";
 import ProjectionChart from "@/components/retirement/ProjectionChart";
 
+interface AnnualSnapshotWithDetails extends AnnualSnapshot {
+  assets: AnnualSnapshotAsset[];
+  liabilities: AnnualSnapshotLiability[];
+  income: AnnualSnapshotIncome[];
+  expenses: AnnualSnapshotExpense[];
+}
+
 interface RetirementPlanWithDetails extends RetirementPlan {
-  snapshots: AnnualSnapshot[];
+  snapshots: AnnualSnapshotWithDetails[];
   milestones: Milestone[];
 }
 
@@ -43,11 +50,11 @@ export default function RetirementPlanPage() {
   // Delete plan mutation
   const deletePlanMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await fetch(`/api/retirement-plans/${planId}`, {
+      const response = await apiRequest(`/api/retirement-plans/${planId}`, {
         method: 'DELETE',
-        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to delete plan');
+      if (response.status === 204) return null;
       return response.json();
     },
     onSuccess: (_, deletedPlanId) => {
@@ -91,13 +98,15 @@ export default function RetirementPlanPage() {
     queryKey: ["retirement-plan-details", selectedPlanId],
     queryFn: async () => {
       if (!selectedPlanId) return null;
-      const response = await apiRequest(`/api/retirement-plans/${selectedPlanId}/details`);
+      // Use the new /full endpoint to get complete nested data
+      const response = await apiRequest(`/api/retirement-plans/${selectedPlanId}/full`);
       if (!response.ok) throw new Error("Failed to fetch plan details");
       return response.json();
     },
     enabled: !!selectedPlanId,
   });
 
+  // Also keep fetching single year detailed view for safety/redundancy or specific UI needs
   const { data: yearData, isLoading: yearLoading } = useQuery({
     queryKey: ["year-details", selectedPlanId, selectedYear],
     queryFn: async () => {
@@ -133,7 +142,7 @@ export default function RetirementPlanPage() {
         setSelectedPlanId(plans[0].id);
       }
     }
-  }, [plans, selectedPlanId, urlPlanId]);
+  }, [plans, urlPlanId]); // Removed selectedPlanId to prevent resetting when user selects a plan manually
 
   // Auto-select current year when plan details and user data are available
   useEffect(() => {
@@ -148,108 +157,54 @@ export default function RetirementPlanPage() {
     setSelectedYear(year);
   };
 
-  // Construct Initial Data for Projection
-  const projectionInitialData = useMemo<InitialData | null>(() => {
-    if (!userData || !planDetails) return null;
+  // Convert DB snapshots to YearlyData format for charts
+  const projectionData = useMemo<YearlyData[]>(() => {
+    if (!planDetails?.snapshots) return [];
 
-    // Aggregate assets from User Profile data (not investment-accounts table)
-    const initialAssets = {
-      '401k': (Number(userData.retirementAccount401k) || 0) + (Number(userData.retirementAccountIRA) || 0),
-      RothIRA: Number(userData.retirementAccountRoth) || 0,
-      Brokerage: Number(userData.investmentBalance) || 0,
-      Savings: (Number(userData.savingsBalance) || 0) + (Number(userData.checkingBalance) || 0),
-    };
+    return planDetails.snapshots.map(s => {
+      // Calculate asset breakdowns from the nested assets array
+      const assets = s.assets || [];
 
-    return {
-      currentAge: userData.currentAge || 30,
-      primaryRetireAge: planDetails.retirementAge,
-      primarySSStartAge: planDetails.socialSecurityStartAge || 67,
-      primarySSBenefit: Number(planDetails.estimatedSocialSecurityBenefit) || 0,
-      spouseRetireAge: planDetails.spouseRetirementAge || 65,
-      spouseSSStartAge: planDetails.spouseSocialSecurityStartAge || 67,
-      spouseSSBenefit: Number(planDetails.spouseEstimatedSocialSecurityBenefit) || 0,
-      lifeExpectancy: planDetails.endAge || 95,
-      portfolioGrowthRate: Number(planDetails.portfolioGrowthRate) / 100 || 0.07, // Convert percentage to decimal
-      inflationRate: Number(planDetails.inflationRate) / 100 || 0.03, // Convert percentage to decimal
-      initialAnnualSpending: Number(planDetails.desiredAnnualRetirementSpending) || 60000,
+      const getAssetTotal = (type: string) =>
+        assets.filter(a => a.type === type).reduce((sum, a) => sum + Number(a.balance), 0);
 
-      initialAssets,
-      // Mortgage Details
-      mortgageBalance: Number(userData.mortgageBalance) || 0,
-      mortgagePayment: Number(userData.mortgagePayment) || 0,
-      mortgageInterestRate: Number(userData.mortgageRate) / 100 || 0.04,
-      mortgageYearsLeft: Number(userData.mortgageYearsLeft) || 30,
-      // Additional Income
-      pensionIncome: Number(planDetails.pensionIncome) || 0,
-      spousePensionIncome: Number(planDetails.spousePensionIncome) || 0,
-      otherRetirementIncome: Number(planDetails.otherRetirementIncome) || 0,
-      // Pre-Retirement Income
-      currentIncome: Number(userData.currentIncome) || 0,
-      spouseCurrentIncome: Number(userData.spouseCurrentIncome) || 0,
-      spouseExpectedIncomeGrowth: Number(userData.spouseExpectedIncomeGrowth) / 100 || 0.03,
-      expectedIncomeGrowth: Number(userData.expectedIncomeGrowth) / 100 || 0.03,
-    };
-  }, [userData, planDetails]);
-
-  // Fetch Projection from API
-  const { data: projectionData = [], isLoading: isProjectionLoading } = useQuery<YearlyData[]>({
-    queryKey: ['projection', projectionInitialData],
-    queryFn: async () => {
-      if (!projectionInitialData) return [];
-      const response = await apiRequest('/api/projections/calculate', {
-        method: 'POST',
-        body: JSON.stringify(projectionInitialData),
-      });
-      if (!response.ok) throw new Error('Failed to calculate projection');
-      return response.json();
-    },
-    enabled: !!projectionInitialData,
-  });
-
-  // Calculate derived data for Dashboard and Timeline
-  const { dashboardData, timelineSnapshots } = useMemo(() => {
-    if (!projectionData.length || !userData) return { dashboardData: null, timelineSnapshots: [] };
-
-    const totalLiabilities =
-      (Number(userData.mortgageBalance) || 0) +
-      (Number(userData.creditCardDebt) || 0) +
-      (Number(userData.studentLoanDebt) || 0) +
-      (Number(userData.otherDebt) || 0);
-
-    const timelineSnapshots: AnnualSnapshot[] = projectionData.map(d => ({
-      id: `snapshot-${d.year}`,
-      planId: selectedPlanId || "temp-plan-id",
-      year: d.year,
-      age: d.age,
-      grossIncome: String(d.socialSecurityIncome + d.pensionIncome + (d.currentIncome || 0) + (d.spouseCurrentIncome || 0) + d.totalGrossWithdrawal),
-      netIncome: String((d.socialSecurityIncome + d.pensionIncome + (d.currentIncome || 0) + (d.spouseCurrentIncome || 0) + d.totalGrossWithdrawal) - (d.inflationAdjustedSpending + d.estimatedTax)),
-      totalExpenses: String(d.inflationAdjustedSpending + d.estimatedTax),
-      totalAssets: String(d.totalAssets_eoy),
-      totalLiabilities: String(d.totalLiabilities_eoy),
-      netWorth: String(d.totalAssets_eoy - d.totalLiabilities_eoy),
-      taxesPaid: String(d.estimatedTax),
-      cumulativeTax: "0",
-      incomeBreakdown: null,
-      expenseBreakdown: null,
-      createdAt: new Date(),
-    }));
-
-    const currentYearData = projectionData.find(d => d.year === selectedYear);
-
-    let dashboardData = null;
-    if (currentYearData) {
-      const snapshot = timelineSnapshots.find(s => s.year === selectedYear) || null;
-      const accountBalances: AccountBalance[] = [
-        { id: "bal-1", snapshotId: snapshot?.id || "temp-snap-id", accountName: '401k / Traditional IRA', accountType: '401k', balance: String(currentYearData['401k_eoy']), growth: '7', contribution: '0', withdrawal: String(currentYearData.withdrawals['401k']) },
-        { id: "bal-2", snapshotId: snapshot?.id || "temp-snap-id", accountName: 'Roth IRA', accountType: 'roth_ira', balance: String(currentYearData.rothIRA_eoy), growth: '7', contribution: '0', withdrawal: String(currentYearData.withdrawals.RothIRA) },
-        { id: "bal-3", snapshotId: snapshot?.id || "temp-snap-id", accountName: 'Brokerage', accountType: 'brokerage', balance: String(currentYearData.brokerage_eoy), growth: '7', contribution: '0', withdrawal: String(currentYearData.withdrawals.Brokerage) },
-        { id: "bal-4", snapshotId: snapshot?.id || "temp-snap-id", accountName: 'Savings', accountType: 'savings', balance: String(currentYearData.savings_eoy), growth: '2', contribution: '0', withdrawal: String(currentYearData.withdrawals.Savings) },
-      ];
-      dashboardData = { snapshot, accountBalances };
-    }
-
-    return { dashboardData, timelineSnapshots };
-  }, [projectionData, userData, selectedYear]);
+      // Map AnnualSnapshot (from DB) to YearlyData (for UI components)
+      return {
+        year: s.year,
+        age: s.age,
+        grossIncome: Number(s.grossIncome),
+        netIncome: Number(s.netIncome),
+        totalExpenses: Number(s.totalExpenses),
+        totalAssets: Number(s.totalAssets),
+        totalLiabilities: Number(s.totalLiabilities),
+        netWorth: Number(s.netWorth),
+        taxesPaid: Number(s.taxesPaid),
+        cumulativeTax: Number(s.cumulativeTax),
+        // Map detailed breakdowns
+        "401k_eoy": getAssetTotal('401k'),
+        rothIRA_eoy: getAssetTotal('roth_ira'),
+        brokerage_eoy: getAssetTotal('brokerage'),
+        savings_eoy: getAssetTotal('savings'),
+        // Fill other required fields with defaults or calculate if data exists
+        inflationAdjustedSpending: Number(s.totalExpenses),
+        socialSecurityIncome: 0, // Individual income streams would need to be aggregated from s.income if types align
+        pensionIncome: 0,
+        currentIncome: 0,
+        spouseCurrentIncome: 0,
+        totalGrossWithdrawal: 0,
+        estimatedTax: Number(s.taxesPaid),
+        totalAssets_eoy: Number(s.totalAssets),
+        totalLiabilities_eoy: Number(s.totalLiabilities),
+        rmdCalculated: 0,
+        isDepleted: Number(s.totalAssets) <= 0,
+        // Arrays for detailed views if needed
+        assets: s.assets,
+        liabilities: s.liabilities,
+        income: s.income,
+        expenses: s.expenses
+      } as unknown as YearlyData; // Cast because some specific breakdown fields might be missing but chart mainly needs eoy values
+    });
+  }, [planDetails]);
 
   if (plansLoading) {
     return (
@@ -269,6 +224,7 @@ export default function RetirementPlanPage() {
       <div className="container mx-auto p-6">
         {showCreateForm ? (
           <CreatePlanForm
+            existingPlans={plans || []}
             onCancel={() => setShowCreateForm(false)}
             onSuccess={(planId) => {
               setShowCreateForm(false);
@@ -305,6 +261,7 @@ export default function RetirementPlanPage() {
     return (
       <div className="container mx-auto p-6">
         <CreatePlanForm
+          existingPlans={plans}
           onCancel={() => setShowCreateForm(false)}
           onSuccess={(planId) => {
             setShowCreateForm(false);
@@ -350,16 +307,6 @@ export default function RetirementPlanPage() {
                 return aOrder - bOrder;
               })
               .map(plan => {
-                const getPlanTypeDisplay = (planType: string | null) => {
-                  switch (planType) {
-                    case 'P': return 'Primary';
-                    case 'A': return 'Plan-A';
-                    case 'B': return 'Plan-B';
-                    case 'C': return 'Plan-C';
-                    default: return planType || 'Primary';
-                  }
-                };
-
                 return (
                   <button
                     key={plan.id}
@@ -426,33 +373,18 @@ export default function RetirementPlanPage() {
             </div>
           )}
 
-
-
-          <Tabs defaultValue="projection" className="w-full">
+          <Tabs defaultValue="annual-financials" className="w-full">
             <TabsList>
+              <TabsTrigger value="annual-financials">Annual Financials</TabsTrigger>
               <TabsTrigger value="projection">Projection</TabsTrigger>
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="projection">
-              {projectionData.length > 0 ? (
-                <div className="space-y-6">
-                  <ProjectionChart data={projectionData} />
-                  <ProjectionTable data={projectionData} />
-                </div>
-              ) : (
-                <div className="p-6 text-center text-gray-500">
-                  Insufficient data to generate projection. Please ensure you have account balances and plan details.
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="dashboard">
-              {/* Interactive Timeline - Moved here */}
+            <TabsContent value="annual-financials">
+              {/* Interactive Timeline */}
               {activePlan && planDetails && (
                 <div className="hidden md:block mb-6">
                   <InteractiveTimeline
-                    snapshots={timelineSnapshots.length > 0 ? timelineSnapshots : planDetails.snapshots}
+                    snapshots={planDetails.snapshots}
                     milestones={planDetails.milestones}
                     onYearSelect={handleYearSelect}
                     selectedYear={selectedYear}
@@ -469,11 +401,26 @@ export default function RetirementPlanPage() {
                 <FinancialDashboard
                   year={selectedYear}
                   age={userData?.currentAge ? userData.currentAge + (selectedYear - new Date().getFullYear()) : (activePlan?.startAge || 30) + (selectedYear - new Date().getFullYear())}
-                  snapshot={dashboardData?.snapshot || yearData?.snapshot || null}
-                  accountBalances={dashboardData?.accountBalances || yearData?.accountBalances || []}
-                  liabilities={yearData?.liabilities || []}
-                  isLoading={(yearLoading || isProjectionLoading) && !dashboardData}
+                  snapshot={yearData?.snapshot || planDetails.snapshots.find(s => s.year === selectedYear) || null}
+                  assets={yearData?.assets || planDetails.snapshots.find(s => s.year === selectedYear)?.assets || []}
+                  liabilities={yearData?.liabilities || planDetails.snapshots.find(s => s.year === selectedYear)?.liabilities || []}
+                  income={yearData?.income || planDetails.snapshots.find(s => s.year === selectedYear)?.income || []}
+                  expenses={yearData?.expenses || planDetails.snapshots.find(s => s.year === selectedYear)?.expenses || []}
+                  isLoading={yearLoading && !planDetails}
                 />
+              )}
+            </TabsContent>
+
+            <TabsContent value="projection">
+              {projectionData.length > 0 ? (
+                <div className="space-y-6">
+                  <ProjectionChart data={projectionData} />
+                  <ProjectionTable data={projectionData} />
+                </div>
+              ) : (
+                <div className="p-6 text-center text-gray-500">
+                  Insufficient data to generate projection. Please ensure you have account balances and plan details.
+                </div>
               )}
             </TabsContent>
           </Tabs>

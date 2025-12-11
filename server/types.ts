@@ -11,9 +11,11 @@ import type {
   MultiStepFormProgress, InsertMultiStepFormProgress,
   RetirementPlan, InsertRetirementPlan,
   AnnualSnapshot, InsertAnnualSnapshot,
-  AccountBalance, InsertAccountBalance,
+  AnnualSnapshotAsset, InsertAnnualSnapshotAsset,
+  AnnualSnapshotLiability, InsertAnnualSnapshotLiability,
+  AnnualSnapshotIncome, InsertAnnualSnapshotIncome,
+  AnnualSnapshotExpense, InsertAnnualSnapshotExpense,
   Milestone, InsertMilestone,
-  Liability, InsertLiability,
   StandardMilestone, InsertStandardMilestone,
   Recommendation, Resource
 } from "@shared/schema";
@@ -96,25 +98,38 @@ export interface IStorage {
 
   // Annual snapshots operations
   getAnnualSnapshots(planId: string): Promise<AnnualSnapshot[]>;
+  getFullPlanData(planId: string): Promise<(AnnualSnapshot & { assets: AnnualSnapshotAsset[], liabilities: AnnualSnapshotLiability[], income: AnnualSnapshotIncome[], expenses: AnnualSnapshotExpense[] })[]>;
   getAnnualSnapshot(planId: string, year: number): Promise<AnnualSnapshot | undefined>;
   createAnnualSnapshot(snapshot: InsertAnnualSnapshot): Promise<AnnualSnapshot>;
   updateAnnualSnapshot(id: string, snapshot: Partial<InsertAnnualSnapshot>): Promise<AnnualSnapshot | undefined>;
 
-  // Account balances operations
-  getAccountBalances(snapshotId: string): Promise<AccountBalance[]>;
-  createAccountBalance(balance: InsertAccountBalance): Promise<AccountBalance>;
-  updateAccountBalance(id: string, balance: Partial<InsertAccountBalance>): Promise<AccountBalance | undefined>;
+  // Annual Snapshot Assets
+  getSnapshotAssets(snapshotId: string): Promise<AnnualSnapshotAsset[]>;
+  createSnapshotAsset(asset: InsertAnnualSnapshotAsset): Promise<AnnualSnapshotAsset>;
+
+  // Annual Snapshot Liabilities
+  getSnapshotLiabilities(snapshotId: string): Promise<AnnualSnapshotLiability[]>;
+  createSnapshotLiability(liability: InsertAnnualSnapshotLiability): Promise<AnnualSnapshotLiability>;
+
+  // Annual Snapshot Income
+  getSnapshotIncome(snapshotId: string): Promise<AnnualSnapshotIncome[]>;
+  createSnapshotIncome(income: InsertAnnualSnapshotIncome): Promise<AnnualSnapshotIncome>;
+
+  // Annual Snapshot Expenses
+  getSnapshotExpenses(snapshotId: string): Promise<AnnualSnapshotExpense[]>;
+  createSnapshotExpense(expense: InsertAnnualSnapshotExpense): Promise<AnnualSnapshotExpense>;
+
+  // Milestones
+  getMilestones(planId?: string, userId?: string): Promise<Milestone[]>;
+  createMilestone(milestone: InsertMilestone): Promise<Milestone>;
+  updateMilestone(id: string, milestone: Partial<InsertMilestone>): Promise<Milestone | undefined>;
+  deleteMilestone(id: string): Promise<boolean>;
 
   // Milestones operations
   getMilestones(planId?: string, userId?: string): Promise<Milestone[]>;
   createMilestone(milestone: InsertMilestone): Promise<Milestone>;
   updateMilestone(id: string, milestone: Partial<InsertMilestone>): Promise<Milestone | undefined>;
   deleteMilestone(id: string): Promise<boolean>;
-
-  // Liabilities operations
-  getLiabilities(snapshotId: string): Promise<Liability[]>;
-  createLiability(liability: InsertLiability): Promise<Liability>;
-  updateLiability(id: string, liability: Partial<InsertLiability>): Promise<Liability | undefined>;
 
   // Standard milestones operations
   getStandardMilestones(): Promise<StandardMilestone[]>;

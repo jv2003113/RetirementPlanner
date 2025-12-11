@@ -9,14 +9,16 @@ import {
     Wallet,
     DollarSign
 } from "lucide-react";
-import type { AnnualSnapshot, AccountBalance, Liability } from "@shared/schema";
+import type { AnnualSnapshot, AnnualSnapshotAsset, AnnualSnapshotLiability, AnnualSnapshotIncome, AnnualSnapshotExpense } from "@shared/schema";
 
 interface FinancialDashboardProps {
     year: number;
     age: number;
     snapshot: AnnualSnapshot | null;
-    accountBalances: AccountBalance[];
-    liabilities?: Liability[];
+    assets: AnnualSnapshotAsset[];
+    liabilities: AnnualSnapshotLiability[];
+    income: AnnualSnapshotIncome[];
+    expenses: AnnualSnapshotExpense[];
     isLoading: boolean;
 }
 
@@ -32,8 +34,10 @@ export default function FinancialDashboard({
     year,
     age,
     snapshot,
-    accountBalances,
+    assets = [],
     liabilities = [],
+    income = [],
+    expenses = [],
     isLoading,
 }: FinancialDashboardProps) {
     if (isLoading) {
@@ -68,7 +72,6 @@ export default function FinancialDashboard({
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Financial Overview</h2>
                     <p className="text-gray-500">Year {year} • Age {age}</p>
                 </div>
                 <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
@@ -93,17 +96,18 @@ export default function FinancialDashboard({
                         </div>
 
                         <div className="flex-grow space-y-3 border-t pt-3">
-                            {accountBalances.map((account, index) => (
+                            {assets.map((asset, index) => (
                                 <div key={index} className="flex justify-between items-center text-sm">
                                     <div className="flex items-center gap-2">
-                                        {account.accountType.includes('real_estate') ? <Home className="h-3 w-3 text-blue-500" /> :
-                                            account.accountType.includes('401k') || account.accountType.includes('ira') ? <Building2 className="h-3 w-3 text-purple-500" /> :
+                                        {asset.type.includes('real_estate') ? <Home className="h-3 w-3 text-blue-500" /> :
+                                            asset.type.includes('401k') || asset.type.includes('ira') ? <Building2 className="h-3 w-3 text-purple-500" /> :
                                                 <Wallet className="h-3 w-3 text-green-500" />}
-                                        <span className="text-gray-600">{account.accountName}</span>
+                                        <span className="text-gray-600">{asset.name}</span>
                                     </div>
-                                    <span className="font-medium">{formatCurrency(parseFloat(account.balance))}</span>
+                                    <span className="font-medium">{formatCurrency(parseFloat(asset.balance))}</span>
                                 </div>
                             ))}
+                            {assets.length === 0 && <div className="text-sm text-gray-400 italic">No assets</div>}
                         </div>
                     </CardContent>
                 </Card>
@@ -126,16 +130,11 @@ export default function FinancialDashboard({
                                 <>
                                     {liabilities.map((liability, i) => (
                                         <div key={i} className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600">{liability.liabilityName || liability.liabilityType}</span>
+                                            <span className="text-gray-600">{liability.name}</span>
                                             <span className="font-medium">{formatCurrency(parseFloat(liability.balance))}</span>
                                         </div>
                                     ))}
                                 </>
-                            ) : totalLiabilities > 0 ? (
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Total Liabilities</span>
-                                    <span className="font-medium">{formatCurrency(totalLiabilities)}</span>
-                                </div>
                             ) : (
                                 <div className="text-sm text-gray-400 italic">No liabilities</div>
                             )}
@@ -157,19 +156,17 @@ export default function FinancialDashboard({
                         </div>
 
                         <div className="flex-grow space-y-3 border-t pt-3">
-                            {grossIncome > 0 ? (
+                            {income && income.length > 0 ? (
                                 <>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600">Gross Income</span>
-                                        <span className="font-medium">{formatCurrency(parseFloat(snapshot.grossIncome || "0"))}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600">Net Income</span>
-                                        <span className="font-medium">{formatCurrency(parseFloat(snapshot.netIncome || "0"))}</span>
-                                    </div>
+                                    {income.map((inc, i) => (
+                                        <div key={i} className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-600">{inc.source}</span>
+                                            <span className="font-medium">{formatCurrency(parseFloat(inc.amount))}</span>
+                                        </div>
+                                    ))}
                                 </>
                             ) : (
-                                <div className="text-sm text-gray-400 italic">No income data</div>
+                                <div className="text-sm text-gray-400 italic">No income detail</div>
                             )}
                         </div>
                     </CardContent>
@@ -189,19 +186,17 @@ export default function FinancialDashboard({
                         </div>
 
                         <div className="flex-grow space-y-3 border-t pt-3">
-                            {totalExpenses > 0 ? (
+                            {expenses && expenses.length > 0 ? (
                                 <>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600">Total Expenses</span>
-                                        <span className="font-medium">{formatCurrency(parseFloat(snapshot.totalExpenses || "0"))}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600">Taxes Paid</span>
-                                        <span className="font-medium">{formatCurrency(parseFloat(snapshot.taxesPaid || "0"))}</span>
-                                    </div>
+                                    {expenses.map((exp, i) => (
+                                        <div key={i} className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-600">{exp.category}</span>
+                                            <span className="font-medium">{formatCurrency(parseFloat(exp.amount))}</span>
+                                        </div>
+                                    ))}
                                 </>
                             ) : (
-                                <div className="text-sm text-gray-400 italic">No expense data</div>
+                                <div className="text-sm text-gray-400 italic">No expense detail</div>
                             )}
                         </div>
                     </CardContent>

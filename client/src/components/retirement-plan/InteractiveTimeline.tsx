@@ -145,6 +145,35 @@ export default function InteractiveTimeline({
   const timelineRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Drag to scroll implementation
+  const isMouseDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftPos = useRef(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isMouseDown.current = true;
+    startX.current = e.pageX - (scrollContainerRef.current?.offsetLeft || 0);
+    scrollLeftPos.current = scrollContainerRef.current?.scrollLeft || 0;
+  };
+
+  const handleMouseLeave = () => {
+    isMouseDown.current = false;
+  };
+
+  const handleMouseUp = () => {
+    isMouseDown.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown.current) return;
+    e.preventDefault();
+    const x = e.pageX - (scrollContainerRef.current?.offsetLeft || 0);
+    const walk = (x - startX.current) * 1; // Scroll 1:1 for natural feel
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = scrollLeftPos.current - walk;
+    }
+  };
+
   // Fetch standard milestones from API
   const { data: standardMilestonesData, isLoading: standardMilestonesLoading } = useQuery<StandardMilestone[]>({
     queryKey: ["standard-milestones"],
@@ -244,8 +273,15 @@ export default function InteractiveTimeline({
             {/* Scrollable Timeline Container */}
             <div
               ref={scrollContainerRef}
-              className="relative overflow-x-auto pb-4"
-              style={{ scrollBehavior: 'smooth' }}
+              className="relative overflow-x-auto pb-4 cursor-grab active:cursor-grabbing"
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              style={{
+                scrollbarWidth: 'thin',  // For Firefox
+                msOverflowStyle: 'none'  // For IE/Edge
+              }}
             >
               <div
                 ref={timelineRef}

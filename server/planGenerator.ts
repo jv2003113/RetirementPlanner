@@ -1,4 +1,4 @@
-import type { RetirementPlan, InsertAnnualSnapshot, InsertAccountBalance, InsertMilestone } from "../shared/schema";
+import type { RetirementPlan, InsertAnnualSnapshot, InsertAnnualSnapshotAsset, InsertAnnualSnapshotLiability, InsertMilestone } from "../shared/schema";
 import { storage } from "./storage";
 
 interface PlanGenerationOptions {
@@ -219,12 +219,12 @@ export class RetirementPlanGenerator {
         cumulativeTax: projection.cumulativeTax.toFixed(2)
       });
 
-      // Create account balances for this snapshot
+      // Create account balances for this snapshot as assets
       for (const account of projection.accounts) {
-        await storage.createAccountBalance({
+        await storage.createSnapshotAsset({
           snapshotId: snapshot.id,
-          accountType: account.type,
-          accountName: account.name,
+          type: account.type,
+          name: account.name,
           balance: account.balance.toFixed(2),
           contribution: account.contribution.toFixed(2),
           withdrawal: account.withdrawal.toFixed(2),
@@ -234,13 +234,12 @@ export class RetirementPlanGenerator {
 
       // Create liability records for this snapshot
       if (projection.mortgageBalance > 0) {
-        await storage.createLiability({
+        await storage.createSnapshotLiability({
           snapshotId: snapshot.id,
-          liabilityType: 'mortgage',
-          liabilityName: 'Primary Mortgage',
+          type: 'mortgage',
+          name: 'Primary Mortgage',
           balance: projection.mortgageBalance.toFixed(2),
-          interestRate: '5.0',
-          monthlyPayment: projection.mortgagePayment.toFixed(2)
+          payment: projection.mortgagePayment.toFixed(2)
         });
       }
     }

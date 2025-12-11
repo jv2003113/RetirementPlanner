@@ -400,16 +400,40 @@ export const annualSnapshots = pgTable("annual_snapshots", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Account balances by year - tracks each account type balance over time
-export const accountBalances = pgTable("account_balances", {
+// Annual Snapshot Child Tables
+
+export const annualSnapshotsAssets = pgTable("annual_snapshots_assets", {
   id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
   snapshotId: uuid("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
-  accountType: text("account_type").notNull(), // 401k, traditional_ira, roth_ira, brokerage, savings, checking, etc.
-  accountName: text("account_name"), // Optional display name
-  balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
-  contribution: decimal("contribution", { precision: 10, scale: 2 }).default("0"), // Annual contribution
-  withdrawal: decimal("withdrawal", { precision: 10, scale: 2 }).default("0"), // Annual withdrawal
-  growth: decimal("growth", { precision: 10, scale: 2 }).default("0"), // Annual growth/return
+  name: text("name").notNull(),
+  type: text("type").notNull(), // 401k, savings, brokerage, etc.
+  balance: decimal("balance", { precision: 12, scale: 2 }).default("0").notNull(),
+  growth: decimal("growth", { precision: 10, scale: 2 }).default("0"),
+  contribution: decimal("contribution", { precision: 10, scale: 2 }).default("0"),
+  withdrawal: decimal("withdrawal", { precision: 10, scale: 2 }).default("0"),
+});
+
+export const annualSnapshotsLiabilities = pgTable("annual_snapshots_liabilities", {
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  snapshotId: uuid("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // mortgage, credit_card, etc.
+  balance: decimal("balance", { precision: 12, scale: 2 }).default("0").notNull(),
+  payment: decimal("payment", { precision: 10, scale: 2 }).default("0"),
+});
+
+export const annualSnapshotsIncome = pgTable("annual_snapshots_income", {
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  snapshotId: uuid("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
+  source: text("source").notNull(), // salary, social_security, pension, etc.
+  amount: decimal("amount", { precision: 12, scale: 2 }).default("0").notNull(),
+});
+
+export const annualSnapshotsExpenses = pgTable("annual_snapshots_expenses", {
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
+  snapshotId: uuid("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
+  category: text("category").notNull(), // living, housing, taxes, etc.
+  amount: decimal("amount", { precision: 12, scale: 2 }).default("0").notNull(),
 });
 
 // Milestones schema - both personal and standard milestones
@@ -427,17 +451,6 @@ export const milestones = pgTable("milestones", {
   color: text("color").default("#3b82f6"), // Color for timeline display
   icon: text("icon"), // Icon name for display
   createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Liabilities schema - tracks debts over time
-export const liabilities = pgTable("liabilities", {
-  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
-  snapshotId: uuid("snapshot_id").references(() => annualSnapshots.id, { onDelete: "cascade" }).notNull(),
-  liabilityType: text("liability_type").notNull(), // mortgage, car_loan, credit_card, student_loan, etc.
-  liabilityName: text("liability_name"),
-  balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
-  interestRate: decimal("interest_rate", { precision: 5, scale: 2 }),
-  monthlyPayment: decimal("monthly_payment", { precision: 8, scale: 2 }),
 });
 
 // Standard milestones schema - general milestones that apply to all users
@@ -466,17 +479,25 @@ export const insertAnnualSnapshotSchema = createInsertSchema(annualSnapshots).om
   createdAt: true,
 });
 
-export const insertAccountBalanceSchema = createInsertSchema(accountBalances).omit({
+export const insertAnnualSnapshotAssetSchema = createInsertSchema(annualSnapshotsAssets).omit({
+  id: true,
+});
+
+export const insertAnnualSnapshotLiabilitySchema = createInsertSchema(annualSnapshotsLiabilities).omit({
+  id: true,
+});
+
+export const insertAnnualSnapshotIncomeSchema = createInsertSchema(annualSnapshotsIncome).omit({
+  id: true,
+});
+
+export const insertAnnualSnapshotExpenseSchema = createInsertSchema(annualSnapshotsExpenses).omit({
   id: true,
 });
 
 export const insertMilestoneSchema = createInsertSchema(milestones).omit({
   id: true,
   createdAt: true,
-});
-
-export const insertLiabilitySchema = createInsertSchema(liabilities).omit({
-  id: true,
 });
 
 export const insertStandardMilestoneSchema = createInsertSchema(standardMilestones).omit({
@@ -492,14 +513,20 @@ export type InsertRetirementPlan = z.infer<typeof insertRetirementPlanSchema>;
 export type AnnualSnapshot = typeof annualSnapshots.$inferSelect;
 export type InsertAnnualSnapshot = z.infer<typeof insertAnnualSnapshotSchema>;
 
-export type AccountBalance = typeof accountBalances.$inferSelect;
-export type InsertAccountBalance = z.infer<typeof insertAccountBalanceSchema>;
+export type AnnualSnapshotAsset = typeof annualSnapshotsAssets.$inferSelect;
+export type InsertAnnualSnapshotAsset = z.infer<typeof insertAnnualSnapshotAssetSchema>;
+
+export type AnnualSnapshotLiability = typeof annualSnapshotsLiabilities.$inferSelect;
+export type InsertAnnualSnapshotLiability = z.infer<typeof insertAnnualSnapshotLiabilitySchema>;
+
+export type AnnualSnapshotIncome = typeof annualSnapshotsIncome.$inferSelect;
+export type InsertAnnualSnapshotIncome = z.infer<typeof insertAnnualSnapshotIncomeSchema>;
+
+export type AnnualSnapshotExpense = typeof annualSnapshotsExpenses.$inferSelect;
+export type InsertAnnualSnapshotExpense = z.infer<typeof insertAnnualSnapshotExpenseSchema>;
 
 export type Milestone = typeof milestones.$inferSelect;
 export type InsertMilestone = z.infer<typeof insertMilestoneSchema>;
-
-export type Liability = typeof liabilities.$inferSelect;
-export type InsertLiability = z.infer<typeof insertLiabilitySchema>;
 
 export type StandardMilestone = typeof standardMilestones.$inferSelect;
 export type InsertStandardMilestone = z.infer<typeof insertStandardMilestoneSchema>;
@@ -578,6 +605,43 @@ export interface YearlyData {
     Brokerage: number;
     Savings: number;
   };
+
+  // Detailed Normalized Data
+  assets: {
+    name: string;
+    type: string;
+    balance: number;
+    growth: number;
+    contribution: number;
+    withdrawal: number;
+  }[];
+
+  liabilities: {
+    name: string;
+    type: string;
+    balance: number;
+    payment: number;
+  }[];
+
+  income: {
+    source: string;
+    amount: number;
+  }[];
+
+  expenses: {
+    category: string;
+    amount: number;
+  }[];
+
+  // Aggregated Accounts Data (Legacy support if needed, but we'll try to use 'assets' now)
+  accounts?: {
+    type: string;
+    name: string;
+    balance: number;
+    contribution: number;
+    withdrawal: number;
+    growth: number;
+  }[];
 
   // Status
   isDepleted: boolean;

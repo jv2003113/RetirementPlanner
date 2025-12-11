@@ -2,15 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api';
 
-interface User {
-  id: string;
-  username: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  currentAge?: number;
-  targetRetirementAge?: number;
-}
+import { User } from "@shared/schema";
 
 interface AuthContextType {
   user: User | null;

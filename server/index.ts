@@ -67,13 +67,19 @@ app.use((req, res, next) => {
 
   // ALWAYS serve the app on port 4000
   // this serves both the UI proxy and the client.
-  const port = process.env.PORT || 4000;
-  server.listen({
+  const PORT = Number(process.env.PORT || 4000);
+  const HOST = process.env.HOST || '0.0.0.0';
+  /*server.listen({
     port,
-    host: "0.0.0.0",
+    host,
     reusePort: true,
   }, () => {
     log(`🚀 UI SERVER STARTED ON PORT ${port} - BUILD TIME: ${new Date().toISOString()}`);
     log(`📡 Proxying API requests to: ${process.env.API_URL || 'http://localhost:4001'}`);
+  });*/
+
+  server.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
   });
+
 })();

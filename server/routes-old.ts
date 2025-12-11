@@ -16,9 +16,11 @@ import {
   insertMultiStepFormProgressSchema,
   insertRetirementPlanSchema,
   insertAnnualSnapshotSchema,
-  insertAccountBalanceSchema,
+  insertAnnualSnapshotAssetSchema,
+  insertAnnualSnapshotLiabilitySchema,
+  insertAnnualSnapshotIncomeSchema,
+  insertAnnualSnapshotExpenseSchema,
   insertMilestoneSchema,
-  insertLiabilitySchema,
 } from "../shared/schema";
 import { z } from "zod";
 import { generateRetirementPlan } from "./planGenerator";
@@ -1139,6 +1141,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  app.get("/api/retirement-plans/:id/full", requireAuth, async (req: Request, res: Response) => {
+    const planId = req.params.id;
+
+    if (!planId) {
+      return res.status(400).json({ message: "Invalid plan ID" });
+    }
+
+    const plan = await storage.getRetirementPlan(planId);
+
+    if (!plan) {
+      return res.status(404).json({ message: "Retirement plan not found" });
+    }
+
+    // Get full nested data: snapshots with assets/liabilities/income/expenses
+    const snapshots = await storage.getFullPlanData(planId);
+    const milestones = await storage.getMilestones(planId);
+
+    return res.json({
+      ...plan,
+      snapshots,
+      milestones
+    });
+  });
+
   app.get("/api/retirement-plans/:id/year/:year", requireAuth, async (req: Request, res: Response) => {
     const planId = req.params.id;
     const year = parseInt(req.params.year);
@@ -1153,14 +1179,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Year data not found" });
     }
 
-    // Get account balances and liabilities for this snapshot
-    const accountBalances = await storage.getAccountBalances(snapshot.id);
-    const liabilities = await storage.getLiabilities(snapshot.id);
+    // Get detailed data for this snapshot
+    const assets = await storage.getSnapshotAssets(snapshot.id);
+    const liabilities = await storage.getSnapshotLiabilities(snapshot.id);
+    const income = await storage.getSnapshotIncome(snapshot.id);
+    const expenses = await storage.getSnapshotExpenses(snapshot.id);
 
     return res.json({
       snapshot,
-      accountBalances,
-      liabilities
+      assets,
+      liabilities,
+      income,
+      expenses
     });
   });
 
@@ -1615,40 +1645,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         snapshots.push(snapshot);
         
         // Add basic account balances
-        await storage.createAccountBalance({
+        await storage.createSnapshotAsset({
           snapshotId: snapshot.id,
-          accountType: "401k",
-          accountName: "Company 401(k)",
+          type: "401k",
+          name: "Company 401(k)",
           balance: (netWorth * 0.4).toString(),
           contribution: isRetired ? "0" : "15000",
           withdrawal: isRetired ? "25000" : "0",
           growth: (netWorth * 0.04).toString()
         });
 
-        await storage.createAccountBalance({
+        await storage.createSnapshotAsset({
           snapshotId: snapshot.id,
-          accountType: "roth_ira",
-          accountName: "Roth IRA", 
+          type: "roth_ira",
+          name: "Roth IRA", 
           balance: (netWorth * 0.3).toString(),
           contribution: isRetired ? "0" : "6000",
           withdrawal: "0",
           growth: (netWorth * 0.03).toString()
         });
 
-        await storage.createAccountBalance({
+        await storage.createSnapshotAsset({
           snapshotId: snapshot.id,
-          accountType: "brokerage",
-          accountName: "Taxable Brokerage",
+          type: "brokerage",
+          name: "Taxable Brokerage",
           balance: (netWorth * 0.2).toString(),
           contribution: "5000",
           withdrawal: isRetired ? "10000" : "0",
           growth: (netWorth * 0.02).toString()
         });
 
-        await storage.createAccountBalance({
+        await storage.createSnapshotAsset({
           snapshotId: snapshot.id,
-          accountType: "savings", 
-          accountName: "Emergency Fund",
+          type: "savings", 
+          name: "Emergency Fund",
           balance: (netWorth * 0.1).toString(),
           contribution: "2000",
           withdrawal: "0",

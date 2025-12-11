@@ -2,7 +2,7 @@
  * API utility for making requests to the backend
  */
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4001';
 
 /**
  * Get the full API URL for a given endpoint

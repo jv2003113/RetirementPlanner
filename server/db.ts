@@ -14,9 +14,11 @@ import {
   multiStepFormProgress, type MultiStepFormProgress, type InsertMultiStepFormProgress,
   retirementPlans, type RetirementPlan, type InsertRetirementPlan,
   annualSnapshots, type AnnualSnapshot, type InsertAnnualSnapshot,
-  accountBalances, type AccountBalance, type InsertAccountBalance,
+  annualSnapshotsAssets, type AnnualSnapshotAsset, type InsertAnnualSnapshotAsset,
+  annualSnapshotsLiabilities, type AnnualSnapshotLiability, type InsertAnnualSnapshotLiability,
+  annualSnapshotsIncome, type AnnualSnapshotIncome, type InsertAnnualSnapshotIncome,
+  annualSnapshotsExpenses, type AnnualSnapshotExpense, type InsertAnnualSnapshotExpense,
   milestones, type Milestone, type InsertMilestone,
-  liabilities, type Liability, type InsertLiability,
   standardMilestones, type StandardMilestone, type InsertStandardMilestone,
   type Recommendation, type Resource
 } from "@shared/schema";
@@ -435,6 +437,18 @@ export class PostgresStorage implements IStorage {
   }
 
   async deleteRetirementPlan(id: string): Promise<boolean> {
+    // Manually clean up all dependencies to ensure deletion succeeds
+    // even if CASCADE is not perfectly configured
+
+    // 1. Clear all financial data (snapshots, balances, liabilities)
+    await this.clearPlanData(id);
+
+    // 2. Delete milestones associated with this plan
+    await db
+      .delete(milestones)
+      .where(eq(milestones.planId, id));
+
+    // 3. Finally delete the plan itself
     const results = await db
       .delete(retirementPlans)
       .where(eq(retirementPlans.id, id))
@@ -443,16 +457,32 @@ export class PostgresStorage implements IStorage {
   }
 
   async clearPlanData(planId: string): Promise<void> {
-    // First delete all account balances for snapshots of this plan
+    // First delete all child records for snapshots of this plan
     const planSnapshots = await db
       .select({ id: annualSnapshots.id })
       .from(annualSnapshots)
       .where(eq(annualSnapshots.planId, planId));
 
     for (const snapshot of planSnapshots) {
+      // Delete assets
       await db
-        .delete(accountBalances)
-        .where(eq(accountBalances.snapshotId, snapshot.id));
+        .delete(annualSnapshotsAssets)
+        .where(eq(annualSnapshotsAssets.snapshotId, snapshot.id));
+
+      // Delete liabilities
+      await db
+        .delete(annualSnapshotsLiabilities)
+        .where(eq(annualSnapshotsLiabilities.snapshotId, snapshot.id));
+
+      // Delete income
+      await db
+        .delete(annualSnapshotsIncome)
+        .where(eq(annualSnapshotsIncome.snapshotId, snapshot.id));
+
+      // Delete expenses
+      await db
+        .delete(annualSnapshotsExpenses)
+        .where(eq(annualSnapshotsExpenses.snapshotId, snapshot.id));
     }
 
     // Then delete all annual snapshots for this plan
@@ -468,6 +498,30 @@ export class PostgresStorage implements IStorage {
       .from(annualSnapshots)
       .where(eq(annualSnapshots.planId, planId))
       .orderBy(annualSnapshots.year);
+  }
+
+  async getFullPlanData(planId: string): Promise<(AnnualSnapshot & { assets: AnnualSnapshotAsset[], liabilities: AnnualSnapshotLiability[], income: AnnualSnapshotIncome[], expenses: AnnualSnapshotExpense[] })[]> {
+    const snapshots = await this.getAnnualSnapshots(planId);
+
+    // Enrich each snapshot with its detailed data
+    const richSnapshots = await Promise.all(snapshots.map(async (snapshot) => {
+      const [assets, liabilities, income, expenses] = await Promise.all([
+        this.getSnapshotAssets(snapshot.id),
+        this.getSnapshotLiabilities(snapshot.id),
+        this.getSnapshotIncome(snapshot.id),
+        this.getSnapshotExpenses(snapshot.id)
+      ]);
+
+      return {
+        ...snapshot,
+        assets,
+        liabilities,
+        income,
+        expenses
+      };
+    }));
+
+    return richSnapshots;
   }
 
   async getAnnualSnapshot(planId: string, year: number): Promise<AnnualSnapshot | undefined> {
@@ -495,27 +549,18 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  // Account balances operations
-  async getAccountBalances(snapshotId: string): Promise<AccountBalance[]> {
+  // Annual Snapshot Assets operations
+  async getSnapshotAssets(snapshotId: string): Promise<AnnualSnapshotAsset[]> {
     return await db
       .select()
-      .from(accountBalances)
-      .where(eq(accountBalances.snapshotId, snapshotId));
+      .from(annualSnapshotsAssets)
+      .where(eq(annualSnapshotsAssets.snapshotId, snapshotId));
   }
 
-  async createAccountBalance(balanceData: InsertAccountBalance): Promise<AccountBalance> {
+  async createSnapshotAsset(assetData: InsertAnnualSnapshotAsset): Promise<AnnualSnapshotAsset> {
     const results = await db
-      .insert(accountBalances)
-      .values(balanceData)
-      .returning();
-    return results[0];
-  }
-
-  async updateAccountBalance(id: string, balanceData: Partial<InsertAccountBalance>): Promise<AccountBalance | undefined> {
-    const results = await db
-      .update(accountBalances)
-      .set(balanceData)
-      .where(eq(accountBalances.id, id))
+      .insert(annualSnapshotsAssets)
+      .values(assetData)
       .returning();
     return results[0];
   }
@@ -576,27 +621,50 @@ export class PostgresStorage implements IStorage {
     return results.length > 0;
   }
 
-  // Liabilities operations
-  async getLiabilities(snapshotId: string): Promise<Liability[]> {
+  // Annual Snapshot Liabilities operations
+  async getSnapshotLiabilities(snapshotId: string): Promise<AnnualSnapshotLiability[]> {
     return await db
       .select()
-      .from(liabilities)
-      .where(eq(liabilities.snapshotId, snapshotId));
+      .from(annualSnapshotsLiabilities)
+      .where(eq(annualSnapshotsLiabilities.snapshotId, snapshotId));
   }
 
-  async createLiability(liabilityData: InsertLiability): Promise<Liability> {
+  async createSnapshotLiability(liabilityData: InsertAnnualSnapshotLiability): Promise<AnnualSnapshotLiability> {
     const results = await db
-      .insert(liabilities)
+      .insert(annualSnapshotsLiabilities)
       .values(liabilityData)
       .returning();
     return results[0];
   }
 
-  async updateLiability(id: string, liabilityData: Partial<InsertLiability>): Promise<Liability | undefined> {
+  // Annual Snapshot Income operations
+  async getSnapshotIncome(snapshotId: string): Promise<AnnualSnapshotIncome[]> {
+    return await db
+      .select()
+      .from(annualSnapshotsIncome)
+      .where(eq(annualSnapshotsIncome.snapshotId, snapshotId));
+  }
+
+  async createSnapshotIncome(incomeData: InsertAnnualSnapshotIncome): Promise<AnnualSnapshotIncome> {
     const results = await db
-      .update(liabilities)
-      .set(liabilityData)
-      .where(eq(liabilities.id, id))
+      .insert(annualSnapshotsIncome)
+      .values(incomeData)
+      .returning();
+    return results[0];
+  }
+
+  // Annual Snapshot Expenses operations
+  async getSnapshotExpenses(snapshotId: string): Promise<AnnualSnapshotExpense[]> {
+    return await db
+      .select()
+      .from(annualSnapshotsExpenses)
+      .where(eq(annualSnapshotsExpenses.snapshotId, snapshotId));
+  }
+
+  async createSnapshotExpense(expenseData: InsertAnnualSnapshotExpense): Promise<AnnualSnapshotExpense> {
+    const results = await db
+      .insert(annualSnapshotsExpenses)
+      .values(expenseData)
       .returning();
     return results[0];
   }
