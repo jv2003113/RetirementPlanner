@@ -2,17 +2,7 @@
  * API utility for making requests to the backend
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4001';
-
-if (import.meta.env.PROD && API_URL.includes('localhost')) {
-    console.warn(
-        'WARNING: You are running in production mode but using localhost as the API URL.\n' +
-        'Make sure you have set the VITE_API_URL environment variable in your deployment settings (e.g., Vercel).\n' +
-        'Current API_URL:', API_URL
-    );
-}
-
-// DEBUG: Log environment diagnostic info removed
+const API_URL = import.meta.env.VITE_API_URL || ''; // Default to relative path for proxy support
 
 /**
  * Get the full API URL for a given endpoint
