@@ -12,21 +12,7 @@ if (import.meta.env.PROD && API_URL.includes('localhost')) {
     );
 }
 
-// DEBUG: Log environment diagnostic info
-const debugInfo = [
-    '--- ENV DIAGNOSTICS ---',
-    'Mode: ' + import.meta.env.MODE,
-    'Prod: ' + import.meta.env.PROD,
-    'VITE_API_URL: ' + import.meta.env.VITE_API_URL,
-    'Resolved API_URL: ' + API_URL,
-].join('\n');
-
-console.log(debugInfo);
-
-// Temporary: Alert so you can't miss it
-if (import.meta.env.PROD) {
-    alert(debugInfo);
-}
+// DEBUG: Log environment diagnostic info removed
 
 /**
  * Get the full API URL for a given endpoint
