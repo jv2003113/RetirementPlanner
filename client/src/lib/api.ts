@@ -12,6 +12,15 @@ if (import.meta.env.PROD && API_URL.includes('localhost')) {
     );
 }
 
+// DEBUG: Log environment diagnostic info
+console.log('--- ENV DIAGNOSTICS ---');
+console.log('Mode:', import.meta.env.MODE);
+console.log('Prod:', import.meta.env.PROD);
+console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('Resolved API_URL:', API_URL);
+console.log('All Env Keys:', Object.keys(import.meta.env));
+console.log('-----------------------');
+
 /**
  * Get the full API URL for a given endpoint
  * @param endpoint - API endpoint (e.g., '/api/users')
