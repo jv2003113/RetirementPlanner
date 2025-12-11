@@ -297,32 +297,29 @@ export default function RetirementPlanPage() {
 
         {/* Plan Tabs */}
         <div className="flex items-center gap-3 mb-4 overflow-x-auto scrollbar-hide">
-          <div className="flex bg-gray-100 rounded-lg p-1 min-w-fit">
-            {plans
-              .sort((a, b) => {
-                // Sort by plan type: P first, then A, B, C
-                const order = { 'P': 0, 'A': 1, 'B': 2, 'C': 3 };
-                const aOrder = order[a.planType as keyof typeof order] ?? 999;
-                const bOrder = order[b.planType as keyof typeof order] ?? 999;
-                return aOrder - bOrder;
-              })
-              .map(plan => {
-                return (
-                  <button
-                    key={plan.id}
-                    onClick={() => setSelectedPlanId(plan.id)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${selectedPlanId === plan.id
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                  >
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-sm font-medium">{plan.planName}</span>
-                    </div>
-                  </button>
-                );
-              })}
-          </div>
+          {plans && plans.length > 0 && (
+            <Tabs
+              value={selectedPlanId || undefined}
+              onValueChange={setSelectedPlanId}
+              className="w-auto"
+            >
+              <TabsList>
+                {[...plans]
+                  .sort((a, b) => {
+                    // Sort by plan type: P first, then A, B, C
+                    const order = { 'P': 0, 'A': 1, 'B': 2, 'C': 3 };
+                    const aOrder = order[a.planType as keyof typeof order] ?? 999;
+                    const bOrder = order[b.planType as keyof typeof order] ?? 999;
+                    return aOrder - bOrder;
+                  })
+                  .map(plan => (
+                    <TabsTrigger key={plan.id} value={plan.id}>
+                      {plan.planName}
+                    </TabsTrigger>
+                  ))}
+              </TabsList>
+            </Tabs>
+          )}
           <Button
             onClick={() => setShowCreateForm(true)}
             disabled={plans.length >= 4}
