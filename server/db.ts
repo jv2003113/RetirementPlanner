@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import {
   users, type User, type InsertUser,
-  retirementGoals, type RetirementGoal, type InsertRetirementGoal,
+
   investmentAccounts, type InvestmentAccount, type InsertInvestmentAccount,
   assetAllocations, type AssetAllocation, type InsertAssetAllocation,
   securityHoldings, type SecurityHolding, type InsertSecurityHolding,
@@ -59,46 +59,7 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
-  // Retirement goals operations
-  async getRetirementGoals(userId: string): Promise<RetirementGoal[]> {
-    return await db
-      .select()
-      .from(retirementGoals)
-      .where(eq(retirementGoals.userId, userId));
-  }
 
-  async getRetirementGoal(id: string): Promise<RetirementGoal | undefined> {
-    const results = await db
-      .select()
-      .from(retirementGoals)
-      .where(eq(retirementGoals.id, id));
-    return results[0];
-  }
-
-  async createRetirementGoal(goalData: InsertRetirementGoal): Promise<RetirementGoal> {
-    const results = await db
-      .insert(retirementGoals)
-      .values(goalData)
-      .returning();
-    return results[0];
-  }
-
-  async updateRetirementGoal(id: string, goalData: Partial<InsertRetirementGoal>): Promise<RetirementGoal | undefined> {
-    const results = await db
-      .update(retirementGoals)
-      .set(goalData)
-      .where(eq(retirementGoals.id, id))
-      .returning();
-    return results[0];
-  }
-
-  async deleteRetirementGoal(id: string): Promise<boolean> {
-    const results = await db
-      .delete(retirementGoals)
-      .where(eq(retirementGoals.id, id))
-      .returning();
-    return results.length > 0;
-  }
 
   // Investment accounts operations
   async getInvestmentAccounts(userId: string): Promise<InvestmentAccount[]> {

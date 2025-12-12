@@ -1,6 +1,6 @@
 import type {
   User, InsertUser,
-  RetirementGoal, InsertRetirementGoal,
+
   InvestmentAccount, InsertInvestmentAccount,
   AssetAllocation, InsertAssetAllocation,
   SecurityHolding, InsertSecurityHolding,
@@ -27,12 +27,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
 
-  // Retirement goals operations
-  getRetirementGoals(userId: string): Promise<RetirementGoal[]>;
-  getRetirementGoal(id: string): Promise<RetirementGoal | undefined>;
-  createRetirementGoal(goal: InsertRetirementGoal): Promise<RetirementGoal>;
-  updateRetirementGoal(id: string, goal: Partial<InsertRetirementGoal>): Promise<RetirementGoal | undefined>;
-  deleteRetirementGoal(id: string): Promise<boolean>;
+
 
   // Investment accounts operations
   getInvestmentAccounts(userId: string): Promise<InvestmentAccount[]>;

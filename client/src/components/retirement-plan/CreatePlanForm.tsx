@@ -100,7 +100,7 @@ export default function CreatePlanForm({ onCancel, onSuccess, existingPlans }: C
     otherRetirementIncome: 0,
 
     // Spending defaults from profile
-    desiredAnnualRetirementSpending: Number(user?.expectedAnnualExpenses) || (Number(user?.totalMonthlyExpenses) * 12) || 80000,
+    desiredAnnualRetirementSpending: (Number(user?.totalMonthlyExpenses) * 12) || 80000,
     majorOneTimeExpenses: 0,
   });
 

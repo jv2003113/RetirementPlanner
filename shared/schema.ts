@@ -77,11 +77,7 @@ export const users = pgTable("users", {
   otherDebt: decimal("other_debt", { precision: 12, scale: 2 }),
   totalMonthlyDebtPayments: decimal("total_monthly_debt_payments", { precision: 10, scale: 2 }),
   // Retirement Goals
-  expectedAnnualExpenses: decimal("expected_annual_expenses", { precision: 10, scale: 2 }),
-  healthcareExpectations: text("healthcare_expectations"),
-  travelPlans: text("travel_plans"),
-  legacyGoals: text("legacy_goals"),
-  retirementLocation: text("retirement_location"),
+
   // Risk Assessment
   investmentExperience: text("investment_experience"),
   riskTolerance: text("risk_tolerance"),
@@ -92,17 +88,7 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Retirement goals schema
-export const retirementGoals = pgTable("retirement_goals", {
-  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  targetMonthlyIncome: decimal("target_monthly_income", { precision: 10, scale: 2 }),
-  description: text("description"),
-  category: text("category"), // travel, hobbies, healthcare, etc.
-  frequency: text("frequency").default("monthly"), // monthly, yearly, one-time
-  priority: integer("priority"), // 1-5
-  createdAt: timestamp("created_at").defaultNow(),
-});
+
 
 // Investment accounts schema
 export const investmentAccounts = pgTable("investment_accounts", {
@@ -132,7 +118,6 @@ export const assetAllocations = pgTable("asset_allocations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Retirement expenses schema
 
 
 // Activities schema
@@ -176,7 +161,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   studentLoanDebt: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   otherDebt: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
   totalMonthlyDebtPayments: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
-  expectedAnnualExpenses: z.union([z.string(), z.number()]).transform(val => String(val)).optional(),
+
   // Coerce integer fields to numbers to handle string inputs
   currentAge: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
   targetRetirementAge: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
@@ -186,10 +171,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   mortgageYearsLeft: z.union([z.string(), z.number()]).transform(val => typeof val === 'string' ? parseInt(val, 10) : val).optional(),
 });
 
-export const insertRetirementGoalSchema = createInsertSchema(retirementGoals).omit({
-  id: true,
-  createdAt: true,
-});
+
 
 export const insertInvestmentAccountSchema = createInsertSchema(investmentAccounts).omit({
   id: true,
@@ -214,8 +196,7 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
-export type RetirementGoal = typeof retirementGoals.$inferSelect;
-export type InsertRetirementGoal = z.infer<typeof insertRetirementGoalSchema>;
+
 
 export type InvestmentAccount = typeof investmentAccounts.$inferSelect;
 export type InsertInvestmentAccount = z.infer<typeof insertInvestmentAccountSchema>;

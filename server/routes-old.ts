@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import {
   insertUserSchema,
-  insertRetirementGoalSchema,
+
   insertInvestmentAccountSchema,
   insertAssetAllocationSchema,
   insertSecurityHoldingSchema,
@@ -178,17 +178,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.login(user, (err) => {
         if (err) {
           console.error('Login error:', err);
-          return res.status(500).json({ message: "Login failed" });
+          return next(err);
         }
 
-        // Explicitly save the session before sending response
-        req.session.save((err) => {
+        // Explicitly save the session before responding
+        (req as any).session.save((err: any) => {
           if (err) {
-            console.error('Session save error:', err);
-            return res.status(500).json({ message: "Session save failed" });
+            console.error("Session save error:", err);
+            return next(err);
           }
-          console.log('✓ User', user.id, 'logged in successfully with session', req.sessionID);
-          return res.json({ message: "Login successful", user });
+
+          console.log('✓ User', user.id, 'logged in successfully with session', (req as any).sessionID);
+          return res.status(200).json(user);
         });
       });
     })(req, res, next);
@@ -272,116 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Retirement goals routes
-  app.get("/api/users/:userId/retirement-goals", async (req: Request, res: Response) => {
-    const userId = req.params.userId;
 
-    if (!userId) {
-      return res.status(400).json({ message: "Invalid user ID" });
-    }
-
-    const goals = await storage.getRetirementGoals(userId);
-    return res.json(goals);
-  });
-
-  app.post("/api/retirement-goals", async (req: Request, res: Response) => {
-    try {
-      const goalData = insertRetirementGoalSchema.parse(req.body);
-      const goal = await storage.createRetirementGoal(goalData);
-
-      // Create an activity for this goal creation
-      await storage.createActivity({
-        userId: goalData.userId,
-        activityType: "goal_created",
-        title: "New Retirement Goal",
-        description: `Added a new retirement goal${goalData.description ? ': ' + goalData.description : ''}`,
-        metadata: {
-          goalId: goal.id,
-          category: goalData.category,
-          priority: goalData.priority
-        }
-      });
-
-      return res.status(201).json(goal);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid goal data", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Failed to create retirement goal" });
-    }
-  });
-
-  app.patch("/api/retirement-goals/:id", async (req: Request, res: Response) => {
-    const goalId = req.params.id;
-
-    if (!goalId) {
-      return res.status(400).json({ message: "Invalid goal ID" });
-    }
-
-    try {
-      const goalData = insertRetirementGoalSchema.partial().parse(req.body);
-      const updatedGoal = await storage.updateRetirementGoal(goalId, goalData);
-
-      if (!updatedGoal) {
-        return res.status(404).json({ message: "Retirement goal not found" });
-      }
-
-      // Create an activity for this goal update
-      await storage.createActivity({
-        userId: updatedGoal.userId,
-        activityType: "goal_updated",
-        title: "Updated Retirement Goal",
-        description: `Updated retirement goal${updatedGoal.description ? ': ' + updatedGoal.description : ''}`,
-        metadata: {
-          goalId: updatedGoal.id,
-          category: updatedGoal.category,
-          priority: updatedGoal.priority
-        }
-      });
-
-      return res.json(updatedGoal);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid goal data", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Failed to update retirement goal" });
-    }
-  });
-
-  app.delete("/api/retirement-goals/:id", async (req: Request, res: Response) => {
-    const goalId = req.params.id;
-
-    if (!goalId) {
-      return res.status(400).json({ message: "Invalid goal ID" });
-    }
-
-    // Get the goal before deleting it to capture user info and goal details
-    const goal = await storage.getRetirementGoal(goalId);
-    if (!goal) {
-      return res.status(404).json({ message: "Retirement goal not found" });
-    }
-
-    const success = await storage.deleteRetirementGoal(goalId);
-
-    if (!success) {
-      return res.status(404).json({ message: "Retirement goal not found" });
-    }
-
-    // Create an activity for this goal deletion
-    await storage.createActivity({
-      userId: goal.userId,
-      activityType: "goal_deleted",
-      title: "Deleted Retirement Goal",
-      description: `Deleted retirement goal${goal.description ? ': ' + goal.description : ''}`,
-      metadata: {
-        goalId: goal.id,
-        category: goal.category,
-        priority: goal.priority
-      }
-    });
-
-    return res.status(204).end();
-  });
 
   // Investment accounts routes
   app.get("/api/users/:userId/investment-accounts", async (req: Request, res: Response) => {
@@ -844,7 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Get retirement goals
-    const goals = await storage.getRetirementGoals(userId);
+    const goals = [];
 
     // Get investment accounts
     const accounts = await storage.getInvestmentAccounts(userId);
@@ -883,7 +775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
     // Find the primary income goal if exists
-    const primaryIncomeGoal = goals.find(goal => goal.category === "income") || null;
+    const primaryIncomeGoal = null;
 
     // Calculate aggregate asset allocation
     const aggregateAssetAllocation = {
@@ -920,7 +812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       },
       monthlyIncome: {
         projected: 5250,
-        goal: primaryIncomeGoal?.targetMonthlyIncome || 6000,
+        goal: 6000,
         percentOfCurrent: 87
       },
       savingsRate: {
@@ -951,7 +843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       recommendations: recommendations,
       resources: resources,
       recentActivities: activities,
-      retirementGoals: goals // Add retirement goals to dashboard data
+      retirementGoals: [] // Add retirement goals to dashboard data
     });
   });
 

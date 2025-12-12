@@ -39,7 +39,7 @@ import { format } from "date-fns";
 
 import { useAuth } from "@/contexts/AuthContext";
 
-import { User, InvestmentAccount, RetirementGoal, AnnualSnapshot } from "@shared/schema";
+import { User, InvestmentAccount, AnnualSnapshot } from "@shared/schema";
 
 const Reports = () => {
   const [activeTab, setActiveTab] = useState("summary");
@@ -58,11 +58,7 @@ const Reports = () => {
     enabled: !!userId,
   });
 
-  // Fetch retirement goals
-  const { data: goalsData, isLoading: isLoadingGoals } = useQuery<RetirementGoal[]>({
-    queryKey: [`/api/users/${userId}/retirement-goals`],
-    enabled: !!userId,
-  });
+
 
   // Fetch dashboard data
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery<any>({
@@ -70,7 +66,7 @@ const Reports = () => {
     enabled: !!userId,
   });
 
-  if (isLoadingUser || isLoadingAccounts || isLoadingGoals || isLoadingDashboard) {
+  if (isLoadingUser || isLoadingAccounts || isLoadingDashboard) {
     return (
       <div className="py-4">
         <Skeleton className="h-8 w-64 mb-1" />
@@ -269,48 +265,7 @@ const Reports = () => {
 
               </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Retirement Goals Summary</CardTitle>
-                  <CardDescription>
-                    Overview of your defined retirement goals
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-gray-50">
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Goal Description</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Category</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Priority</th>
-                          <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Monthly Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {goalsData && goalsData.length > 0 ? (
-                          goalsData.map((goal: any) => (
-                            <tr key={goal.id}>
-                              <td className="px-4 py-3 text-sm">{goal.description}</td>
-                              <td className="px-4 py-3 text-sm capitalize">{goal.category}</td>
-                              <td className="px-4 py-3 text-sm">{goal.priority}</td>
-                              <td className="px-4 py-3 text-sm text-right">
-                                {goal.targetMonthlyIncome ? formatCurrency(goal.targetMonthlyIncome) : "—"}
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={4} className="px-4 py-3 text-sm text-center text-gray-500">
-                              No retirement goals defined yet.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
+
 
               <div className="flex flex-col space-y-2">
                 <h3 className="text-lg font-medium">Recommendations</h3>
