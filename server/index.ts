@@ -7,6 +7,19 @@ import { applyCacheHeaders } from "./cache-middleware";
 
 const app = express();
 
+import { createProxyMiddleware } from "http-proxy-middleware";
+
+// Proxy API requests to the backend - MUST be before express.json()
+app.use(
+  "/api",
+  createProxyMiddleware({
+    target: process.env.VITE_API_URL || "http://127.0.0.1:3001",
+    changeOrigin: true,
+    secure: false, // For self-signed certs if any
+    ws: true, // Proxy websockets if needed
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

@@ -29,12 +29,20 @@ export function getApiUrl(endpoint: string): string {
 export async function apiRequest(endpoint: string, options?: RequestInit): Promise<Response> {
     const url = getApiUrl(endpoint);
     const method = options?.method || 'GET';
-    return fetch(url, {
+    const response = await fetch(url, {
         ...options,
-        credentials: 'include', // Important for cookies/sessions
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
             ...options?.headers,
         },
     });
+
+    // Check if the response is HTML (likely a 404/fallback serving index.html)
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+        throw new Error("API not available (received HTML response)");
+    }
+
+    return response;
 }

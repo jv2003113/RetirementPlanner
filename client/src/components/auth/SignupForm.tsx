@@ -61,19 +61,19 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Join EasyRetire</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Join Retire Easy</h2>
         <p className="text-gray-600">
           Take the first step towards a secure retirement
         </p>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <Alert variant="destructive" className="border-red-200 bg-red-50">
             <AlertDescription className="text-red-800">{error}</AlertDescription>
           </Alert>
         )}
-        
+
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="firstName" className="text-sm font-semibold text-gray-700">
@@ -110,7 +110,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             </div>
           </div>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
             Email Address
@@ -131,7 +131,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             />
           </div>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="username" className="text-sm font-semibold text-gray-700">
             Username <span className="text-red-500">*</span>
@@ -153,7 +153,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             />
           </div>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
             Password <span className="text-red-500">*</span>
@@ -190,7 +190,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             At least 6 characters long
           </p>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">
             Confirm Password <span className="text-red-500">*</span>
@@ -224,10 +224,10 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             </button>
           </div>
         </div>
-        
-        <Button 
-          type="submit" 
-          className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200" 
+
+        <Button
+          type="submit"
+          className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -242,7 +242,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             </>
           )}
         </Button>
-        
+
         {onSwitchToLogin && (
           <div className="text-center text-sm pt-4 border-t border-gray-100">
             <span className="text-gray-600">Already have an account? </span>

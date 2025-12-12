@@ -7,6 +7,7 @@ import { User } from "@shared/schema";
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isCheckingAuth: boolean;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<void>;
   signup: (userData: SignupData) => Promise<void>;
@@ -72,8 +73,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
+        let errorMessage = 'Login failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // If JSON parse fails, try to get text or use status text
+          const text = await response.text();
+          errorMessage = text || response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       return response.json() as Promise<LoginResponse>;
@@ -143,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     isLoading: isLoading || loginMutation.isPending || signupMutation.isPending || logoutMutation.isPending,
+    isCheckingAuth: isLoading,
     isAuthenticated: !!user,
     login,
     signup,

@@ -23,7 +23,7 @@ export default function Auth() {
             <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-200">
               <PiggyBank className="h-7 w-7 text-blue-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">EasyRetire</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Retire Easy</h1>
           </div>
 
           <h2 className="text-3xl font-bold text-gray-900 leading-tight mb-4">
@@ -117,7 +117,7 @@ export default function Auth() {
               <div className="bg-blue-600 rounded-xl p-2.5 shadow-sm">
                 <PiggyBank className="h-7 w-7 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">EasyRetire</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Retire Easy</h1>
             </div>
             <p className="text-gray-600 text-sm">Plan your financial future</p>
           </div>
@@ -156,7 +156,7 @@ export default function Auth() {
 
           {/* Footer */}
           <div className="text-center mt-6">
-            <p className="text-gray-500 text-sm mb-2">Trusted by thousands of users</p>
+            <p className="text-gray-500 text-sm mb-2">Your partner for simple, stress-free planning</p>
             <div className="flex items-center justify-center space-x-4 text-xs text-gray-400">
               <span className="flex items-center gap-1">
                 <Shield className="h-3 w-3" />

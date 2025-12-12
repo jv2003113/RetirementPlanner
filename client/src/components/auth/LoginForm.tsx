@@ -36,19 +36,19 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Welcome back!</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Your Retirement, Made Easy</h2>
         <p className="text-gray-600">
-          Continue your journey to financial freedom
+          Powered by smart AI guidance.
         </p>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <Alert variant="destructive" className="border-red-200 bg-red-50">
             <AlertDescription className="text-red-800">{error}</AlertDescription>
           </Alert>
         )}
-        
+
         <div className="space-y-2">
           <Label htmlFor="username" className="text-sm font-semibold text-gray-700">
             Username
@@ -69,7 +69,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
             />
           </div>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
             Password
@@ -102,10 +102,10 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
             </button>
           </div>
         </div>
-        
-        <Button 
-          type="submit" 
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200" 
+
+        <Button
+          type="submit"
+          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -117,19 +117,11 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
             'Sign In'
           )}
         </Button>
-        
-        {/* Demo credentials hint */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-          <p className="text-sm text-yellow-800 font-medium mb-1">Demo Account</p>
-          <p className="text-xs text-yellow-700">
-            Username: <span className="font-mono font-semibold">john.doe</span> | 
-            Password: <span className="font-mono font-semibold">password123</span>
-          </p>
-        </div>
-        
+
+
         {onSwitchToSignup && (
           <div className="text-center text-sm pt-4 border-t border-gray-100">
-            <span className="text-gray-600">New to EasyRetire? </span>
+            <span className="text-gray-600">New to Retire Easy? </span>
             <Button
               type="button"
               variant="link"

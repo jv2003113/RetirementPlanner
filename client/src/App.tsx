@@ -24,12 +24,12 @@ import RothConversionCalculator from "@/components/tax/RothConversionCalculator"
 
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isCheckingAuth } = useAuth();
 
-  console.log('[Router] isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
+  console.log('[Router] isCheckingAuth:', isCheckingAuth, 'isAuthenticated:', isAuthenticated);
 
   // Show loading screen while checking authentication
-  if (isLoading) {
+  if (isCheckingAuth) {
     console.log('[Router] Showing loading screen');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
