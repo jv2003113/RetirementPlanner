@@ -10,7 +10,7 @@ import { IncomeInfoStep } from './steps/IncomeInfoStep';
 import { CurrentExpensesStep } from './steps/CurrentExpensesStep';
 import { CurrentAssetsStep } from './steps/CurrentAssetsStep';
 import { LiabilitiesStep } from './steps/LiabilitiesStep';
-import { RetirementGoalsStep } from './steps/RetirementGoalsStep';
+
 import { RiskAssessmentStep } from './steps/RiskAssessmentStep';
 import { ReviewStep } from './steps/ReviewStep';
 
@@ -24,7 +24,7 @@ const StepIndicator: React.FC = () => {
     { number: FORM_STEPS.CURRENT_EXPENSES, title: 'Expenses', icon: Receipt, colors: { bg: 'bg-amber-600', hover: 'hover:bg-amber-700', text: 'text-amber-600', ring: 'ring-amber-200', border: 'border-amber-600' } },
     { number: FORM_STEPS.CURRENT_ASSETS, title: 'Assets', icon: PiggyBank, colors: { bg: 'bg-purple-600', hover: 'hover:bg-purple-700', text: 'text-purple-600', ring: 'ring-purple-200', border: 'border-purple-600' } },
     { number: FORM_STEPS.LIABILITIES, title: 'Liabilities', icon: CreditCard, colors: { bg: 'bg-red-600', hover: 'hover:bg-red-700', text: 'text-red-600', ring: 'ring-red-200', border: 'border-red-600' } },
-    { number: FORM_STEPS.RETIREMENT_GOALS, title: 'Goals', icon: Target, colors: { bg: 'bg-orange-600', hover: 'hover:bg-orange-700', text: 'text-orange-600', ring: 'ring-orange-200', border: 'border-orange-600' } },
+
     { number: FORM_STEPS.RISK_ASSESSMENT, title: 'Risk', icon: TrendingUp, colors: { bg: 'bg-indigo-600', hover: 'hover:bg-indigo-700', text: 'text-indigo-600', ring: 'ring-indigo-200', border: 'border-indigo-600' } },
     { number: FORM_STEPS.REVIEW, title: 'Summary', icon: FileText, colors: { bg: 'bg-gray-600', hover: 'hover:bg-gray-700', text: 'text-gray-600', ring: 'ring-gray-200', border: 'border-gray-600' } },
   ];
@@ -246,7 +246,7 @@ const StepContent: React.FC = () => {
     { number: FORM_STEPS.CURRENT_EXPENSES, title: 'Expenses', icon: Receipt, colors: { bg: 'bg-amber-600', hover: 'hover:bg-amber-700', text: 'text-amber-600', ring: 'ring-amber-200', border: 'border-amber-600' } },
     { number: FORM_STEPS.CURRENT_ASSETS, title: 'Assets', icon: PiggyBank, colors: { bg: 'bg-purple-600', hover: 'hover:bg-purple-700', text: 'text-purple-600', ring: 'ring-purple-200', border: 'border-purple-600' } },
     { number: FORM_STEPS.LIABILITIES, title: 'Liabilities', icon: CreditCard, colors: { bg: 'bg-red-600', hover: 'hover:bg-red-700', text: 'text-red-600', ring: 'ring-red-200', border: 'border-red-600' } },
-    { number: FORM_STEPS.RETIREMENT_GOALS, title: 'Goals', icon: Target, colors: { bg: 'bg-orange-600', hover: 'hover:bg-orange-700', text: 'text-orange-600', ring: 'ring-orange-200', border: 'border-orange-600' } },
+
     { number: FORM_STEPS.RISK_ASSESSMENT, title: 'Risk', icon: TrendingUp, colors: { bg: 'bg-indigo-600', hover: 'hover:bg-indigo-700', text: 'text-indigo-600', ring: 'ring-indigo-200', border: 'border-indigo-600' } },
     { number: FORM_STEPS.REVIEW, title: 'Summary', icon: FileText, colors: { bg: 'bg-gray-600', hover: 'hover:bg-gray-700', text: 'text-gray-600', ring: 'ring-gray-200', border: 'border-gray-600' } },
   ];
@@ -265,8 +265,7 @@ const StepContent: React.FC = () => {
         return <CurrentAssetsStep />;
       case FORM_STEPS.LIABILITIES:
         return <LiabilitiesStep />;
-      case FORM_STEPS.RETIREMENT_GOALS:
-        return <RetirementGoalsStep />;
+
       case FORM_STEPS.RISK_ASSESSMENT:
         return <RiskAssessmentStep />;
       case FORM_STEPS.REVIEW:

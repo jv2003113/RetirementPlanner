@@ -536,54 +536,7 @@ export const ReviewStep: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Retirement Goals */}
-      <Card>
-        <CardContent className="pt-6">
-          <SectionHeader
-            title="Retirement Goals"
-            stepNumber={FORM_STEPS.RETIREMENT_GOALS}
-            icon={Target}
-            isComplete={isStepCompleted(FORM_STEPS.RETIREMENT_GOALS)}
-            onEdit={() => navigateToStep(FORM_STEPS.RETIREMENT_GOALS)}
-          />
-          <div className="space-y-3 text-sm">
-            <div>
-              <strong>Desired Lifestyle:</strong>
-              <Badge variant="secondary" className="ml-2 capitalize">
-                {formData.desiredLifestyle || 'Not specified'}
-              </Badge>
-            </div>
-            <div>
-              <strong>Expected Annual Expenses:</strong> {formatCurrency(formData.expectedAnnualExpenses)}
-            </div>
-            <div>
-              <strong>Healthcare Expectations:</strong>
-              <span className="ml-2 capitalize">
-                {formData.healthcareExpectations?.replace('-', ' ') || 'Not specified'}
-              </span>
-            </div>
-            <div>
-              <strong>Retirement Location:</strong> {formData.retirementLocation || 'Not specified'}
-            </div>
-            {formData.travelPlans && (
-              <div>
-                <strong>Travel Plans:</strong>
-                <p className="mt-1 text-gray-700 pl-4 border-l-2 border-gray-200">
-                  {formData.travelPlans}
-                </p>
-              </div>
-            )}
-            {formData.legacyGoals && (
-              <div>
-                <strong>Legacy Goals:</strong>
-                <p className="mt-1 text-gray-700 pl-4 border-l-2 border-gray-200">
-                  {formData.legacyGoals}
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Risk Assessment */}
       <Card>
@@ -660,12 +613,7 @@ export const ReviewStep: React.FC = () => {
                 </div>
                 <div className="text-sm text-green-700">Until Retirement</div>
               </div>
-              <div>
-                <div className="text-xl font-bold text-green-900">
-                  {formatCurrency(formData.expectedAnnualExpenses)}
-                </div>
-                <div className="text-sm text-green-700">Annual Retirement Goal</div>
-              </div>
+
             </div>
 
             <div className="text-center text-green-800 bg-green-100 p-4 rounded-lg">

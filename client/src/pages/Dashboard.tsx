@@ -5,9 +5,9 @@ import PortfolioAllocationChart from "@/components/dashboard/PortfolioAllocation
 import RecommendationsCard from "@/components/dashboard/RecommendationsCard";
 import RetirementMilestones from "@/components/dashboard/RetirementMilestones";
 import ResourceCard from "@/components/dashboard/ResourceCard";
-import RetirementGoalsCard from "@/components/dashboard/RetirementGoalsCard";
+
 import { Skeleton } from "@/components/ui/skeleton";
-import { Recommendation, Resource, Activity, RetirementGoal, User } from "@shared/schema";
+import { Recommendation, Resource, Activity, User } from "@shared/schema";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,7 +40,7 @@ interface DashboardData {
   recommendations: Recommendation[];
   resources: Resource[];
   recentActivities: Activity[];
-  retirementGoals: RetirementGoal[];
+
 }
 
 const Dashboard = () => {
@@ -129,7 +129,7 @@ const Dashboard = () => {
       <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <PortfolioAllocationChart data={data!.portfolioAllocation} />
         <div className="grid grid-cols-1 gap-5">
-          <RetirementGoalsCard goals={data!.retirementGoals || []} />
+
           <RetirementMilestones
             user={{
               currentAge: 30,

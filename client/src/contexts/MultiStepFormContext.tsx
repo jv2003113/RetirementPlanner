@@ -14,9 +14,8 @@ export const FORM_STEPS = {
   CURRENT_EXPENSES: 3,
   CURRENT_ASSETS: 4,
   LIABILITIES: 5,
-  RETIREMENT_GOALS: 6,
-  RISK_ASSESSMENT: 7,
-  REVIEW: 8,
+  RISK_ASSESSMENT: 6,
+  REVIEW: 7,
 } as const;
 
 export type FormStepType = typeof FORM_STEPS[keyof typeof FORM_STEPS];
@@ -79,13 +78,7 @@ const multiStepFormSchema = z.object({
   otherDebt: z.string().optional(),
   totalMonthlyDebtPayments: z.string().optional(),
 
-  // Step 6: Retirement Goals & Preferences
-  desiredLifestyle: z.string().optional(),
-  expectedAnnualExpenses: z.string().optional(),
-  healthcareExpectations: z.string().optional(),
-  travelPlans: z.string().optional(),
-  legacyGoals: z.string().optional(),
-  retirementLocation: z.string().optional(),
+
 
   // Step 7: Risk Assessment
   investmentExperience: z.string().optional(),
@@ -150,14 +143,7 @@ export const stepSchemas = {
     otherDebt: true,
     totalMonthlyDebtPayments: true,
   }),
-  [FORM_STEPS.RETIREMENT_GOALS]: multiStepFormSchema.pick({
-    desiredLifestyle: true,
-    expectedAnnualExpenses: true,
-    healthcareExpectations: true,
-    travelPlans: true,
-    legacyGoals: true,
-    retirementLocation: true,
-  }),
+
   [FORM_STEPS.RISK_ASSESSMENT]: multiStepFormSchema.pick({
     investmentExperience: true,
     riskTolerance: true,
@@ -250,7 +236,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       studentLoanDebt: '0',
       otherDebt: '0',
       totalMonthlyDebtPayments: '0',
-      expectedAnnualExpenses: '0',
+
       preferredInvestmentTypes: [],
     },
   });
@@ -271,7 +257,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         dependents: userData.dependents || 0,
         currentIncome: String(userData.currentIncome || '0'),
 
-        desiredLifestyle: userData.desiredLifestyle || '',
+
         hasSpouse: userData.hasSpouse || false,
         spouseFirstName: userData.spouseFirstName || '',
         spouseLastName: userData.spouseLastName || '',
@@ -312,11 +298,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         }],
         totalMonthlyExpenses: String(userData.totalMonthlyExpenses || '0'),
         // Retirement Goals
-        expectedAnnualExpenses: String(userData.expectedAnnualExpenses || '0'),
-        healthcareExpectations: userData.healthcareExpectations || '',
-        travelPlans: userData.travelPlans || '',
-        legacyGoals: userData.legacyGoals || '',
-        retirementLocation: userData.retirementLocation || '',
+
         // Risk Assessment
         investmentExperience: userData.investmentExperience || '',
         riskTolerance: userData.riskTolerance || '',
@@ -395,7 +377,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       [FORM_STEPS.CURRENT_EXPENSES]: "Current Expenses",
       [FORM_STEPS.CURRENT_ASSETS]: "Current Assets",
       [FORM_STEPS.LIABILITIES]: "Liabilities & Debts",
-      [FORM_STEPS.RETIREMENT_GOALS]: "Retirement Goals & Lifestyle",
+
       [FORM_STEPS.RISK_ASSESSMENT]: "Investment Risk Assessment",
       [FORM_STEPS.REVIEW]: "Summary",
     };
@@ -409,7 +391,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       [FORM_STEPS.CURRENT_EXPENSES]: "Review and update your monthly spending categories",
       [FORM_STEPS.CURRENT_ASSETS]: "Update your savings, investments, and asset information",
       [FORM_STEPS.LIABILITIES]: "Review and update your debts and monthly obligations",
-      [FORM_STEPS.RETIREMENT_GOALS]: "Adjust your retirement goals and lifestyle preferences",
+
       [FORM_STEPS.RISK_ASSESSMENT]: "Update your investment preferences and risk tolerance",
       [FORM_STEPS.REVIEW]: "Review and verify all your retirement planning information",
     };
@@ -486,7 +468,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         dependents: Number(formData.dependents) || 0,
         currentIncome: formData.currentIncome,
 
-        desiredLifestyle: formData.desiredLifestyle,
+
         hasSpouse: formData.hasSpouse,
         spouseFirstName: formData.spouseFirstName,
         spouseLastName: formData.spouseLastName,
@@ -522,11 +504,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
         otherDebt: formData.otherDebt,
         totalMonthlyDebtPayments: formData.totalMonthlyDebtPayments,
         // Retirement Goals
-        expectedAnnualExpenses: formData.expectedAnnualExpenses,
-        healthcareExpectations: formData.healthcareExpectations,
-        travelPlans: formData.travelPlans,
-        legacyGoals: formData.legacyGoals,
-        retirementLocation: formData.retirementLocation,
+
         // Risk Assessment
         investmentExperience: formData.investmentExperience,
         riskTolerance: formData.riskTolerance,
@@ -579,7 +557,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       dependents: Number(formData.dependents) || 0,
       currentIncome: formData.currentIncome,
 
-      desiredLifestyle: formData.desiredLifestyle,
+
       hasSpouse: formData.hasSpouse,
       spouseFirstName: formData.spouseFirstName,
       spouseLastName: formData.spouseLastName,
@@ -615,11 +593,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
       otherDebt: formData.otherDebt,
       totalMonthlyDebtPayments: formData.totalMonthlyDebtPayments,
       // Retirement Goals
-      expectedAnnualExpenses: formData.expectedAnnualExpenses,
-      healthcareExpectations: formData.healthcareExpectations,
-      travelPlans: formData.travelPlans,
-      legacyGoals: formData.legacyGoals,
-      retirementLocation: formData.retirementLocation,
+
       // Risk Assessment
       investmentExperience: formData.investmentExperience,
       riskTolerance: formData.riskTolerance,
@@ -686,7 +660,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
           dependents: Number(formData.dependents) || 0,
           currentIncome: formData.currentIncome,
 
-          desiredLifestyle: formData.desiredLifestyle,
+
           hasSpouse: formData.hasSpouse,
           spouseFirstName: formData.spouseFirstName,
           spouseLastName: formData.spouseLastName,
@@ -722,11 +696,7 @@ export const MultiStepFormProvider: React.FC<MultiStepFormProviderProps> = ({ ch
           otherDebt: formData.otherDebt,
           totalMonthlyDebtPayments: formData.totalMonthlyDebtPayments,
           // Retirement Goals
-          expectedAnnualExpenses: formData.expectedAnnualExpenses,
-          healthcareExpectations: formData.healthcareExpectations,
-          travelPlans: formData.travelPlans,
-          legacyGoals: formData.legacyGoals,
-          retirementLocation: formData.retirementLocation,
+
           // Risk Assessment
           investmentExperience: formData.investmentExperience,
           riskTolerance: formData.riskTolerance,
