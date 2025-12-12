@@ -7,7 +7,7 @@ import {
   investmentAccounts, type InvestmentAccount, type InsertInvestmentAccount,
   assetAllocations, type AssetAllocation, type InsertAssetAllocation,
   securityHoldings, type SecurityHolding, type InsertSecurityHolding,
-  retirementExpenses, type RetirementExpense, type InsertRetirementExpense,
+
   activities, type Activity, type InsertActivity,
   rothConversionPlans, type RothConversionPlan, type InsertRothConversionPlan,
   rothConversionScenarios, type RothConversionScenario, type InsertRothConversionScenario,
@@ -215,38 +215,7 @@ export class PostgresStorage implements IStorage {
     return results.length > 0;
   }
 
-  // Retirement expenses operations
-  async getRetirementExpenses(userId: string): Promise<RetirementExpense[]> {
-    return await db
-      .select()
-      .from(retirementExpenses)
-      .where(eq(retirementExpenses.userId, userId));
-  }
 
-  async createRetirementExpense(expenseData: InsertRetirementExpense): Promise<RetirementExpense> {
-    const results = await db
-      .insert(retirementExpenses)
-      .values(expenseData)
-      .returning();
-    return results[0];
-  }
-
-  async updateRetirementExpense(id: string, expenseData: Partial<InsertRetirementExpense>): Promise<RetirementExpense | undefined> {
-    const results = await db
-      .update(retirementExpenses)
-      .set(expenseData)
-      .where(eq(retirementExpenses.id, id))
-      .returning();
-    return results[0];
-  }
-
-  async deleteRetirementExpense(id: string): Promise<boolean> {
-    const results = await db
-      .delete(retirementExpenses)
-      .where(eq(retirementExpenses.id, id))
-      .returning();
-    return results.length > 0;
-  }
 
   // Activities operations
   async getActivities(userId: string, limit?: number): Promise<Activity[]> {

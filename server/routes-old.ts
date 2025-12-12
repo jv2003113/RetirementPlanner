@@ -9,7 +9,7 @@ import {
   insertInvestmentAccountSchema,
   insertAssetAllocationSchema,
   insertSecurityHoldingSchema,
-  insertRetirementExpenseSchema,
+
   insertActivitySchema,
   insertRothConversionPlanSchema,
   insertRothConversionScenarioSchema,
@@ -618,70 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Retirement expenses routes
-  app.get("/api/users/:userId/retirement-expenses", async (req: Request, res: Response) => {
-    const userId = req.params.userId;
 
-    if (!userId) {
-      return res.status(400).json({ message: "Invalid user ID" });
-    }
-
-    const expenses = await storage.getRetirementExpenses(userId);
-    return res.json(expenses);
-  });
-
-  app.post("/api/retirement-expenses", async (req: Request, res: Response) => {
-    try {
-      const expenseData = insertRetirementExpenseSchema.parse(req.body);
-      const expense = await storage.createRetirementExpense(expenseData);
-      return res.status(201).json(expense);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid expense data", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Failed to create retirement expense" });
-    }
-  });
-
-  app.patch("/api/retirement-expenses/:id", async (req: Request, res: Response) => {
-    const expenseId = req.params.id;
-
-    if (!expenseId) {
-      return res.status(400).json({ message: "Invalid expense ID" });
-    }
-
-    try {
-      const expenseData = insertRetirementExpenseSchema.partial().parse(req.body);
-      const updatedExpense = await storage.updateRetirementExpense(expenseId, expenseData);
-
-      if (!updatedExpense) {
-        return res.status(404).json({ message: "Retirement expense not found" });
-      }
-
-      return res.json(updatedExpense);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid expense data", errors: error.errors });
-      }
-      return res.status(500).json({ message: "Failed to update retirement expense" });
-    }
-  });
-
-  app.delete("/api/retirement-expenses/:id", async (req: Request, res: Response) => {
-    const expenseId = req.params.id;
-
-    if (!expenseId) {
-      return res.status(400).json({ message: "Invalid expense ID" });
-    }
-
-    const success = await storage.deleteRetirementExpense(expenseId);
-
-    if (!success) {
-      return res.status(404).json({ message: "Retirement expense not found" });
-    }
-
-    return res.status(204).end();
-  });
 
   // Activities routes
   app.get("/api/users/:userId/activities", async (req: Request, res: Response) => {
@@ -927,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Get retirement expenses
-    const expenses = await storage.getRetirementExpenses(userId);
+
 
     // Get recent activities
     const activities = await storage.getActivities(userId, 3);
@@ -970,11 +907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
-    // Calculate total expenses
-    const totalMonthlyExpenses = expenses.reduce(
-      (sum, expense) => sum + Number(expense.estimatedMonthlyAmount),
-      0
-    );
+
 
     // Calculate current savings rate (simplified)
     const currentSavingsRate = 15;

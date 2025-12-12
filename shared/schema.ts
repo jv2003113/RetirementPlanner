@@ -133,15 +133,7 @@ export const assetAllocations = pgTable("asset_allocations", {
 });
 
 // Retirement expenses schema
-export const retirementExpenses = pgTable("retirement_expenses", {
-  id: uuid("id").primaryKey().$defaultFn(() => uuidv7()),
-  userId: uuid("user_id").references(() => users.id).notNull(),
-  category: text("category").notNull(), // housing, healthcare, travel, etc.
-  estimatedMonthlyAmount: decimal("estimated_monthly_amount", { precision: 10, scale: 2 }).notNull(),
-  isEssential: boolean("is_essential").default(false),
-  notes: text("notes"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-});
+
 
 // Activities schema
 export const activities = pgTable("activities", {
@@ -211,10 +203,7 @@ export const insertAssetAllocationSchema = createInsertSchema(assetAllocations).
   updatedAt: true,
 });
 
-export const insertRetirementExpenseSchema = createInsertSchema(retirementExpenses).omit({
-  id: true,
-  createdAt: true,
-});
+
 
 export const insertActivitySchema = createInsertSchema(activities).omit({
   id: true,
@@ -256,8 +245,7 @@ export const insertSecurityHoldingSchema = createInsertSchema(securityHoldings).
 export type SecurityHolding = typeof securityHoldings.$inferSelect;
 export type InsertSecurityHolding = z.infer<typeof insertSecurityHoldingSchema>;
 
-export type RetirementExpense = typeof retirementExpenses.$inferSelect;
-export type InsertRetirementExpense = z.infer<typeof insertRetirementExpenseSchema>;
+
 
 export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;

@@ -39,7 +39,7 @@ import { format } from "date-fns";
 
 import { useAuth } from "@/contexts/AuthContext";
 
-import { User, InvestmentAccount, RetirementGoal, RetirementExpense, AnnualSnapshot } from "@shared/schema";
+import { User, InvestmentAccount, RetirementGoal, AnnualSnapshot } from "@shared/schema";
 
 const Reports = () => {
   const [activeTab, setActiveTab] = useState("summary");
@@ -64,19 +64,13 @@ const Reports = () => {
     enabled: !!userId,
   });
 
-  // Fetch retirement expenses
-  const { data: expensesData, isLoading: isLoadingExpenses } = useQuery<RetirementExpense[]>({
-    queryKey: [`/api/users/${userId}/retirement-expenses`],
-    enabled: !!userId,
-  });
-
   // Fetch dashboard data
   const { data: dashboardData, isLoading: isLoadingDashboard } = useQuery<any>({
     queryKey: [`/api/users/${userId}/dashboard`],
     enabled: !!userId,
   });
 
-  if (isLoadingUser || isLoadingAccounts || isLoadingGoals || isLoadingExpenses || isLoadingDashboard) {
+  if (isLoadingUser || isLoadingAccounts || isLoadingGoals || isLoadingDashboard) {
     return (
       <div className="py-4">
         <Skeleton className="h-8 w-64 mb-1" />
@@ -123,52 +117,6 @@ const Reports = () => {
 
   const COLORS = ['#1E88E5', '#43A047', '#FFA000', '#9C27B0'];
 
-  // Calculate total expenses by category
-  const calculateExpensesByCategory = () => {
-    if (!expensesData) return [];
-
-    const categories: Record<string, number> = {};
-
-    expensesData.forEach((expense: any) => {
-      const category = expense.category;
-      const amount = Number(expense.estimatedMonthlyAmount);
-
-      if (categories[category]) {
-        categories[category] += amount;
-      } else {
-        categories[category] = amount;
-      }
-    });
-
-    return Object.entries(categories).map(([name, value]) => ({
-      name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
-      value
-    }));
-  };
-
-  // Calculate income vs expenses data
-  const calculateIncomeVsExpenses = () => {
-    if (!dashboardData || !expensesData) return [];
-
-    const totalMonthlyExpenses = expensesData.reduce(
-      (sum: number, expense: any) => sum + Number(expense.estimatedMonthlyAmount),
-      0
-    );
-
-    return [
-      {
-        name: "Current",
-        income: (userData?.currentIncome ? Number(userData.currentIncome) : 0) / 12,
-        expenses: totalMonthlyExpenses * 0.7 // Assuming current expenses are lower
-      },
-      {
-        name: "Retirement",
-        income: dashboardData.monthlyIncome.projected,
-        expenses: totalMonthlyExpenses
-      }
-    ];
-  };
-
   // Generate retirement readiness data
   const generateRetirementReadinessData = () => {
     if (!dashboardData) return [];
@@ -183,8 +131,7 @@ const Reports = () => {
   };
 
   const portfolioData = calculatePortfolioData();
-  const expenseData = calculateExpensesByCategory();
-  const incomeVsExpensesData = calculateIncomeVsExpenses();
+
   const retirementReadinessData = generateRetirementReadinessData();
 
   return (
@@ -319,42 +266,7 @@ const Reports = () => {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Income vs. Expenses</CardTitle>
-                    <CardDescription>
-                      Comparing income and expenses now and in retirement
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[250px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={incomeVsExpensesData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis tickFormatter={(value) => `$${value / 1000}k`} />
-                          <Tooltip formatter={(value) => [formatCurrency(value as number), ""]} />
-                          <Legend />
-                          <Bar dataKey="income" name="Monthly Income" fill="#43A047" />
-                          <Bar dataKey="expenses" name="Monthly Expenses" fill="#F44336" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span>Income Replacement Rate</span>
-                        <span className="font-medium">{dashboardData.monthlyIncome.percentOfCurrent}%</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Monthly Expenses in Retirement</span>
-                        <span className="font-medium">{formatCurrency(4500)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+
               </div>
 
               <Card>
@@ -490,51 +402,7 @@ const Reports = () => {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Expense Distribution</CardTitle>
-                    <CardDescription>
-                      Breakdown of your expected retirement expenses
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[250px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={expenseData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {expenseData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      {expenseData.slice(0, 6).map((item, index) => (
-                        <div key={`expense-${index}`} className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            <span
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                            ></span>
-                            <span className="text-sm">{item.name}</span>
-                          </div>
-                          <span className="text-sm font-medium">{formatCurrency(item.value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+
               </div>
 
               <Card>

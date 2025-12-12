@@ -4,7 +4,7 @@ import type {
   InvestmentAccount, InsertInvestmentAccount,
   AssetAllocation, InsertAssetAllocation,
   SecurityHolding, InsertSecurityHolding,
-  RetirementExpense, InsertRetirementExpense,
+
   Activity, InsertActivity,
   RothConversionPlan, InsertRothConversionPlan,
   RothConversionScenario, InsertRothConversionScenario,
@@ -54,11 +54,7 @@ export interface IStorage {
   updateSecurityHolding(id: string, holding: Partial<InsertSecurityHolding>): Promise<SecurityHolding | undefined>;
   deleteSecurityHolding(id: string): Promise<boolean>;
 
-  // Retirement expenses operations
-  getRetirementExpenses(userId: string): Promise<RetirementExpense[]>;
-  createRetirementExpense(expense: InsertRetirementExpense): Promise<RetirementExpense>;
-  updateRetirementExpense(id: string, expense: Partial<InsertRetirementExpense>): Promise<RetirementExpense | undefined>;
-  deleteRetirementExpense(id: string): Promise<boolean>;
+
 
   // Activities operations
   getActivities(userId: string, limit?: number): Promise<Activity[]>;
