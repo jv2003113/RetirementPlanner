@@ -28,6 +28,7 @@ export function getApiUrl(endpoint: string): string {
  */
 export async function apiRequest(endpoint: string, options?: RequestInit): Promise<Response> {
     const url = getApiUrl(endpoint);
+    const method = options?.method || 'GET';
     return fetch(url, {
         ...options,
         credentials: 'include', // Important for cookies/sessions
