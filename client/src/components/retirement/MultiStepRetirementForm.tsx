@@ -16,7 +16,7 @@ import { ReviewStep } from './steps/ReviewStep';
 
 // Progress indicator component
 const StepIndicator: React.FC = () => {
-  const { currentStep, completedSteps, totalSteps, navigateToStep, canGoToStep, getStepTitle } = useMultiStepForm();
+  const { currentStep, completedSteps, totalSteps: contextTotalSteps, navigateToStep, canGoToStep, getStepTitle } = useMultiStepForm();
 
   const steps = [
     { number: FORM_STEPS.PERSONAL_INFO, title: 'Personal', icon: User, colors: { bg: 'bg-blue-600', hover: 'hover:bg-blue-700', text: 'text-blue-600', ring: 'ring-blue-200', border: 'border-blue-600' } },
@@ -24,19 +24,24 @@ const StepIndicator: React.FC = () => {
     { number: FORM_STEPS.CURRENT_EXPENSES, title: 'Expenses', icon: Receipt, colors: { bg: 'bg-amber-600', hover: 'hover:bg-amber-700', text: 'text-amber-600', ring: 'ring-amber-200', border: 'border-amber-600' } },
     { number: FORM_STEPS.CURRENT_ASSETS, title: 'Assets', icon: PiggyBank, colors: { bg: 'bg-purple-600', hover: 'hover:bg-purple-700', text: 'text-purple-600', ring: 'ring-purple-200', border: 'border-purple-600' } },
     { number: FORM_STEPS.LIABILITIES, title: 'Liabilities', icon: CreditCard, colors: { bg: 'bg-red-600', hover: 'hover:bg-red-700', text: 'text-red-600', ring: 'ring-red-200', border: 'border-red-600' } },
-
     { number: FORM_STEPS.RISK_ASSESSMENT, title: 'Risk', icon: TrendingUp, colors: { bg: 'bg-indigo-600', hover: 'hover:bg-indigo-700', text: 'text-indigo-600', ring: 'ring-indigo-200', border: 'border-indigo-600' } },
     { number: FORM_STEPS.REVIEW, title: 'Summary', icon: FileText, colors: { bg: 'bg-gray-600', hover: 'hover:bg-gray-700', text: 'text-gray-600', ring: 'ring-gray-200', border: 'border-gray-600' } },
   ];
 
-  const progressPercentage = (completedSteps.length / totalSteps) * 100;
+  // Exclude Review step from total count for progress calculation
+  const totalSteps = contextTotalSteps - 1;
+  const completedCount = completedSteps.filter(step => step !== FORM_STEPS.REVIEW).length;
+
+  // Cap at 100%
+  const progressPercentage = Math.min(100, (completedCount / totalSteps) * 100);
 
   return (
     <div className="mb-0">
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Step {currentStep} of {totalSteps}</span>
+          {/* If on review step (7), show "Review" instead of "Step 7 of 6" */}
+          <span>{currentStep === FORM_STEPS.REVIEW ? 'Review' : `Step ${currentStep} of ${totalSteps}`}</span>
           <span>{Math.round(progressPercentage)}% Complete</span>
         </div>
         <Progress value={progressPercentage} className="h-2" />
