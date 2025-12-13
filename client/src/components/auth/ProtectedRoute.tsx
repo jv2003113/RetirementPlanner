@@ -39,7 +39,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Fetch multi-step form progress
   const { data: progressData } = useQuery({
-    queryKey: ['form-progress', userId],
+    queryKey: [`/api/users/${userId}/multi-step-form-progress`],
     queryFn: async () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/${userId}/multi-step-form-progress`, {
         credentials: 'include',
