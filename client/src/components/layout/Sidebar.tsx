@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import {
   HomeIcon,
   UserIcon,
@@ -13,22 +12,13 @@ import {
   LayoutPanelLeftIcon,
   HeartPulseIcon,
   ActivitySquareIcon,
-  CalendarIcon,
-  LogOutIcon,
   Target
 } from "lucide-react";
+import { ERLogo } from "@/components/ui/ERLogo";
 
 const Sidebar = () => {
   const [location] = useLocation();
-  const { user, logout, isLoading } = useAuth();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
+  const { user } = useAuth();
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
@@ -48,10 +38,8 @@ const Sidebar = () => {
       <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
         <div className="flex items-center flex-shrink-0 px-4 mb-5">
           <div className="flex items-center space-x-2">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-2">
-              <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-              </svg>
+            <div className="rounded-lg p-2">
+              <ERLogo className="h-10 w-10 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-800">Retire Easy</span>
           </div>

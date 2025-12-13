@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PiggyBank, TrendingUp, Shield, Target } from 'lucide-react';
+import { TrendingUp, Shield, Target } from 'lucide-react';
+import { ERLogo } from '@/components/ui/ERLogo';
 
 export default function Auth() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -21,7 +22,7 @@ export default function Auth() {
         <div className="relative z-10">
           <div className="flex items-center space-x-3 mb-12">
             <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-200">
-              <PiggyBank className="h-7 w-7 text-blue-600" />
+              <ERLogo className="h-10 w-10 text-blue-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Retire Easy</h1>
           </div>
@@ -75,35 +76,36 @@ export default function Auth() {
         </div>
 
         {/* Features */}
-        <div className="relative z-10 space-y-3">
-          <div className="flex items-center gap-3 text-sm">
-            <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200">
-              <Shield className="h-4 w-4 text-blue-600" />
+        {/* Features */}
+        <div className="relative z-10 grid grid-cols-3 gap-4 pt-4 border-t border-gray-100/50">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="bg-white rounded-lg p-1.5 shadow-sm border border-gray-200">
+                <Shield className="h-4 w-4 text-blue-600" />
+              </div>
+              <span className="text-gray-900 font-medium text-sm">Secure</span>
             </div>
-            <div>
-              <span className="text-gray-900 font-medium">Secure & Private</span>
-              <p className="text-gray-500 text-xs">Bank-level encryption</p>
-            </div>
+            <p className="text-gray-500 text-xs">Bank-level encryption</p>
           </div>
 
-          <div className="flex items-center gap-3 text-sm">
-            <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200">
-              <TrendingUp className="h-4 w-4 text-emerald-600" />
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="bg-white rounded-lg p-1.5 shadow-sm border border-gray-200">
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
+              </div>
+              <span className="text-gray-900 font-medium text-sm">Smart</span>
             </div>
-            <div>
-              <span className="text-gray-900 font-medium">Smart Forecasting</span>
-              <p className="text-gray-500 text-xs">AI-powered projections</p>
-            </div>
+            <p className="text-gray-500 text-xs">AI-powered projections</p>
           </div>
 
-          <div className="flex items-center gap-3 text-sm">
-            <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200">
-              <Target className="h-4 w-4 text-amber-600" />
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="bg-white rounded-lg p-1.5 shadow-sm border border-gray-200">
+                <Target className="h-4 w-4 text-amber-600" />
+              </div>
+              <span className="text-gray-900 font-medium text-sm">Tracking</span>
             </div>
-            <div>
-              <span className="text-gray-900 font-medium">Goal Tracking</span>
-              <p className="text-gray-500 text-xs">Monitor your progress</p>
-            </div>
+            <p className="text-gray-500 text-xs">Monitor your progress</p>
           </div>
         </div>
       </div>
@@ -114,12 +116,12 @@ export default function Auth() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="flex items-center justify-center space-x-2 mb-3">
-              <div className="bg-blue-600 rounded-xl p-2.5 shadow-sm">
-                <PiggyBank className="h-7 w-7 text-white" />
+              <div>
+                <ERLogo className="h-10 w-10 text-white" />
               </div>
               <h1 className="text-2xl font-bold text-gray-900">Retire Easy</h1>
             </div>
-            <p className="text-gray-600 text-sm">Plan your financial future</p>
+            <p className="text-gray-600 text-sm">Visualize Your Financial Future</p>
           </div>
 
           {/* Auth Form Container */}
